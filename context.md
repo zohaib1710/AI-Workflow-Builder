@@ -16,5 +16,11 @@
 - Dependencies added: runtime `pydantic-settings`; test-only `pytest` and `httpx2` for FastAPI `TestClient`.
 - Successful validation: `uv run --project backend pytest backend/tests/test_health.py` (4 passed); settings-field and app-import commands; `git diff --check`.
 - Current known issues: none for Checkpoint 2.
-- Next action: implement Checkpoint 3.
-- Proposed commit title: `feat(backend): add configuration and health endpoint`.
+- Checkpoint 3 is complete: strict workflow schemas, safe error models, and deterministic graph validation were added.
+- Created `backend/app/schemas/workflow.py`, `backend/app/domain/validation.py`, `backend/app/domain/__init__.py`, `backend/tests/test_workflow_schemas.py`, and `backend/tests/test_workflow_validation.py`.
+- Supported node types are finalized to the ten Version 1 values; coordinates, execution fields, persistence identifiers, and unknown fields are rejected.
+- Successful validation: schema/graph tests (44 passed), health test (4 passed), complete backend suite (48 passed), workflow-contract import check, and `git diff --check`.
+- No Groq integration or generation API route has been added.
+- Current known issues: none for Checkpoint 3.
+- Next action: implement Checkpoint 4.
+- Proposed commit title: `feat(backend): define and validate workflow schema`.

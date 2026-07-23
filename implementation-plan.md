@@ -226,13 +226,43 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 3: Define workflow schemas and graph validation
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Create the single validated domain contract used by AI, API, and frontend.
 - Files to create: `backend/app/schemas/workflow.py`, `backend/app/domain/__init__.py`, `backend/app/domain/validation.py`, `backend/tests/test_workflow_schemas.py`, `backend/tests/test_workflow_validation.py`.
 - Files to modify: `backend/app/main.py` only if shared validation error handling must be registered.
 - Implementation instructions: Define the exact workflow, node, edge, request, response, generation, error, and supported-node enum models. Enforce all listed input and graph rules, including disconnected graphs and decision fan-out. Keep coordinates out of the backend schema and preserve decision edge labels. Use deterministic, testable validation functions.
 - Validation commands: `uv run --project backend pytest backend/tests/test_workflow_schemas.py backend/tests/test_workflow_validation.py`.
-- Acceptance criteria: Valid representative workflows parse; each required invalid case is covered by a focused test; duplicate IDs/references/node types/structural rules fail with safe actionable errors; no coordinates or execution fields are accepted.
+- Acceptance criteria:
+  - [x] The supported-node enum contains exactly the ten Version 1 node types.
+  - [x] A representative valid workflow parses.
+  - [x] Workflow request and response models match the Version 1 contract.
+  - [x] Safe error response models exist.
+  - [x] Unknown schema fields are rejected.
+  - [x] Coordinates are rejected.
+  - [x] Execution fields are rejected.
+  - [x] Persistence identifiers are not part of the schema.
+  - [x] Prompt validation enforces non-empty input and the 5,000-character limit.
+  - [x] Duplicate node IDs fail safely.
+  - [x] Duplicate edge IDs fail safely.
+  - [x] Missing source references fail safely.
+  - [x] Missing target references fail safely.
+  - [x] Self-referencing edges fail safely.
+  - [x] Start nodes with incoming edges fail safely.
+  - [x] End nodes with outgoing edges fail safely.
+  - [x] Decision nodes require at least two outgoing edges.
+  - [x] Decision outgoing edges require meaningful labels.
+  - [x] Valid decision edge labels are preserved.
+  - [x] Disconnected multi-node workflows fail safely.
+  - [x] Single-node workflows may pass without edges.
+  - [x] Validation functions are deterministic.
+  - [x] Validation does not mutate workflow data.
+  - [x] Validation errors are safe and actionable.
+  - [x] No Groq communication is implemented.
+  - [x] No API generation route is implemented.
+  - [x] No frontend files are modified.
+  - [x] Existing health tests still pass.
+  - [x] All required schema and validation tests pass.
+  - [x] No unrelated files are changed.
 - Commit message: `feat(backend): define and validate workflow schema`
 - Stop conditions: Stop if the schema adds unsupported node types, execution semantics, coordinates, persistence identifiers, or silently coerces invalid graph data.
 
