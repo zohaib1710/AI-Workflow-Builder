@@ -183,13 +183,17 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 1: Scaffold frontend and backend applications
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Create minimal runnable React/Vite/Tailwind and Python/FastAPI/`uv` application boundaries without Version 1 behavior.
-- Files to create: `frontend/package.json`, `frontend/package-lock.json`, `frontend/tsconfig*.json`, `frontend/vite.config.ts`, `frontend/index.html`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`, `backend/pyproject.toml`, `backend/uv.lock`, `backend/app/main.py`, `backend/app/__init__.py`, `backend/tests/__init__.py`.
+- Files to create: `frontend/package.json`, `frontend/package-lock.json`, `frontend/tsconfig*.json`, `frontend/vite.config.ts`, `frontend/index.html`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/src/vite-env.d.ts`, `backend/pyproject.toml`, `backend/uv.lock`, `backend/app/main.py`, `backend/app/__init__.py`, `backend/tests/__init__.py`.
 - Files to modify: root `.gitignore` only if generated tooling requires a missing safe ignore; do not alter control docs.
 - Implementation instructions: Use Vite’s React TypeScript structure and Tailwind’s current Vite integration. Create a minimal FastAPI app that starts and returns a temporary root response only; do not add generation, Groq, persistence, auth, or UI functionality. Generate lock files with npm and `uv` and keep all source inside the planned directories.
 - Validation commands: `npm ci --prefix frontend`; `npm run build --prefix frontend`; `uv run --project backend python -c "from app.main import app; print(app.title)"`.
-- Acceptance criteria: Both projects have standard manifests and lock files; frontend build succeeds; backend imports under Python 3.12; no database, Docker, deployment, or auth files exist.
+- Acceptance criteria:
+  - [x] Both projects have standard manifests and lock files.
+  - [x] Frontend build succeeds.
+  - [x] Backend imports under Python 3.12.
+  - [x] No database, Docker, deployment, or auth files exist.
 - Commit message: `build(repo): scaffold version one applications`
 - Stop conditions: Stop if scaffolding introduces unrelated directories, dependencies cannot be locked, or a generator proposes application features beyond the empty shells.
 
