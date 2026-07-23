@@ -199,13 +199,28 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 2: Add backend configuration and health endpoint
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Establish safe settings, CORS, app wiring, and the required health contract.
 - Files to create: `backend/app/config.py`, `backend/app/api/__init__.py`, `backend/app/api/routes/__init__.py`, `backend/app/api/routes/health.py`, `backend/.env.example`, `backend/tests/test_health.py`.
 - Files to modify: `backend/app/main.py`, `backend/pyproject.toml`, `backend/uv.lock`.
 - Implementation instructions: Load the specified settings with Pydantic Settings, require no secret for health, allow CORS only from `FRONTEND_URL`, register `GET /api/v1/health`, and return `{ "status": "ok" }`. Do not expose configuration values or call Groq.
-- Validation commands: `uv run --project backend pytest backend/tests/test_health.py`; `uv run --project backend python -c "from app.config import Settings; print(Settings.model_fields.keys())"`.
-- Acceptance criteria: Health returns 200 with the stable JSON; settings names and defaults match the environment contract; no API key is printed or required for health; route functions stay thin.
+- Validation commands: `uv run --project backend pytest backend/tests/test_health.py`; `uv run --project backend python -c "from app.config import Settings; print(Settings.model_fields.keys())"`; `uv run --project backend python -c "from app.main import app; print(app.title)"`; `git diff --check`.
+- Acceptance criteria:
+  - [x] `GET /api/v1/health` returns HTTP 200.
+  - [x] The response is exactly `{ "status": "ok" }`.
+  - [x] Settings fields match the required environment contract.
+  - [x] `GROQ_TEMPERATURE` defaults to `0.2`.
+  - [x] `GROQ_MAX_TOKENS` defaults to `8000`.
+  - [x] `FRONTEND_URL` defaults to `http://localhost:5173`.
+  - [x] Backend startup does not require a real Groq API key.
+  - [x] No API key is printed or exposed.
+  - [x] CORS allows only the configured frontend URL.
+  - [x] CORS does not use a wildcard origin.
+  - [x] Health route functions remain thin.
+  - [x] No Groq call occurs.
+  - [x] No authentication or persistence behavior is added.
+  - [x] Required tests and validation commands pass.
+  - [x] No unrelated files are changed.
 - Commit message: `feat(backend): add configuration and health endpoint`
 - Stop conditions: Stop if startup requires a real Groq key, CORS becomes permissive by default, or unrelated auth/persistence behavior appears.
 

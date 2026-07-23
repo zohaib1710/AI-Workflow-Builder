@@ -10,5 +10,11 @@
 - Successful validation: `npm.cmd ci --prefix frontend`; `npm.cmd run build --prefix frontend`; `uv run --project backend python -c "from app.main import app; print(app.title)"`.
 - Validation result: frontend production build and backend import passed; generated environments and build output were removed.
 - Current known issues: none for Checkpoint 1.
-- Next action: implement Checkpoint 2.
-- Proposed commit title: `build(repo): scaffold version one applications`.
+- Checkpoint 2 is complete: backend settings, restricted CORS, and the versioned health endpoint were added.
+- Created `backend/app/config.py`, `backend/app/api/`, `backend/app/api/routes/health.py`, `backend/.env.example`, and `backend/tests/test_health.py`.
+- Modified `backend/app/main.py`, `backend/pyproject.toml`, and `backend/uv.lock`.
+- Dependencies added: runtime `pydantic-settings`; test-only `pytest` and `httpx2` for FastAPI `TestClient`.
+- Successful validation: `uv run --project backend pytest backend/tests/test_health.py` (4 passed); settings-field and app-import commands; `git diff --check`.
+- Current known issues: none for Checkpoint 2.
+- Next action: implement Checkpoint 3.
+- Proposed commit title: `feat(backend): add configuration and health endpoint`.
