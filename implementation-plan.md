@@ -297,15 +297,27 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 5: Expose the workflow generation API
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Provide the required POST endpoint with thin routing and stable request/error/response behavior.
 - Files to create: `backend/app/api/errors.py`, `backend/app/api/routes/workflows.py`, `backend/tests/test_workflow_routes.py`.
-- Files to modify: `backend/app/main.py`, `backend/app/services/workflow_generation.py`, `backend/app/schemas/workflow.py`.
-- Implementation instructions: Add `POST /api/v1/workflows/generate`, validate prompt presence and configured length limit before service invocation, call the generation service, measure `durationMs`, return the configured model name, and map known failures to the stable error envelope. Keep route handlers orchestration-only and never expose provider internals or credentials.
-- Validation commands: `uv run --project backend pytest backend/tests/test_workflow_routes.py backend/tests/test_health.py`.
-- Acceptance criteria: Valid request returns the specified response shape; empty and oversized prompts are rejected without Groq calls; mocked valid generation succeeds; invalid output/provider errors map predictably; `durationMs` is non-negative; route code remains thin.
+- Files to modify: `backend/app/main.py`, `backend/app/schemas/workflow.py`, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
+- Implementation instructions: Add `POST /api/v1/workflows/generate` over the provider-agnostic `WorkflowGenerationService`. Validate the canonical request before service invocation, resolve the service through FastAPI dependency injection and the provider factory, measure `durationMs`, return the configured model name, and map provider-agnostic exceptions through centralized safe handlers. The route must not call Groq or any provider directly, parse model output, validate graphs, retry, persist, or expose provider internals, credentials, raw responses, or candidate output.
+- Validation commands: `uv run --project backend pytest backend/tests/test_workflow_routes.py backend/tests/test_health.py`; `uv run --project backend pytest backend/tests/test_provider_factory.py backend/tests/test_openai_compatible_provider.py backend/tests/test_generation_service.py`; `uv run --project backend pytest backend/tests/test_workflow_schemas.py backend/tests/test_workflow_validation.py`; `uv run --project backend pytest backend/tests`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`; `git diff --check`.
+- Acceptance criteria:
+  - [x] Provider-agnostic Checkpoint 5 wording is defined.
+  - [x] `POST /api/v1/workflows/generate` returns validated workflow data and generation metadata.
+  - [x] Configured model and non-negative integer `durationMs` are returned.
+  - [x] Empty, whitespace-only, oversized, non-string, malformed, and unknown-field requests return safe HTTP 422 responses before service invocation.
+  - [x] Known generation and provider errors map to deterministic safe HTTP responses.
+  - [x] Unexpected errors return generic HTTP 500 responses.
+  - [x] Error responses expose no provider internals, credentials, raw output, request headers, or tracebacks.
+  - [x] Route code remains orchestration-only and provider-agnostic.
+  - [x] Dependency overrides replace the generation service in tests.
+  - [x] No live provider calls, persistence, execution behavior, or frontend changes are introduced.
+  - [x] Existing backend and Checkpoint 5 tests pass.
+  - [x] No unrelated files are changed.
 - Commit message: `feat(backend): expose workflow generation endpoint`
-- Stop conditions: Stop if the endpoint persists data, accepts execution commands, reveals raw SDK errors/secrets, or calls Groq from route code.
+- Stop conditions: Stop if the route calls a provider directly, exposes internal errors or secrets, accepts execution fields, persists data, makes live calls in tests, or requires Checkpoint 6.
 
 ### Checkpoint 6: Build frontend prompt page and API client
 

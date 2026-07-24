@@ -29,6 +29,11 @@
 - Successful validation: focused provider/generation tests (31 passed), protected backend tests (48 passed), complete backend suite (79 passed), Ruff, compilation, provider-agnostic import, SDK absence checks, and `git diff --check`.
 - Provider tests use mocked HTTP; generation tests use fake providers; no real credentials or network requests are required.
 - Current known issues: none for Checkpoint 4.
-- The public workflow-generation endpoint does not exist yet.
-- Next action: implement Checkpoint 5.
-- Proposed commit title: `feat(backend): add provider-agnostic workflow generation`.
+- Checkpoint 5 is complete: `POST /api/v1/workflows/generate` is exposed through FastAPI.
+- Created `backend/app/api/errors.py`, `backend/app/api/routes/workflows.py`, and `backend/tests/test_workflow_routes.py`.
+- The route uses dependency injection for `WorkflowGenerationService`, validates requests before service generation, returns configured model and monotonic `durationMs`, and centralizes safe provider/application error mapping.
+- Successful validation: route and health tests (21 passed), provider/generation tests (31 passed), schema/graph tests (44 passed), complete backend suite (96 passed), Ruff, compilation, OpenAPI route registration, forbidden-reference checks, and `git diff --check`.
+- No frontend changes, persistence, execution behavior, or live provider requests were added.
+- Current known issues: none for Checkpoint 5.
+- Next action: implement Checkpoint 6.
+- Proposed commit title: `feat(backend): expose workflow generation endpoint`.

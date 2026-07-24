@@ -14,16 +14,20 @@ from pydantic import (
 NonEmptyString = Annotated[StrictStr, Field(min_length=1)]
 
 
-def _strip_required(value: str) -> str:
+def _strip_required(value: object) -> object:
+    if not isinstance(value, str):
+        return value
     stripped = value.strip()
     if not stripped:
         raise ValueError("value must not be blank")
     return stripped
 
 
-def _strip_optional(value: str | None) -> str | None:
+def _strip_optional(value: object) -> object:
     if value is None:
         return None
+    if not isinstance(value, str):
+        return value
     stripped = value.strip()
     if not stripped:
         raise ValueError("value must not be blank")
