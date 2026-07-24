@@ -6,7 +6,7 @@ AI Workflow Builder converts natural-language prompts into visual workflow diagr
 
 ## 2. Technology direction
 
-The frontend direction is React, TypeScript, Vite, Tailwind CSS, React Flow, and Dagre. The backend direction is Python, FastAPI, Pydantic, and `uv`. Groq is the initial AI provider and may only be called from the backend.
+The frontend direction is React, TypeScript, Vite, Tailwind CSS, React Flow, and Dagre. The backend direction is Python, FastAPI, Pydantic, and `uv`. AI access uses a provider-agnostic interface; Groq is the initial configured provider through its OpenAI-compatible HTTP API. Provider SDKs are not required for Version 1.
 
 ## 3. Version-based development
 
@@ -42,7 +42,7 @@ Use the planned React/TypeScript/Vite/Tailwind CSS/React Flow/Dagre stack. Keep 
 
 ## 11. Backend rules
 
-Use the planned Python/FastAPI/Pydantic/`uv` stack. Keep provider calls server-side, validate inputs and outputs, and treat AI responses as untrusted data. Groq must only be called from the backend.
+Use the planned Python/FastAPI/Pydantic/`uv` stack. Keep provider calls server-side, validate inputs and outputs, and treat AI responses as untrusted data. Provider-specific transport logic must remain inside provider adapters, and workflow-generation services must not depend on a vendor name. Groq must only be accessed from the backend; Anthropic or other non-compatible providers require separate future adapters.
 
 ## 12. Testing rules
 

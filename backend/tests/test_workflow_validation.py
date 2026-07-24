@@ -1,7 +1,8 @@
 import pytest
-
 from app.domain.validation import WorkflowGraphValidationError, validate_workflow_graph
 from app.schemas.workflow import SupportedNodeType, Workflow
+from pydantic import ValidationError
+
 from tests.test_workflow_schemas import edge, node, workflow_payload
 
 
@@ -87,5 +88,5 @@ def test_validation_does_not_mutate_workflow() -> None:
 
 
 def test_unsupported_node_type_fails_before_graph_validation() -> None:
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         Workflow.model_validate({**workflow_payload(), "nodes": [{**node(), "type": "unsupported"}]})

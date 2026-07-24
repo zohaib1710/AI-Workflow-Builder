@@ -1,6 +1,4 @@
 import pytest
-from pydantic import ValidationError
-
 from app.schemas.workflow import (
     GenerateWorkflowRequest,
     GenerationMetadata,
@@ -9,6 +7,7 @@ from app.schemas.workflow import (
     WorkflowEdge,
     WorkflowNode,
 )
+from pydantic import ValidationError
 
 
 def node(node_id: str = "start", node_type: SupportedNodeType = SupportedNodeType.START) -> dict[str, object]:

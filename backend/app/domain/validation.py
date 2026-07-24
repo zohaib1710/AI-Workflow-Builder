@@ -63,7 +63,6 @@ def validate_workflow_graph(workflow: Workflow) -> None:
         if source_exists and target_exists:
             valid_edges.append((edge.id, edge.source, edge.target))
 
-    nodes_by_id = {node.id: node for node in workflow.nodes}
     for node in workflow.nodes:
         if node.type is SupportedNodeType.START and incoming[node.id]:
             errors.append(

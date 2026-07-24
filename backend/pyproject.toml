@@ -5,6 +5,7 @@ description = "Backend application shell for AI Workflow Builder"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi",
+    "httpx>=0.28.1",
     "pydantic-settings>=2.14.2",
     "uvicorn[standard]",
 ]
@@ -20,4 +21,6 @@ where = ["."]
 dev = [
     "httpx2>=2.9.0",
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.0",
 ]

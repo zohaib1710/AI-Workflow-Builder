@@ -20,7 +20,15 @@
 - Created `backend/app/schemas/workflow.py`, `backend/app/domain/validation.py`, `backend/app/domain/__init__.py`, `backend/tests/test_workflow_schemas.py`, and `backend/tests/test_workflow_validation.py`.
 - Supported node types are finalized to the ten Version 1 values; coordinates, execution fields, persistence identifiers, and unknown fields are rejected.
 - Successful validation: schema/graph tests (44 passed), health test (4 passed), complete backend suite (48 passed), workflow-contract import check, and `git diff --check`.
-- No Groq integration or generation API route has been added.
-- Current known issues: none for Checkpoint 3.
-- Next action: implement Checkpoint 4.
-- Proposed commit title: `feat(backend): define and validate workflow schema`.
+- No Groq SDK integration or generation API route has been added.
+- Checkpoint 4 is complete: provider-agnostic AI generation is implemented with `httpx` as transport.
+- Created `backend/app/providers/`, `backend/app/services/`, `backend/app/prompts/`, and provider/generation tests.
+- Generic `AIProvider`, `OpenAICompatibleProvider`, environment-driven factory, safe provider exceptions, constrained prompts, strict workflow parsing, graph validation, and one bounded correction retry are in place.
+- Modified `backend/app/config.py`, `backend/.env.example`, `backend/pyproject.toml`, `backend/uv.lock`, `backend/tests/test_health.py`, `instructions.md`, and `implementation-plan.md`.
+- Dependencies added: runtime `httpx`; test/development `pytest-asyncio` and `ruff`.
+- Successful validation: focused provider/generation tests (31 passed), protected backend tests (48 passed), complete backend suite (79 passed), Ruff, compilation, provider-agnostic import, SDK absence checks, and `git diff --check`.
+- Provider tests use mocked HTTP; generation tests use fake providers; no real credentials or network requests are required.
+- Current known issues: none for Checkpoint 4.
+- The public workflow-generation endpoint does not exist yet.
+- Next action: implement Checkpoint 5.
+- Proposed commit title: `feat(backend): add provider-agnostic workflow generation`.

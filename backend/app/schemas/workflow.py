@@ -1,8 +1,15 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
-
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictInt,
+    StrictStr,
+    field_validator,
+    model_validator,
+)
 
 NonEmptyString = Annotated[StrictStr, Field(min_length=1)]
 
@@ -60,6 +67,16 @@ class WorkflowNode(StrictModel):
 
     _normalize_strings = field_validator("id", "title", "description", mode="before")(_strip_required)
     _normalize_application = field_validator("application", mode="before")(_strip_optional)
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def normalize_node_type(cls, value: str | SupportedNodeType) -> SupportedNodeType:
+        if isinstance(value, SupportedNodeType):
+            return value
+        try:
+            return SupportedNodeType(value)
+        except ValueError as exc:
+            raise ValueError("unsupported workflow node type") from exc
 
 
 class WorkflowEdge(StrictModel):

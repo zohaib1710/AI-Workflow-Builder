@@ -1,8 +1,6 @@
-from fastapi.testclient import TestClient
-
 from app.config import Settings
 from app.main import app
-
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -17,15 +15,15 @@ def test_health_returns_ok() -> None:
 def test_app_startup_does_not_require_groq_key() -> None:
     settings = Settings()
 
-    assert settings.groq_api_key == ""
+    assert settings.ai_api_key.get_secret_value() == ""
     assert client.get("/api/v1/health").status_code == 200
 
 
 def test_health_does_not_expose_settings() -> None:
     response = client.get("/api/v1/health")
 
-    assert "GROQ_API_KEY" not in response.text
-    assert "groq_api_key" not in response.text
+    assert "AI_API_KEY" not in response.text
+    assert "ai_api_key" not in response.text
     assert "FRONTEND_URL" not in response.text
 
 

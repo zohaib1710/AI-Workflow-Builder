@@ -266,17 +266,34 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 - Commit message: `feat(backend): define and validate workflow schema`
 - Stop conditions: Stop if the schema adds unsupported node types, execution semantics, coordinates, persistence identifiers, or silently coerces invalid graph data.
 
-### Checkpoint 4: Implement isolated Groq provider and structured generation
+### Checkpoint 4: Implement provider-agnostic structured workflow generation
 
-- Status: INCOMPLETE
-- Purpose: Convert a prompt into constrained candidate workflow JSON behind a mockable provider boundary.
-- Files to create: `backend/app/services/__init__.py`, `backend/app/services/groq_provider.py`, `backend/app/prompts/__init__.py`, `backend/app/prompts/workflow_generation.py`, `backend/tests/test_groq_provider.py`, `backend/tests/test_generation_service.py`.
-- Files to modify: `backend/app/config.py`, `backend/app/services/workflow_generation.py`, `backend/pyproject.toml`, `backend/uv.lock`.
-- Implementation instructions: Wrap the Groq SDK in a service with explicit model, temperature, token, timeout, credential, rate-limit, and API-error handling. Instruct the model to return only the schema fields, use exactly supported node types, never generate coordinates/HTML/code/credentials, and explain assumptions/missing requirements/suggestions. Parse JSON, validate it with domain validation, and retry exactly once for invalid structured output. Never retry credential, rate-limit, timeout, or general provider errors. Keep model output untrusted and do not log secrets.
-- Validation commands: `uv run --project backend pytest backend/tests/test_groq_provider.py backend/tests/test_generation_service.py`.
-- Acceptance criteria: Provider is the only Groq SDK boundary; mocked tests cover valid output, invalid JSON, invalid schema then successful retry, invalid schema after retry, credential, rate-limit, timeout, and API failures; retry count is never greater than one.
-- Commit message: `feat(backend): add mockable Groq workflow generation`
-- Stop conditions: Stop if a frontend module imports Groq, raw model output bypasses validation, retries can loop, or the provider requires a live credential in tests.
+- Status: COMPLETE
+- Purpose: Convert a natural-language prompt into validated workflow data through a provider-agnostic AI boundary.
+- Files to create: `backend/app/providers/__init__.py`, `backend/app/providers/base.py`, `backend/app/providers/exceptions.py`, `backend/app/providers/factory.py`, `backend/app/providers/openai_compatible.py`, `backend/app/services/__init__.py`, `backend/app/services/workflow_generation.py`, `backend/app/prompts/__init__.py`, `backend/app/prompts/workflow_generation.py`, `backend/tests/test_provider_factory.py`, `backend/tests/test_openai_compatible_provider.py`, `backend/tests/test_generation_service.py`.
+- Files to modify: `backend/app/config.py`, `backend/.env.example`, `backend/pyproject.toml`, `backend/uv.lock`, `instructions.md`, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
+- Implementation instructions: Replace Groq-specific settings with generic `AI_*` settings and use `httpx` as the only provider transport. Define an `AIProvider` protocol, generic provider exceptions, an environment-driven factory, and one `OpenAICompatibleProvider` adapter. Configure Groq through the OpenAI-compatible base URL without hardcoding its hostname or using any vendor SDK. Keep the workflow service dependent only on `AIProvider`; generate the Pydantic `Workflow` JSON Schema, request constrained JSON, parse strictly, run Pydantic and graph validation, and retry exactly once only for invalid candidate output. Never retry provider/configuration/credential/rate-limit/timeout/connection/response failures. Do not add the public generation route.
+- Validation commands: `uv run --project backend pytest backend/tests/test_provider_factory.py backend/tests/test_openai_compatible_provider.py backend/tests/test_generation_service.py`; `uv run --project backend pytest backend/tests/test_health.py backend/tests/test_workflow_schemas.py backend/tests/test_workflow_validation.py`; `uv run --project backend pytest backend/tests`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`; `uv run --project backend python -c "from app.providers.base import AIProvider; from app.providers.factory import create_ai_provider; from app.providers.openai_compatible import OpenAICompatibleProvider; from app.services.workflow_generation import WorkflowGenerationService; print('provider-agnostic-generation-ok')"`; `git diff --check`.
+- Acceptance criteria:
+  - [x] The Checkpoint 4 plan text is updated to the provider-agnostic architecture.
+  - [x] Permanent project instructions reflect the provider-agnostic architecture.
+  - [x] `httpx` is the only provider transport dependency; no provider SDK is installed.
+  - [x] `AIProvider` is the generic provider contract.
+  - [x] `OpenAICompatibleProvider` is the only implemented adapter and has no hardcoded Groq hostname.
+  - [x] Groq and another compatible provider can be selected through settings without service changes.
+  - [x] Unknown providers and missing credentials fail safely without startup network access.
+  - [x] Generic provider errors are classified and never retried.
+  - [x] The workflow schema is generated from the Checkpoint 3 Pydantic model.
+  - [x] Prompts require supported node types, assumptions, missing requirements, suggestions, and prohibit coordinates, HTML, code, credentials, and persistence fields.
+  - [x] Candidate JSON is parsed strictly and always passes Pydantic and graph validation.
+  - [x] Invalid candidates retry exactly once and never exceed two provider calls.
+  - [x] Invalid output after retry raises a controlled validation exception.
+  - [x] Automated provider tests use mocked HTTP and service tests use fake providers; no live network occurs.
+  - [x] No frontend files or public generation endpoint are added.
+  - [x] Existing backend tests and all Checkpoint 4 tests pass.
+  - [x] No unrelated files are changed.
+- Commit message: `feat(backend): add provider-agnostic workflow generation`
+- Stop conditions: Stop if a provider SDK is needed, the service references a vendor, the adapter hardcodes Groq, raw output bypasses validation, retries exceed two calls, provider failures retry, tests require network/credentials, or Checkpoint 5 becomes necessary.
 
 ### Checkpoint 5: Expose the workflow generation API
 
