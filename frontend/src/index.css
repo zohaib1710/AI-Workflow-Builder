@@ -43,8 +43,8 @@ textarea {
 }
 
 .workflow-node {
-  width: 240px;
-  min-height: 150px;
+  width: 280px;
+  min-height: 170px;
   border: 1px solid #cbd5e1;
   border-left-width: 5px;
   border-radius: 0.75rem;

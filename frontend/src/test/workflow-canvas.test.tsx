@@ -21,6 +21,8 @@ vi.mock("@xyflow/react", () => ({
   Background: () => <span data-testid="background" />,
   Controls: () => <span data-testid="controls" />,
   MiniMap: () => <span data-testid="minimap" />,
+  useNodesInitialized: () => true,
+  useReactFlow: () => ({ fitView: vi.fn() }),
 }))
 
 const nodeTypes = [...supportedNodeTypes]
@@ -79,10 +81,10 @@ describe("workflow node registry", () => {
 describe("workflow canvas conversion", () => {
   it("preserves order, read-only flags, temporary positions, and edge labels", () => {
     const workflow = sampleWorkflow()
-    const nodes = buildFlowNodes(workflow)
+    const nodes = buildFlowNodes(workflow).nodes
     const edges = buildFlowEdges(workflow)
     expect(nodes.map((node) => node.id)).toEqual(nodeTypes)
-    expect(nodes.map((node) => node.position.x)).toEqual(nodeTypes.map((_, index) => index * 320))
+    expect(nodes.every((node) => Number.isFinite(node.position.x) && Number.isFinite(node.position.y))).toBe(true)
     expect(nodes.every((node) => node.draggable === false && node.connectable === false && node.selectable === false && node.deletable === false)).toBe(true)
     expect(edges.map((edge) => edge.label)).toEqual(["Yes", "No"])
     expect(edges.map((edge) => [edge.source, edge.target])).toEqual([["decision", "action"], ["decision", "end"]])

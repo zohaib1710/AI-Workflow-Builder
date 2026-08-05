@@ -360,13 +360,22 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 8: Add Dagre left-to-right automatic layout
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Calculate stable React Flow positions from domain graph data after generation.
 - Files to create: `frontend/src/lib/layout.ts`, `frontend/src/test/layout.test.ts`.
-- Files to modify: `frontend/src/components/WorkflowCanvas.tsx`, `frontend/package.json`, `frontend/package-lock.json`.
+- Files to modify: `frontend/src/components/WorkflowCanvas.tsx`, `frontend/src/index.css`, `frontend/src/test/workflow-canvas.test.tsx`, `frontend/package.json`, `frontend/package-lock.json`.
 - Implementation instructions: Build a Dagre graph with left-to-right direction, map domain nodes/edges without coordinates from the API, calculate positions in a pure function, and translate the result to React Flow nodes/edges. Preserve IDs, node data, edge labels, and graph order. Re-run layout when workflow changes and fit the view after nodes mount.
-- Validation commands: `npm run test --prefix frontend -- --run src/test/layout.test.ts`; `npm run build --prefix frontend`.
-- Acceptance criteria: Layout output contains a position for every node; it is deterministic for the same input; edges preserve source/target/labels; the AI payload contains no visual coordinates; disconnected input is rejected by backend rather than laid out as a valid workflow.
+- Validation commands: `npm.cmd ci --prefix frontend`; `npm.cmd run test --prefix frontend -- --run src/test/layout.test.ts`; `npm.cmd run test --prefix frontend -- --run src/test/workflow-canvas.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
+- Acceptance criteria:
+  - [x] `@dagrejs/dagre` is installed and `dagre` is not installed.
+  - [x] `layoutWorkflow` is pure, coordinate-free at the domain boundary, deterministic, and left-to-right.
+  - [x] Every node receives a finite position while node IDs, data, and order are preserved.
+  - [x] Edge IDs, source/target IDs, labels, and order are preserved, including parallel edges.
+  - [x] Input workflow data is not mutated and single-node workflows remain valid without fabricated edges.
+  - [x] The temporary sequential layout is removed and layout reruns for a new workflow.
+  - [x] React Flow fits the laid-out viewport after nodes initialize and remains read-only.
+  - [x] Backend validation remains responsible for disconnected or invalid graph input.
+  - [x] Layout and canvas regression tests pass; no Checkpoint 9 UI is implemented.
 - Commit message: `feat(frontend): add Dagre workflow layout`
 - Stop conditions: Stop if coordinates are requested from Groq, layout mutates domain data, or manual positioning/editing is introduced.
 

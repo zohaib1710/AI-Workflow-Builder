@@ -50,5 +50,12 @@
 - Unsupported runtime types produce a controlled display error. Temporary deterministic sequential positions are used until Checkpoint 8; no Dagre or other layout engine exists.
 - Successful validation: `npm.cmd ci --prefix frontend`; `npm.cmd run build --prefix frontend`; `npm.cmd run test --prefix frontend -- --run src/test/workflow-canvas.test.tsx` (7 passed); `git diff --check`; frontend secret, persistence, and forbidden-dependency scans.
 - Current known issues: none for Checkpoint 7. npm reported one moderate audit finding in installed development dependencies; no audit fix was applied.
-- Next action: implement Checkpoint 8.
-- Proposed commit title: `feat(frontend): render read-only workflow nodes`.
+- Checkpoint 8 is complete: deterministic left-to-right Dagre layout is implemented in the frontend.
+- Created `frontend/src/lib/layout.ts` and `frontend/src/test/layout.test.ts`; modified `frontend/src/components/WorkflowCanvas.tsx`, `frontend/src/index.css`, `frontend/src/test/workflow-canvas.test.tsx`, `frontend/package.json`, and `frontend/package-lock.json`.
+- Added `@dagrejs/dagre`. `layoutWorkflow` is a pure function with fixed 280x170 view-layer dimensions, preserves node/edge IDs, data, labels, and input order, supports parallel edges, and does not mutate coordinate-free domain workflows.
+- Temporary sequential positioning was removed. WorkflowCanvas recalculates layout when the workflow changes and fits the viewport after React Flow nodes initialize while preserving all read-only controls.
+- Backend validation remains responsible for disconnected and invalid graph structures; no backend or Checkpoint 9 changes were made.
+- Successful validation: `npm.cmd ci --prefix frontend`; layout tests (5 passed); canvas regression tests (7 passed); frontend production build; `git diff --check`; forbidden dependency, coordinate, secret, and persistence scans.
+- Current known issues: none for Checkpoint 8. npm continues to report one moderate audit finding; no audit fix was applied.
+- Next action: implement Checkpoint 9.
+- Proposed commit title: `feat(frontend): add Dagre workflow layout`.
