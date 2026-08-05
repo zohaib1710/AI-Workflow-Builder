@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
 
 :root {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
@@ -17,3 +18,100 @@ button,
 textarea {
   font: inherit;
 }
+
+.workflow-result {
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.08);
+}
+
+.workflow-canvas {
+  width: 100%;
+  min-height: 560px;
+  height: min(70vh, 720px);
+}
+
+.workflow-canvas__error {
+  margin: 0;
+  border: 1px solid #fecaca;
+  border-radius: 1rem;
+  background: #fef2f2;
+  padding: 1.25rem;
+  color: #991b1b;
+}
+
+.workflow-node {
+  width: 240px;
+  min-height: 150px;
+  border: 1px solid #cbd5e1;
+  border-left-width: 5px;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 5px 14px rgb(15 23 42 / 0.12);
+}
+
+.workflow-node--start { border-left-color: #16a34a; }
+.workflow-node--end { border-left-color: #334155; }
+.workflow-node--trigger { border-left-color: #d97706; }
+.workflow-node--action { border-left-color: #2563eb; }
+.workflow-node--decision { border-left-color: #7c3aed; }
+.workflow-node--api { border-left-color: #0891b2; }
+.workflow-node--database { border-left-color: #4f46e5; }
+.workflow-node--wait { border-left-color: #ea580c; }
+.workflow-node--approval { border-left-color: #db2777; }
+.workflow-node--notification { border-left-color: #0d9488; }
+
+.workflow-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workflow-badge--start { background: #dcfce7; color: #166534; }
+.workflow-badge--end { background: #e2e8f0; color: #334155; }
+.workflow-badge--trigger { background: #fef3c7; color: #92400e; }
+.workflow-badge--action { background: #dbeafe; color: #1e40af; }
+.workflow-badge--decision { background: #ede9fe; color: #5b21b6; }
+.workflow-badge--api { background: #cffafe; color: #155e75; }
+.workflow-badge--database { background: #e0e7ff; color: #3730a3; }
+.workflow-badge--wait { background: #ffedd5; color: #9a3412; }
+.workflow-badge--approval { background: #fce7f3; color: #9d174d; }
+.workflow-badge--notification { background: #ccfbf1; color: #115e59; }
+
+.workflow-node__title {
+  margin: 0.75rem 0 0.25rem;
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.workflow-node__description {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.workflow-node__application {
+  margin: 0.75rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.workflow-node__application span { font-weight: 700; }
+.workflow-handle { width: 8px; height: 8px; border: 2px solid #ffffff; background: #64748b; }
+.react-flow__edge-text { font-size: 0.75rem; font-weight: 700; fill: #334155; }
+.react-flow__controls-button:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }

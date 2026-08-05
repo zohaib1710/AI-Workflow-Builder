@@ -338,13 +338,23 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 7: Add custom React Flow node rendering
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Render validated workflow nodes and labelled edges as a read-only visual canvas.
-- Files to create: `frontend/src/components/WorkflowCanvas.tsx`, `frontend/src/components/nodes/WorkflowNode.tsx`, `frontend/src/components/nodes/nodeTypes.ts`.
-- Files to modify: `frontend/src/components/WorkflowResult.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`.
+- Files to create: `frontend/src/components/WorkflowCanvas.tsx`, `frontend/src/components/WorkflowResult.tsx`, `frontend/src/components/nodes/WorkflowNode.tsx`, `frontend/src/components/nodes/nodeTypes.ts`, `frontend/src/test/workflow-canvas.test.tsx`.
+- Files to modify: `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.ts`.
 - Implementation instructions: Map each supported domain node type to a distinct safe visual treatment, show title/description/application, use React Flow handles appropriate for the direction, and render edge labels. Configure the canvas as read-only by disabling dragging, connecting, editing, deletion, and mutation controls while retaining navigation. Add `MiniMap`, controls, fit behavior, and grid background, but do not calculate layout here.
-- Validation commands: `npm run build --prefix frontend`; `npm run test --prefix frontend -- --run src/test/workflow-canvas.test.tsx`.
-- Acceptance criteria: Every supported type renders through an explicit registry; decision branch labels are visible; canvas has required navigation affordances; no node/edge editing is possible; untrusted fields are rendered as text, never HTML.
+- Validation commands: `npm.cmd ci --prefix frontend`; `npm.cmd run build --prefix frontend`; `npm.cmd run test --prefix frontend -- --run src/test/workflow-canvas.test.tsx`; `git diff --check`.
+- Acceptance criteria:
+  - [x] `@xyflow/react` is installed and its stylesheet is loaded globally.
+  - [x] All ten supported types have explicit, distinct visual registry entries.
+  - [x] Nodes and edges preserve IDs, data, source/target references, and labels.
+  - [x] Temporary sequential positions are deterministic and do not mutate domain data.
+  - [x] Start/end/regular handle rules are enforced.
+  - [x] MiniMap, Controls, Background, fit view, pan, and zoom are enabled.
+  - [x] Dragging, connecting, selection, focus editing, deletion, and mutation callbacks are disabled.
+  - [x] Unsupported runtime node types show a controlled error and are not remapped.
+  - [x] Generated title, description, application, and edge values render as text only.
+  - [x] The focused canvas test passes without backend or provider calls.
 - Commit message: `feat(frontend): render read-only workflow nodes`
 - Stop conditions: Stop if unsupported node types are silently rendered as executable elements, arbitrary HTML is injected, or editing behavior is added.
 

@@ -42,5 +42,13 @@
 - No provider-specific code, credentials, persistence, visualization, editing, or later-checkpoint behavior was added.
 - Successful validation: `npm.cmd ci --prefix frontend`; `npm.cmd run build --prefix frontend`; `git diff --check`; frontend forbidden-reference and persistence scans; no real `frontend/.env` exists.
 - Current known issues: none for Checkpoint 6.
-- Next action: implement Checkpoint 7.
-- Proposed commit title: `feat(frontend): add prompt generation page`.
+- Checkpoint 7 is complete: React Flow read-only workflow visualization is implemented.
+- Created `frontend/src/components/WorkflowCanvas.tsx`, `frontend/src/components/WorkflowResult.tsx`, `frontend/src/components/nodes/WorkflowNode.tsx`, `frontend/src/components/nodes/nodeTypes.ts`, and `frontend/src/test/workflow-canvas.test.tsx`.
+- Modified `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/vite.config.ts`, `frontend/package.json`, and `frontend/package-lock.json`; added `@xyflow/react` and minimal Vitest/Testing Library test dependencies.
+- All ten supported node types use an explicit visual registry; custom nodes render type, title, description, and application as text, and decision edge labels are preserved.
+- MiniMap, controls, fit view, pan, zoom, and background grid are enabled. Dragging, connections, selection, focus editing, deletion, and mutation callbacks are disabled.
+- Unsupported runtime types produce a controlled display error. Temporary deterministic sequential positions are used until Checkpoint 8; no Dagre or other layout engine exists.
+- Successful validation: `npm.cmd ci --prefix frontend`; `npm.cmd run build --prefix frontend`; `npm.cmd run test --prefix frontend -- --run src/test/workflow-canvas.test.tsx` (7 passed); `git diff --check`; frontend secret, persistence, and forbidden-dependency scans.
+- Current known issues: none for Checkpoint 7. npm reported one moderate audit finding in installed development dependencies; no audit fix was applied.
+- Next action: implement Checkpoint 8.
+- Proposed commit title: `feat(frontend): render read-only workflow nodes`.
