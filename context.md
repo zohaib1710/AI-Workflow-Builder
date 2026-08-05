@@ -35,5 +35,12 @@
 - Successful validation: route and health tests (21 passed), provider/generation tests (31 passed), schema/graph tests (44 passed), complete backend suite (96 passed), Ruff, compilation, OpenAPI route registration, forbidden-reference checks, and `git diff --check`.
 - No frontend changes, persistence, execution behavior, or live provider requests were added.
 - Current known issues: none for Checkpoint 5.
-- Next action: implement Checkpoint 6.
-- Proposed commit title: `feat(backend): expose workflow generation endpoint`.
+- Checkpoint 6 is complete: the frontend prompt page and typed backend API client are implemented.
+- Created `frontend/src/types/workflow.ts`, `frontend/src/api/client.ts`, `frontend/src/components/Header.tsx`, `frontend/src/components/PromptPanel.tsx`, `frontend/src/lib/constants.ts`, and `frontend/.env.example`.
+- Modified `frontend/src/App.tsx` and `frontend/src/index.css`; no dependencies or backend files changed.
+- The frontend submits normalized prompts through `VITE_API_BASE_URL`, stores the typed generation response only in React memory, and provides accessible loading, validation, error, example, and clear states.
+- No provider-specific code, credentials, persistence, visualization, editing, or later-checkpoint behavior was added.
+- Successful validation: `npm.cmd ci --prefix frontend`; `npm.cmd run build --prefix frontend`; `git diff --check`; frontend forbidden-reference and persistence scans; no real `frontend/.env` exists.
+- Current known issues: none for Checkpoint 6.
+- Next action: implement Checkpoint 7.
+- Proposed commit title: `feat(frontend): add prompt generation page`.

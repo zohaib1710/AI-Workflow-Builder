@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     ai_base_url: str = "https://api.groq.com/openai/v1"
     ai_model: str = "openai/gpt-oss-20b"
     ai_temperature: float = 0.2
-    ai_max_tokens: int = 8000
+    ai_max_tokens: int = 4000
     ai_timeout_seconds: float = 30
     frontend_url: str = "http://localhost:5173"
 

@@ -321,13 +321,18 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 6: Build frontend prompt page and API client
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Let an internal user enter a prompt, submit it to the backend, clear it, and hold a typed result in memory.
 - Files to create: `frontend/src/types/workflow.ts`, `frontend/src/api/client.ts`, `frontend/src/components/Header.tsx`, `frontend/src/components/PromptPanel.tsx`, `frontend/src/lib/constants.ts`.
-- Files to modify: `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/.env.example`, `frontend/package.json`, `frontend/package-lock.json`.
+- Files to modify: `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/.env.example` (no package changes required).
 - Implementation instructions: Create one responsive main page with product header, prompt textarea, example prompt, character count and limit, Generate Workflow, Clear, loading state, and controlled error display. Use `VITE_API_BASE_URL` only, typed request/response models, and an in-memory result callback. Prevent duplicate submissions and clear both prompt/result/error as specified; do not add persistence or routing.
 - Validation commands: `npm ci --prefix frontend`; `npm run build --prefix frontend`.
-- Acceptance criteria: UI renders the required prompt controls; client posts exactly `{prompt}` to the configured API; response/error parsing is typed; Groq credentials are absent from frontend environment and source; refresh loses generated state.
+- Acceptance criteria:
+  - [x] UI renders the required prompt controls.
+  - [x] Client posts exactly `{prompt}` to the configured API.
+  - [x] Response and error parsing are typed.
+  - [x] Groq credentials are absent from frontend environment and source.
+  - [x] Generated state is held only in memory and is lost on refresh.
 - Commit message: `feat(frontend): add prompt generation page`
 - Stop conditions: Stop if local storage, accounts, export, editing controls, or direct provider calls are introduced.
 
