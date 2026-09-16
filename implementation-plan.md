@@ -381,13 +381,18 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 9: Add workflow metadata and insight panels
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Display the generated workflow’s title, description, assumptions, missing requirements, and suggestions beside the canvas.
-- Files to create: `frontend/src/components/InsightPanel.tsx`.
+- Files to create: `frontend/src/components/InsightPanel.tsx`, `frontend/src/test/workflow-result.test.tsx`.
 - Files to modify: `frontend/src/components/WorkflowResult.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`.
 - Implementation instructions: Render title and description as text, provide distinct sections for each insight array, handle empty arrays without fabricated content, and keep the result read-only. Preserve the single-page layout and avoid adding save/export/share actions.
 - Validation commands: `npm run build --prefix frontend`; `npm run test --prefix frontend -- --run src/test/workflow-result.test.tsx`.
-- Acceptance criteria: All required response fields are visibly represented; empty insight sections are handled consistently; metadata remains in browser memory; no persistence, export, or editing UI exists.
+- Acceptance criteria:
+  - [x] Workflow title, description, assumptions, missing requirements, and suggestions are visibly represented as plain text.
+  - [x] Insight sections preserve backend order and remain visible with deterministic category-specific empty states.
+  - [x] The existing read-only React Flow canvas and Dagre layout behavior remain intact.
+  - [x] Metadata remains in browser memory with no persistence, export, share, execution, or editing UI.
+  - [x] Workflow result, canvas, and layout tests pass, and the frontend production build succeeds.
 - Commit message: `feat(frontend): display workflow metadata and insights`
 - Stop conditions: Stop if content is rendered as HTML, insights are invented client-side, or excluded actions appear.
 

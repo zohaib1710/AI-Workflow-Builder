@@ -27,6 +27,95 @@ textarea {
   box-shadow: 0 1px 3px rgb(15 23 42 / 0.08);
 }
 
+.workflow-result__header {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1.5rem;
+}
+
+.workflow-result__eyebrow {
+  margin: 0 0 0.375rem;
+  color: #0369a1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workflow-result__title {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #0f172a;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.workflow-result__description {
+  max-width: 72ch;
+  margin: 0.625rem 0 0;
+  overflow-wrap: anywhere;
+  color: #475569;
+  line-height: 1.65;
+}
+
+.workflow-result__grid {
+  display: grid;
+  min-width: 0;
+}
+
+.workflow-result__canvas {
+  min-width: 0;
+}
+
+.workflow-insights {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 1.25rem;
+}
+
+.insight-panel {
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 1rem;
+}
+
+.insight-panel__heading {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.insight-panel__list {
+  display: grid;
+  gap: 0.625rem;
+  margin: 0.75rem 0 0;
+  padding-left: 1.125rem;
+  color: #334155;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.insight-panel__list li,
+.insight-panel__empty {
+  overflow-wrap: anywhere;
+}
+
+.insight-panel__list li::marker {
+  color: #0284c7;
+}
+
+.insight-panel__empty {
+  margin: 0.75rem 0 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
 .workflow-canvas {
   width: 100%;
   min-height: 560px;
@@ -115,3 +204,15 @@ textarea {
 .workflow-handle { width: 8px; height: 8px; border: 2px solid #ffffff; background: #64748b; }
 .react-flow__edge-text { font-size: 0.75rem; font-weight: 700; fill: #334155; }
 .react-flow__controls-button:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }
+
+@media (min-width: 900px) {
+  .workflow-result__grid {
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  }
+
+  .workflow-insights {
+    align-content: start;
+    border-top: 0;
+    border-left: 1px solid #e2e8f0;
+  }
+}

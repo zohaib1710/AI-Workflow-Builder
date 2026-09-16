@@ -57,5 +57,12 @@
 - Backend validation remains responsible for disconnected and invalid graph structures; no backend or Checkpoint 9 changes were made.
 - Successful validation: `npm.cmd ci --prefix frontend`; layout tests (5 passed); canvas regression tests (7 passed); frontend production build; `git diff --check`; forbidden dependency, coordinate, secret, and persistence scans.
 - Current known issues: none for Checkpoint 8. npm continues to report one moderate audit finding; no audit fix was applied.
-- Next action: implement Checkpoint 9.
-- Proposed commit title: `feat(frontend): add Dagre workflow layout`.
+- Checkpoint 9 is complete: workflow metadata and read-only insight panels are displayed around the existing canvas.
+- Created `frontend/src/components/InsightPanel.tsx` and `frontend/src/test/workflow-result.test.tsx`; modified `frontend/src/components/WorkflowResult.tsx` and `frontend/src/index.css`.
+- Workflow title, description, assumptions, missing requirements, and suggestions render as plain React text. Insight order is preserved, and category-specific deterministic empty states remain visible without client-side insight fabrication.
+- The result remains read-only and in browser memory only. No save, export, share, editing, execution, or persistence UI was added; existing React Flow and Dagre behavior remains unchanged.
+- Successful validation: `npm.cmd ci --prefix frontend`; focused WorkflowResult tests (4 passed); canvas tests (7 passed); layout tests (5 passed); combined relevant suites (16 passed); frontend production build; `git diff --check`; unsafe HTML, editing, persistence, and frontend secret/endpoint scans.
+- Frontend linting was not run because no lint script is configured. npm reported four audit findings (three moderate, one high); no audit fix was applied.
+- Current known issues: no Checkpoint 9 implementation issues.
+- Next action: implement Checkpoint 10.
+- Proposed commit title: `feat(frontend): display workflow metadata and insights`.
