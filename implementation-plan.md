@@ -2,11 +2,11 @@
 
 ## Plan metadata
 
-- Status: ACTIVE
+- Status: COMPLETE
 - Version: Version 1
 - Planner model: Codex planning agent
 - Created: 2026-07-23
-- Last updated: 2026-07-23
+- Last updated: 2026-09-18
 
 ## Objective
 
@@ -456,13 +456,19 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 13: Document local development and perform final verification
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Make Version 1 locally understandable and verify the complete bounded feature.
-- Files to create: `docs/specifications/version-1-workflow.md`, `docs/architecture/version-1.md`, `frontend/.env.example`, `backend/.env.example` if not already created, and any focused test configuration documentation.
-- Files to modify: `README.md`, `frontend/README.md`, `backend/README.md`, `context.md`.
+- Files created: `docs/specifications/version-1-workflow.md`, `docs/architecture/version-1.md`.
+- Files modified: `README.md`, `frontend/README.md`, `backend/README.md`, `backend/.env.example`, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
 - Implementation instructions: Document prerequisites (Node/npm, Python 3.12, `uv`), dependency installation from committed manifests/locks, safe env setup, frontend/backend start commands, health check, generation flow, test commands, read-only/in-memory behavior, and explicit Version 1 exclusions. Verify no secret or generated environment is documented as a committed file.
 - Validation commands: `npm ci --prefix frontend`; `npm run test --prefix frontend -- --run`; `npm run build --prefix frontend`; `uv sync --project backend --locked`; `uv run --project backend pytest`; `uv run --project backend ruff check backend`; `git -c safe.directory=D:/AI-Workflow-Builder diff --check`; `git -c safe.directory=D:/AI-Workflow-Builder status --short`.
-- Acceptance criteria: A clean checkout can follow the docs; both test suites and builds pass; health and mocked generation contracts are verified; lock files are committed while secrets, environments, and `.codex/commit-message.txt` are ignored; all exclusions remain absent; context records completed Version 1 work only after implementation validation.
+- Acceptance criteria:
+  - [x] Root, frontend, backend, architecture, and workflow-contract documentation accurately describe Version 1 and local development.
+  - [x] Provider configuration is documented generically, with Groq only as an OpenAI-compatible example and no real secret.
+  - [x] All ten node types, implemented graph rules, safe errors, read-only behavior, in-memory lifecycle, security boundaries, and explicit exclusions are documented.
+  - [x] Locked frontend install, full frontend tests, frontend build, locked backend sync, full backend tests, Ruff, backend compilation, and diff checks pass.
+  - [x] Lock files are tracked; real environment files, temporary commit message, dependencies, and virtual environment are ignored.
+  - [x] Automated validation uses mocks or fakes and requires no provider key, provider network request, new test, source change, or Version 2 feature.
 - Commit message: `docs(repo): document and verify version one`
 - Stop conditions: Stop if final validation needs a real secret/network provider, an excluded service, or any source/config change outside Version 1.
 

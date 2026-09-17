@@ -88,3 +88,14 @@
 - Current known issues: no Checkpoint 12 implementation issues.
 - Next action: implement Checkpoint 13.
 - Proposed commit title: `test(frontend): cover workflow visualization flow`.
+- Checkpoint 13 is complete, and all Version 1 checkpoints are complete.
+- Replaced the root, frontend, and backend placeholder READMEs with verified local setup, environment, run, health, test, build, provider, security, read-only, in-memory, and exclusion documentation.
+- Created `docs/specifications/version-1-workflow.md` and `docs/architecture/version-1.md`; aligned `backend/.env.example` with the implemented `AI_MAX_TOKENS=4000` default. No application source, dependency, or test files changed, and no new tests were needed.
+- Successful final validation: locked frontend install; complete frontend suite (48 passed); frontend production build; locked backend sync; complete backend suite (100 passed); Ruff; backend compilation; `git diff --check`.
+- Repository hygiene passed: both lock files are tracked; real environment files, `.codex/commit-message.txt`, `frontend/node_modules`, and `backend/.venv` are ignored; tracked files contain no real environment file; focused checks found no excluded Version 1 architecture.
+- Automated provider and frontend API tests remain mocked or fake. No real provider key, provider request, or optional manual provider smoke test was required.
+- Version 1 remains a read-only, browser-memory-only workflow visualization application with no persistence, execution, editing, authentication, export, sharing, workers, or deployment automation.
+- npm reported four audit findings (three moderate and one high); no automatic audit fix was applied because dependency changes were outside this documentation checkpoint.
+- Current known issues: no Checkpoint 13 implementation issues.
+- Next action: commit Checkpoint 13, then perform plan cleanup separately if desired.
+- Proposed commit title: `docs(repo): document and verify version one`.
