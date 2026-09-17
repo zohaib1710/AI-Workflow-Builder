@@ -59,6 +59,23 @@ def test_decision_requires_two_labelled_paths() -> None:
     assert "decision_requires_multiple_paths" in codes
 
 
+def test_each_decision_path_requires_a_label() -> None:
+    nodes = [
+        node("decision", SupportedNodeType.DECISION),
+        node("yes", SupportedNodeType.END),
+        node("no", SupportedNodeType.END),
+    ]
+    workflow = make_workflow(
+        nodes,
+        [
+            edge("e1", "decision", "yes", "Yes"),
+            edge("e2", "decision", "no", None),
+        ],
+    )
+
+    assert "decision_edge_label_required" in error_codes(workflow)
+
+
 def test_disconnected_graph_fails() -> None:
     nodes = [node(), node("end", SupportedNodeType.END), node("isolated", SupportedNodeType.ACTION)]
     workflow = make_workflow(nodes, [edge()])

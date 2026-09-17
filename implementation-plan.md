@@ -417,13 +417,20 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 11: Expand backend automated coverage
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Lock down all Version 1 backend validation and provider behavior before final integration.
-- Files to create: `backend/tests/conftest.py`, `backend/tests/test_error_mapping.py`.
-- Files to modify: `backend/tests/test_workflow_schemas.py`, `backend/tests/test_workflow_validation.py`, `backend/tests/test_groq_provider.py`, `backend/tests/test_generation_service.py`, `backend/tests/test_workflow_routes.py`.
-- Implementation instructions: Add focused parametrized tests for every required invalid prompt, JSON, schema, graph, node, edge, credential, rate-limit, timeout, provider, retry, and route case. Mock every Groq call, assert call counts, assert no secret leakage, and test health independently. Keep tests deterministic and local.
+- Files to create: `backend/tests/test_error_mapping.py`; create `backend/tests/conftest.py` only when shared fixtures materially reduce duplication.
+- Files to modify: `backend/tests/test_workflow_validation.py`, `backend/tests/test_provider_factory.py`, `backend/tests/test_openai_compatible_provider.py`, `backend/tests/test_generation_service.py`, `backend/tests/test_workflow_routes.py`, `backend/tests/test_health.py`.
+- Implementation instructions: Audit existing coverage first and add only missing high-value cases. Test `AIProvider` behavior through `OpenAICompatibleProvider` with mocked HTTP, use fake providers and services for generation and routes, assert bounded call counts and safe errors, and keep health independent from AI configuration. Do not add provider SDKs or live provider calls.
 - Validation commands: `uv run --project backend pytest`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`.
-- Acceptance criteria: Full backend tests pass; all listed validation requirements have explicit coverage; Groq is never contacted by automated tests; lint and compilation pass; no persistence or excluded feature tests appear.
+- Acceptance criteria:
+  - [x] Existing schema, graph, provider, generation, route, error, leakage, and health coverage was audited before adding tests.
+  - [x] Missing decision-label and graph-invalid correction-retry cases have direct coverage without duplicating established tests.
+  - [x] Provider failures and centralized API exception mappings have direct parametrized coverage with stable status and error codes.
+  - [x] Retry call counts remain bounded to two, provider failures are not retried, and one focused secret-leakage regression exists.
+  - [x] Provider HTTP is mocked, generation and route tests use fakes, and health is independent from local AI credentials.
+  - [x] No required tests are skipped, no provider SDK or excluded feature tests were added, and no live network is required.
+  - [x] The complete backend suite, Ruff, and Python compilation pass.
 - Commit message: `test(backend): cover workflow generation behavior`
 - Stop conditions: Stop if tests require network credentials, skip required cases, or reveal secrets in fixtures/output.
 

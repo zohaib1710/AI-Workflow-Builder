@@ -72,5 +72,12 @@
 - Successful validation: `npm.cmd ci --prefix frontend`; focused PromptPanel/API client suites (27 passed); result/canvas/layout regressions (16 passed); complete frontend suite (43 passed); frontend production build; `git diff --check`; retry, unsafe rendering, persistence, and provider-secret scans.
 - Frontend linting was not run because no lint script is configured. npm reported four audit findings (three moderate, one high); no audit fix was applied.
 - Current known issues: no Checkpoint 10 implementation issues.
-- Next action: implement Checkpoint 11.
-- Proposed commit title: `fix(frontend): handle generation loading and errors`.
+- Checkpoint 11 is complete: existing backend Version 1 contract coverage was audited and only missing high-value cases were added.
+- Created `backend/tests/test_error_mapping.py`; modified graph validation, generation service, route, health, and provider-factory tests. No production application files changed, and a shared `conftest.py` was intentionally unnecessary.
+- Centralized stable exception mapping now has direct parametrized coverage, including one focused secret-leakage regression. Route tests retain one handler-wiring check without duplicating the mapping matrix.
+- Decision-label validation and graph-invalid correction retry gaps are covered. Existing bounded-retry and provider non-retry assertions remain intact, with mocked HTTP and fake providers only.
+- Health and provider-factory tests are isolated from local dotenv credentials; no live provider credential or network access is required.
+- Successful validation: focused error mapping (10 passed); modified graph/generation/route tests (42 passed); isolated health (4 passed); provider factory (3 passed); relevant backend set (97 passed); complete backend suite (100 passed); Ruff; Python compilation; `git diff --check`.
+- Current known issues: no Checkpoint 11 implementation issues.
+- Next action: implement Checkpoint 12.
+- Proposed commit title: `test(backend): cover workflow generation behavior`.

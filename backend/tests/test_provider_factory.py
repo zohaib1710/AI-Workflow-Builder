@@ -5,10 +5,15 @@ from app.providers.openai_compatible import OpenAICompatibleProvider
 
 
 def test_factory_creates_openai_compatible_provider_without_network() -> None:
-    provider = create_ai_provider(Settings())
+    settings = Settings(
+        _env_file=None,
+        ai_api_key="",
+        ai_base_url="https://provider.invalid/v1",
+    )
+    provider = create_ai_provider(settings)
 
     assert isinstance(provider, OpenAICompatibleProvider)
-    assert provider.base_url == "https://api.groq.com/openai/v1"
+    assert provider.base_url == "https://provider.invalid/v1"
 
 
 def test_factory_rejects_unknown_provider() -> None:
@@ -32,6 +37,6 @@ def test_factory_rejects_unknown_provider() -> None:
 
 
 def test_factory_provider_is_configurable_without_a_key() -> None:
-    provider = create_ai_provider(Settings())
+    provider = create_ai_provider(Settings(_env_file=None, ai_api_key=""))
 
     assert provider.is_configured is False

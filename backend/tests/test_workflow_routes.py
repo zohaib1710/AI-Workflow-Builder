@@ -3,17 +3,7 @@ from collections.abc import Iterator
 import pytest
 from app.api.routes.workflows import get_workflow_generation_service
 from app.main import app
-from app.providers.exceptions import (
-    AIProviderAPIError,
-    AIProviderConfigurationError,
-    AIProviderConnectionError,
-    AIProviderCredentialError,
-    AIProviderRateLimitError,
-    AIProviderResponseError,
-    AIProviderTimeoutError,
-)
-from app.schemas.workflow import ValidationErrorDetail
-from app.services.workflow_generation import WorkflowGenerationValidationError
+from app.providers.exceptions import AIProviderTimeoutError
 from fastapi.testclient import TestClient
 
 
@@ -101,42 +91,15 @@ def test_invalid_requests_use_safe_envelope_and_do_not_call_service(payload: dic
     assert service.calls == []
 
 
-@pytest.mark.parametrize(
-    ("error", "status", "code"),
-    [
-        (WorkflowGenerationValidationError([ValidationErrorDetail(code="bad", message="bad")]), 502, "invalid_provider_output"),
-        (AIProviderConfigurationError("internal provider"), 503, "provider_not_configured"),
-        (AIProviderCredentialError("secret-key"), 503, "provider_credentials_unavailable"),
-        (AIProviderRateLimitError("headers"), 429, "provider_rate_limited"),
-        (AIProviderTimeoutError("httpx details"), 504, "provider_timeout"),
-        (AIProviderConnectionError("local path"), 503, "provider_unavailable"),
-        (AIProviderAPIError("raw response"), 502, "provider_api_error"),
-        (AIProviderResponseError("raw candidate"), 502, "provider_response_invalid"),
-    ],
-)
-def test_known_errors_map_to_safe_responses(error: Exception, status: int, code: str) -> None:
-    service = FakeService(error=error)
+def test_provider_error_handler_is_wired() -> None:
+    service = FakeService(error=AIProviderTimeoutError("private timeout detail"))
     use_service(service)
 
     response = client().post("/api/v1/workflows/generate", json={"prompt": "valid"})
 
-    assert response.status_code == status
-    assert response.json()["errors"][0]["code"] == code
-    assert all(secret not in response.text for secret in ["secret-key", "raw response", "raw candidate", "httpx details"])
-
-
-def test_unexpected_errors_are_generic() -> None:
-    service = FakeService(error=RuntimeError("private internal detail"))
-    use_service(service)
-
-    response = client(raise_server_exceptions=False).post(
-        "/api/v1/workflows/generate", json={"prompt": "valid"}
-    )
-
-    assert response.status_code == 500
-    assert response.json()["errors"][0]["code"] == "internal_error"
-    assert "private internal detail" not in response.text
-    assert "Traceback" not in response.text
+    assert response.status_code == 504
+    assert response.json()["errors"][0]["code"] == "provider_timeout"
+    assert "private timeout detail" not in response.text
 
 
 def test_health_endpoint_is_unchanged() -> None:

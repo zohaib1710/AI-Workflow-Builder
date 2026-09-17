@@ -76,6 +76,18 @@ async def test_invalid_candidate_then_valid_candidate_retries_once(first: str) -
 
 
 @pytest.mark.asyncio
+async def test_invalid_graph_then_valid_candidate_retries_once() -> None:
+    invalid_graph = valid_candidate().replace('"target": "end"', '"target": "missing"')
+    provider = FakeProvider([invalid_graph, valid_candidate()])
+
+    result = await WorkflowGenerationService(provider).generate_workflow("Build a workflow.")
+
+    assert result.title == "Example workflow"
+    assert len(provider.calls) == 2
+    assert "missing_target_node" in str(provider.calls[1]["user_prompt"])
+
+
+@pytest.mark.asyncio
 async def test_invalid_candidate_after_retry_raises_without_third_call() -> None:
     provider = FakeProvider(["not json", "still not json"])
 

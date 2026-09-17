@@ -12,8 +12,9 @@ def test_health_returns_ok() -> None:
     assert response.json() == {"status": "ok"}
 
 
-def test_app_startup_does_not_require_groq_key() -> None:
-    settings = Settings()
+def test_app_startup_does_not_require_ai_key(monkeypatch) -> None:
+    monkeypatch.delenv("AI_API_KEY", raising=False)
+    settings = Settings(_env_file=None)
 
     assert settings.ai_api_key.get_secret_value() == ""
     assert client.get("/api/v1/health").status_code == 200
