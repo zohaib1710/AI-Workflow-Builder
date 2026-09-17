@@ -19,7 +19,9 @@ function PromptPanel({
   onClear,
   onUseExample,
 }: PromptPanelProps) {
-  const isGenerateDisabled = isLoading || value.trim().length === 0 || value.length > PROMPT_MAX_LENGTH
+  const normalizedLength = value.trim().length
+  const isOverLimit = normalizedLength > PROMPT_MAX_LENGTH
+  const isGenerateDisabled = isLoading || normalizedLength === 0 || isOverLimit
 
   return (
     <section aria-labelledby="prompt-heading" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -33,7 +35,12 @@ function PromptPanel({
         </button>
       </div>
 
-      <form onSubmit={(event) => { event.preventDefault(); if (!isGenerateDisabled) onGenerate() }} className="space-y-5">
+      <form
+        aria-labelledby="prompt-heading"
+        aria-busy={isLoading}
+        onSubmit={(event) => { event.preventDefault(); if (!isGenerateDisabled) onGenerate() }}
+        className="space-y-5"
+      >
         <div className="space-y-2">
           <label htmlFor="workflow-prompt" className="text-sm font-semibold text-slate-800">Workflow prompt</label>
           <textarea
@@ -43,15 +50,19 @@ function PromptPanel({
             maxLength={PROMPT_MAX_LENGTH}
             rows={7}
             placeholder="For example: Create a workflow that qualifies new leads and routes them to the right sales representative."
-            aria-describedby="prompt-count"
-            aria-busy={isLoading}
+            aria-describedby="prompt-guidance prompt-count"
+            aria-invalid={isOverLimit}
             className="block w-full resize-y rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base leading-7 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isLoading}
           />
-          <p id="prompt-count" className="text-right text-sm text-slate-500">{value.length} / {PROMPT_MAX_LENGTH}</p>
+          <p id="prompt-guidance" className="sr-only">Enter no more than 5,000 characters.</p>
+          <p id="prompt-count" className={`prompt-count${isOverLimit ? " prompt-count--warning" : ""}`}>
+            {value.length} / {PROMPT_MAX_LENGTH}
+          </p>
         </div>
 
         {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>}
+        {isLoading && <p role="status" aria-live="polite" className="prompt-loading-status">Generating workflow...</p>}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClear} disabled={isLoading} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-50">Clear</button>

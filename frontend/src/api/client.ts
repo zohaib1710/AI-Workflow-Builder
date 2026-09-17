@@ -1,6 +1,5 @@
 import type {
   ApiErrorDetail,
-  ApiErrorResponse,
   GenerateWorkflowRequest,
   GenerateWorkflowResponse,
 } from "../types/workflow"
@@ -9,17 +8,31 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1"
 ).replace(/\/+$/, "")
 
+export const API_REQUEST_TIMEOUT_MS = 30_000
+
+const SUPPORTED_NODE_TYPES = new Set([
+  "start", "end", "trigger", "action", "decision", "api", "database", "wait", "approval", "notification",
+])
+
+const SAFE_BACKEND_ERROR_MESSAGES = {
+  invalid_request: "Check the workflow prompt and try again.",
+  invalid_provider_output: "The workflow could not be generated in a valid format. Please try again.",
+  provider_not_configured: "Workflow generation is temporarily unavailable.",
+  provider_credentials_unavailable: "Workflow generation is temporarily unavailable.",
+  provider_rate_limited: "Workflow generation is busy right now. Please try again shortly.",
+  provider_timeout: "Workflow generation timed out. Please try again.",
+  provider_unavailable: "The workflow generation service is unavailable. Please try again.",
+  provider_api_error: "Workflow generation failed. Please try again.",
+  provider_response_invalid: "The workflow generation service returned an invalid response.",
+  internal_error: "Something went wrong while generating the workflow. Please try again.",
+} as const
+
 export class WorkflowApiError extends Error {
   readonly status: number | null
   readonly code: string
   readonly field: string | null
 
-  constructor(
-    message: string,
-    code: string,
-    status: number | null,
-    field: string | null,
-  ) {
+  constructor(message: string, code: string, status: number | null, field: string | null) {
     super(message)
     this.name = "WorkflowApiError"
     this.status = status
@@ -28,36 +41,87 @@ export class WorkflowApiError extends Error {
   }
 }
 
-function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
-  if (typeof value !== "object" || value === null) return false
-  const candidate = value as { detail?: unknown; errors?: unknown }
-  return typeof candidate.detail === "string" && Array.isArray(candidate.errors)
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string"
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+}
+
+function isApiErrorDetail(value: unknown): value is ApiErrorDetail {
+  if (!isRecord(value)) return false
+  return typeof value.code === "string" && typeof value.message === "string" && isNullableString(value.field)
+}
+
+function isWorkflowNode(value: unknown): boolean {
+  if (!isRecord(value)) return false
+  return typeof value.id === "string" && typeof value.type === "string" &&
+    SUPPORTED_NODE_TYPES.has(value.type) && typeof value.title === "string" &&
+    typeof value.description === "string" && isNullableString(value.application)
+}
+
+function isWorkflowEdge(value: unknown): boolean {
+  if (!isRecord(value)) return false
+  return typeof value.id === "string" && typeof value.source === "string" &&
+    typeof value.target === "string" && isNullableString(value.label)
 }
 
 function isGeneratedWorkflowResponse(value: unknown): value is GenerateWorkflowResponse {
-  if (typeof value !== "object" || value === null) return false
-  const candidate = value as { workflow?: unknown; generation?: unknown }
-  return typeof candidate.workflow === "object" && candidate.workflow !== null &&
-    typeof candidate.generation === "object" && candidate.generation !== null
+  if (!isRecord(value) || !isRecord(value.workflow) || !isRecord(value.generation)) return false
+  const { workflow, generation } = value
+  return typeof workflow.title === "string" && typeof workflow.description === "string" &&
+    Array.isArray(workflow.nodes) && workflow.nodes.every(isWorkflowNode) &&
+    Array.isArray(workflow.edges) && workflow.edges.every(isWorkflowEdge) &&
+    isStringArray(workflow.assumptions) && isStringArray(workflow.missingRequirements) &&
+    isStringArray(workflow.suggestions) && typeof generation.model === "string" &&
+    typeof generation.durationMs === "number" && Number.isFinite(generation.durationMs) &&
+    generation.durationMs >= 0
 }
 
 function errorForStatus(status: number): WorkflowApiError {
   if (status === 422) {
-    return new WorkflowApiError("The workflow prompt is invalid.", "invalid_request", status, "prompt")
+    return new WorkflowApiError(SAFE_BACKEND_ERROR_MESSAGES.invalid_request, "invalid_request", status, "prompt")
   }
-  return new WorkflowApiError("Workflow generation failed.", "request_failed", status, null)
+  return new WorkflowApiError(
+    "Workflow generation failed. Please try again.", "invalid_error_response", status, null,
+  )
+}
+
+function errorFromResponseBody(body: unknown, status: number): WorkflowApiError {
+  if (!isRecord(body) || typeof body.detail !== "string" || !Array.isArray(body.errors)) {
+    return errorForStatus(status)
+  }
+  const detail = body.errors.find(isApiErrorDetail)
+  if (!detail || !(detail.code in SAFE_BACKEND_ERROR_MESSAGES)) return errorForStatus(status)
+
+  const code = detail.code as keyof typeof SAFE_BACKEND_ERROR_MESSAGES
+  return new WorkflowApiError(SAFE_BACKEND_ERROR_MESSAGES[code], code, status, detail.field)
 }
 
 export async function generateWorkflow(
   request: GenerateWorkflowRequest,
   options?: { signal?: AbortSignal },
 ): Promise<GenerateWorkflowResponse> {
+  const controller = new AbortController()
+  let didTimeout = false
+  const timeoutId = globalThis.setTimeout(() => {
+    didTimeout = true
+    controller.abort()
+  }, API_REQUEST_TIMEOUT_MS)
+  const abortFromExternalSignal = () => controller.abort()
+  options?.signal?.addEventListener("abort", abortFromExternalSignal, { once: true })
+
   try {
     const response = await fetch(`${API_BASE_URL}/workflows/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: request.prompt }),
-      signal: options?.signal,
+      signal: controller.signal,
     })
 
     let body: unknown = null
@@ -67,31 +131,23 @@ export async function generateWorkflow(
       body = null
     }
 
-    if (!response.ok) {
-      if (!isApiErrorResponse(body)) throw errorForStatus(response.status)
-      const firstError = body.errors.find(
-        (error) => typeof error === "object" && error !== null &&
-          typeof (error as ApiErrorDetail).message === "string",
-      )
-      throw new WorkflowApiError(
-        firstError?.message ?? body.detail,
-        firstError?.code ?? "request_failed",
-        response.status,
-        firstError?.field ?? null,
-      )
-    }
-
+    if (!response.ok) throw errorFromResponseBody(body, response.status)
     if (!isGeneratedWorkflowResponse(body)) {
       throw new WorkflowApiError(
-        "The backend returned an invalid response.",
-        "invalid_response",
-        response.status,
-        null,
+        "The backend returned an invalid workflow response.", "invalid_response", response.status, null,
       )
     }
     return body
   } catch (error: unknown) {
     if (error instanceof WorkflowApiError) throw error
-    throw new WorkflowApiError("The backend could not be reached.", "backend_unavailable", null, null)
+    if (didTimeout) {
+      throw new WorkflowApiError("The request timed out. Please try again.", "request_timeout", null, null)
+    }
+    throw new WorkflowApiError(
+      "The backend could not be reached. Check your connection and try again.", "network_error", null, null,
+    )
+  } finally {
+    globalThis.clearTimeout(timeoutId)
+    options?.signal?.removeEventListener("abort", abortFromExternalSignal)
   }
 }

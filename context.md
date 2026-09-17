@@ -64,5 +64,13 @@
 - Successful validation: `npm.cmd ci --prefix frontend`; focused WorkflowResult tests (4 passed); canvas tests (7 passed); layout tests (5 passed); combined relevant suites (16 passed); frontend production build; `git diff --check`; unsafe HTML, editing, persistence, and frontend secret/endpoint scans.
 - Frontend linting was not run because no lint script is configured. npm reported four audit findings (three moderate, one high); no audit fix was applied.
 - Current known issues: no Checkpoint 9 implementation issues.
-- Next action: implement Checkpoint 10.
-- Proposed commit title: `feat(frontend): display workflow metadata and insights`.
+- Checkpoint 10 is complete: frontend generation loading, errors, and request lifecycle behavior are deterministic and accessible.
+- Created `frontend/src/test/prompt-panel.test.tsx` and `frontend/src/test/api-client.test.ts`; modified `frontend/src/App.tsx`, `frontend/src/components/PromptPanel.tsx`, `frontend/src/api/client.ts`, and `frontend/src/index.css`.
+- Generate, Clear, prompt editing, and example selection are guarded during active requests. Duplicate submissions are prevented, prior results remain visible during regeneration and after failures, valid successes replace them, and idle Clear removes prompt, result, and error.
+- The API client uses one 30-second abort timeout, safe backend-code mappings, controlled network/non-JSON errors, and runtime validation for successful workflow responses. It performs no automatic retries and exposes no raw provider or backend details.
+- State remains browser-memory-only. Existing workflow result, React Flow, and Dagre behavior is unchanged.
+- Successful validation: `npm.cmd ci --prefix frontend`; focused PromptPanel/API client suites (27 passed); result/canvas/layout regressions (16 passed); complete frontend suite (43 passed); frontend production build; `git diff --check`; retry, unsafe rendering, persistence, and provider-secret scans.
+- Frontend linting was not run because no lint script is configured. npm reported four audit findings (three moderate, one high); no audit fix was applied.
+- Current known issues: no Checkpoint 10 implementation issues.
+- Next action: implement Checkpoint 11.
+- Proposed commit title: `fix(frontend): handle generation loading and errors`.

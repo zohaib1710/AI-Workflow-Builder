@@ -398,13 +398,20 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 10: Complete loading, error, and UX states
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Make generation behavior predictable for slow, invalid, and failed requests.
 - Files to create: `frontend/src/test/prompt-panel.test.tsx`, `frontend/src/test/api-client.test.ts`.
 - Files to modify: `frontend/src/App.tsx`, `frontend/src/components/PromptPanel.tsx`, `frontend/src/api/client.ts`, `frontend/src/index.css`.
 - Implementation instructions: Show an accessible loading state and disable duplicate submission, preserve or clear prior results according to the request lifecycle, normalize backend errors into safe messages, handle network/timeout/non-JSON failures, and keep Clear deterministic. Do not expose stack traces, API keys, or raw provider responses.
 - Validation commands: `npm run test --prefix frontend -- --run src/test/prompt-panel.test.tsx src/test/api-client.test.ts`; `npm run build --prefix frontend`.
-- Acceptance criteria: Tests cover empty/oversized input, success, loading, clear, network failure, backend error, malformed response, and duplicate-submit prevention; users receive controlled messages; no secrets appear in rendered UI.
+- Acceptance criteria:
+  - [x] Accessible loading state and disabled controls prevent duplicate or conflicting actions during requests.
+  - [x] Empty, whitespace-only, and oversized prompts are blocked locally; valid submissions create one request.
+  - [x] Prior results remain during regeneration and after failures, successful results replace them, and idle Clear removes all current state.
+  - [x] Network, timeout, backend-envelope, non-JSON, empty, and HTML failures map to controlled safe errors.
+  - [x] Malformed successful workflow, generation, node, edge, and insight data is rejected before reaching application state.
+  - [x] The frontend performs no retries, exposes no provider internals, and adds no persistence.
+  - [x] Focused, regression, and complete frontend tests pass, and the production build succeeds.
 - Commit message: `fix(frontend): handle generation loading and errors`
 - Stop conditions: Stop if errors expose provider internals, retries are duplicated in the frontend, or a stateful persistence mechanism is added.
 

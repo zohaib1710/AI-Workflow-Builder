@@ -19,6 +19,29 @@ textarea {
   font: inherit;
 }
 
+.prompt-count {
+  margin: 0;
+  text-align: right;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.prompt-count--warning {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.prompt-loading-status {
+  margin: 0;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+  background: #f0f9ff;
+  padding: 0.75rem 1rem;
+  color: #075985;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 .workflow-result {
   overflow: hidden;
   border: 1px solid #cbd5e1;
