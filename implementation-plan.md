@@ -436,13 +436,21 @@ Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dag
 
 ### Checkpoint 12: Add frontend automated coverage
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Verify the prompt flow, rendering, layout, read-only canvas, and controlled states in a browser-like test environment.
-- Files to create: `frontend/src/test/setup.ts`, `frontend/src/test/app.test.tsx`, `frontend/src/test/workflow-canvas.test.tsx`, `frontend/src/test/workflow-result.test.tsx`.
-- Files to modify: `frontend/vite.config.ts`, `frontend/package.json`, `frontend/package-lock.json`, and existing frontend test files as needed.
-- Implementation instructions: Configure the test environment, mock the API boundary rather than Groq, test the main page controls and success/error/loading flows, verify all node types and decision labels, assert read-only settings, and test Dagre output through the public component behavior. Do not use snapshot-heavy tests or real network calls.
+- Files created: `frontend/src/test/setup.ts`, `frontend/src/test/app.test.tsx`.
+- Existing test files audited and reused: `frontend/src/test/workflow-canvas.test.tsx`, `frontend/src/test/workflow-result.test.tsx`, `frontend/src/test/prompt-panel.test.tsx`, `frontend/src/test/api-client.test.ts`, `frontend/src/test/layout.test.ts`.
+- Files modified: `frontend/vite.config.ts`, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
+- Implementation instructions: Configure the test environment, mock the frontend API boundary, add focused App integration coverage for the initial, success, loading, controlled-failure, previous-result, and Clear flows, and retain existing direct coverage for custom nodes, decision labels, read-only settings, safe rendering, API behavior, and Dagre. Do not use snapshot-heavy tests or real network calls.
 - Validation commands: `npm run test --prefix frontend -- --run`; `npm run build --prefix frontend`.
-- Acceptance criteria: Frontend tests pass locally; required controls and result sections are covered; layout and custom nodes are covered; mocked failures render safely; no test depends on a live API or provider.
+- Acceptance criteria:
+  - [x] Existing frontend coverage was audited first and duplicate cases were avoided.
+  - [x] Shared browser-like setup is configured and the focused App integration suite exists.
+  - [x] Initial controls, successful generation, loading, duplicate prevention, controlled failure, previous-result preservation, and Clear behavior have App-level coverage.
+  - [x] App tests mock `generateWorkflow`; API-client tests mock `fetch`; no test requires live services, credentials, or network access.
+  - [x] Existing suites continue to cover result insights, safe text rendering, every supported node type, decision labels, read-only canvas behavior, and deterministic Dagre output.
+  - [x] No snapshot-heavy strategy, excluded UI behavior, backend change, production feature, or new dependency was introduced.
+  - [x] The complete frontend suite and production build pass; lint is not configured.
 - Commit message: `test(frontend): cover workflow visualization flow`
 - Stop conditions: Stop if tests require a live backend/Groq key, depend on unstable implementation details unnecessarily, or introduce excluded UI behavior.
 

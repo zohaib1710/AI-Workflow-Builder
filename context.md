@@ -79,5 +79,12 @@
 - Health and provider-factory tests are isolated from local dotenv credentials; no live provider credential or network access is required.
 - Successful validation: focused error mapping (10 passed); modified graph/generation/route tests (42 passed); isolated health (4 passed); provider factory (3 passed); relevant backend set (97 passed); complete backend suite (100 passed); Ruff; Python compilation; `git diff --check`.
 - Current known issues: no Checkpoint 11 implementation issues.
-- Next action: implement Checkpoint 12.
-- Proposed commit title: `test(backend): cover workflow generation behavior`.
+- Checkpoint 12 is complete: existing frontend coverage was audited and only missing high-value App integration coverage was added.
+- Created `frontend/src/test/setup.ts` and `frontend/src/test/app.test.tsx`; modified `frontend/vite.config.ts` to load the shared browser-like setup. No production or backend files changed, and no new dependency was required.
+- The main prompt-to-result flow, loading state, duplicate-submission prevention, controlled failure rendering, previous-result preservation, and deterministic Clear behavior now have App-level coverage.
+- Existing custom-node, insight, Dagre, decision-label, safe-rendering, API-client, and read-only canvas coverage remains the source of truth without duplicate cases. App tests mock the frontend API boundary; no test requires a live backend, provider, credential, or network request.
+- Successful validation: focused App tests (5 passed); checkpoint-relevant frontend suites (48 passed); complete frontend suite (48 passed); frontend production build; `git diff --check`.
+- Frontend linting was not run because no lint script is configured.
+- Current known issues: no Checkpoint 12 implementation issues.
+- Next action: implement Checkpoint 13.
+- Proposed commit title: `test(frontend): cover workflow visualization flow`.
