@@ -177,7 +177,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 3: Render standard flowchart shapes
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Replace automation-card nodes with a safe, extensible standard flowchart visual system.
 - Dependencies/prerequisites: V2 Checkpoints 1-2 complete.
 - Files to create: `frontend/src/components/editor/nodes/FlowchartNode.tsx`, `frontend/src/components/editor/nodes/shapeRegistry.ts`, `frontend/src/components/editor/nodes/shapeGeometry.tsx`, `frontend/src/test/flowchart-nodes.test.tsx`.
@@ -186,10 +186,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Every shape renders; every semantic type has a default shape; semantic type and selected shape can differ; titles/descriptions/applications render as text; handle rules for start/end/regular nodes; unsupported shapes fail safely.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/flowchart-nodes.test.tsx src/test/workflow-canvas.test.tsx src/test/editor-shell.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] All nine required flowchart shapes use authored safe geometry and readable labels.
-  - [ ] Visual shape is presentation state and never changes semantic type or API data.
-  - [ ] V1 custom-card appearance is removed from the active editor canvas.
-  - [ ] Navigation and safe plain-text rendering remain intact.
+  - [x] All nine required flowchart shapes use authored safe geometry and readable labels.
+  - [x] Visual shape is presentation state and never changes semantic type or API data.
+  - [x] V1 custom-card appearance is removed from the active editor canvas.
+  - [x] Navigation and safe plain-text rendering remain intact.
 - Commit message: `feat(frontend): render standard flowchart shapes`
 - Stop conditions: Stop if shapes require unsafe SVG/HTML injection, semantic schema changes, or an unnecessary graphics dependency.
 

@@ -134,3 +134,12 @@
 - No manual editing, AI editing, routing, persistence, dependency, or backend change was added.
 - Next action: implement V2 Checkpoint 3.
 - Proposed commit title: `feat(frontend): add full-screen workflow editor shell`.
+- V2 Checkpoint 3 is complete.
+- The active editor canvas now renders nine authored standard flowchart silhouettes: terminator, process, decision, input-output, database, document, delay, predefined process, and manual operation.
+- Visual shape and position come from frontend presentation state and remain independent from semantic workflow node type; missing presentation records use the exhaustive semantic default mapping.
+- Workflow titles, descriptions, and applications remain safe plain React text. Start, end, and regular connection handles retain semantic source/target rules while the canvas remains read-only.
+- The approved dark, full-screen editor shell, React Flow navigation, MiniMap, controls, background, edge labels, and initial Dagre layout remain unchanged. V1 automation cards are no longer active in the editor canvas but remain available for compatibility.
+- Unsupported runtime shapes fall back to process geometry with a controlled warning. No manual editing, AI editing, backend behavior, dependency, persistence, or routing change was added.
+- Successful validation: flowchart node tests (23 passed); canvas tests (8 passed); combined flowchart/canvas/editor-shell suites (37 passed); frontend production build; `git diff --check`.
+- Next action: implement V2 Checkpoint 4.
+- Proposed commit title: `feat(frontend): render standard flowchart shapes`.
