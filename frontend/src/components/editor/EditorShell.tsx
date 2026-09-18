@@ -3,8 +3,25 @@ import { generateWorkflow, WorkflowApiError } from "../../api/client"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { EXAMPLE_PROMPT, PROMPT_MAX_LENGTH } from "../../lib/constants"
 import EditorHeader from "./EditorHeader"
+import InspectorPanel from "./InspectorPanel"
 import WorkflowEditorCanvas from "./WorkflowEditorCanvas"
 import WorkflowPromptComposer from "./WorkflowPromptComposer"
+
+function useEditingViewport() {
+  const query = "(min-width: 768px)"
+  const [matches, setMatches] = useState(() => typeof window === "undefined" || typeof window.matchMedia !== "function" ? true : window.matchMedia(query).matches)
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return
+    const media = window.matchMedia(query)
+    const update = (event: MediaQueryListEvent) => setMatches(event.matches)
+    setMatches(media.matches)
+    media.addEventListener("change", update)
+    return () => media.removeEventListener("change", update)
+  }, [])
+
+  return matches
+}
 
 function EditorShell() {
   const editorState = useEditorState()
@@ -14,6 +31,7 @@ function EditorShell() {
   const [error, setError] = useState<string | null>(null)
   const requestInFlight = useRef(false)
   const isMounted = useRef(true)
+  const editingViewport = useEditingViewport()
   const workflow = editorState?.present.workflow ?? null
 
   useEffect(() => {
@@ -78,8 +96,9 @@ function EditorShell() {
 
   return (
     <main className="editor-shell" data-testid="editor-shell">
-      <WorkflowEditorCanvas />
+      <WorkflowEditorCanvas editingViewport={editingViewport} />
       <EditorHeader workflowTitle={workflow?.title ?? null} onNewWorkflow={handleReset} />
+      <InspectorPanel editingViewport={editingViewport} />
       <WorkflowPromptComposer
         mode={workflow ? "iterate" : "generate"}
         value={prompt}

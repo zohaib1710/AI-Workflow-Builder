@@ -322,6 +322,119 @@ textarea {
   display: none;
 }
 
+.inspector-panel {
+  position: absolute;
+  z-index: var(--editor-layer-overlay);
+  top: 1rem;
+  right: 1rem;
+  width: min(18rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 9rem);
+  overflow: auto;
+  border: 1px solid #3f3f46;
+  border-radius: 0.75rem;
+  background: rgb(28 28 28 / 0.96);
+  padding: 0.875rem;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 0.38);
+  backdrop-filter: blur(14px);
+}
+
+.inspector-panel__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+}
+
+.inspector-panel__eyebrow {
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.inspector-panel__title {
+  margin: 0.15rem 0 0;
+  color: #f4f4f5;
+  font-size: 0.9375rem;
+}
+
+.inspector-panel__close {
+  border: 0;
+  background: transparent;
+  padding: 0.2rem;
+  color: #a1a1aa;
+  font-size: 0.6875rem;
+  cursor: pointer;
+}
+
+.node-inspector {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.node-inspector__field {
+  display: grid;
+  gap: 0.35rem;
+  color: #d4d4d8;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.node-inspector__field input,
+.node-inspector__field textarea,
+.node-inspector__field select {
+  width: 100%;
+  border: 1px solid #404040;
+  border-radius: 0.5rem;
+  background: #171717;
+  padding: 0.55rem 0.625rem;
+  color: #f4f4f5;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.node-inspector__field textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.node-inspector__field input[readonly] {
+  color: #a1a1aa;
+}
+
+.node-inspector__field input:focus-visible,
+.node-inspector__field textarea:focus-visible,
+.node-inspector__field select:focus-visible,
+.inspector-panel__close:focus-visible {
+  outline: 2px solid #a1a1aa;
+  outline-offset: 2px;
+}
+
+.node-inspector__error {
+  margin: -0.45rem 0 0;
+  color: #fca5a5;
+  font-size: 0.6875rem;
+}
+
+.node-inspector__delete {
+  border: 1px solid #4c2525;
+  border-radius: 0.5rem;
+  background: #291919;
+  padding: 0.55rem 0.625rem;
+  color: #fca5a5;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.node-inspector :disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .editor-canvas .react-flow,
 .editor-canvas .react-flow__pane {
   background: #141414;

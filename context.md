@@ -143,3 +143,12 @@
 - Successful validation: flowchart node tests (23 passed); canvas tests (8 passed); combined flowchart/canvas/editor-shell suites (37 passed); frontend production build; `git diff --check`.
 - Next action: implement V2 Checkpoint 4.
 - Proposed commit title: `feat(frontend): render standard flowchart shapes`.
+- V2 Checkpoint 4 is complete.
+- Existing nodes support transient single selection and presentation-only movement in Select mode on viewports at least 768px wide while editor async state is idle.
+- Drag previews remain local to React Flow; drag stop records one presentation transaction, no-op drags do not enter history, and the semantic workflow remains coordinate-free.
+- A compact floating node inspector edits title, description, normalized optional application, and presentation shape through separate undoable transactions. Semantic type remains read-only, and manual positions survive semantic and shape edits.
+- Mutation controls lock outside Select mode, below the editing breakpoint, and during async work while pan and zoom remain available. Delete is present but disabled for Checkpoint 5.
+- No node creation/deletion, edge editing, AI editing, persistence, dependency, API-contract, or backend change was added.
+- Successful validation: node-editing tests (8 passed); editor-state tests (10 passed); combined node-editing/editor-state/flowchart suites (41 passed); frontend production build; `git diff --check`.
+- Next action: implement V2 Checkpoint 5.
+- Proposed commit title: `feat(frontend): enable node selection and editing`.

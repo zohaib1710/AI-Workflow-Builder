@@ -1,11 +1,17 @@
-import type { Workflow } from "../types/workflow"
+import type { Workflow, WorkflowNode } from "../types/workflow"
 import { createInitialPresentation } from "./presentation"
-import type { EditorAsyncState, EditorSelection, EditorSnapshot, EditorState, EditorTool, EditorValidationIssue } from "./types"
+import type { CanvasPosition, EditorAsyncState, EditorSelection, EditorSnapshot, EditorState, EditorTool, EditorValidationIssue, FlowchartShape } from "./types"
 import { validateWorkflowDraft } from "./validation"
 
 export const EDITOR_HISTORY_LIMIT = 100
 
-export type RecordedEditorAction = { type: "snapshot/record"; snapshot: EditorSnapshot }
+type EditableNodeFields = Partial<Pick<WorkflowNode, "title" | "description" | "application">>
+
+export type RecordedEditorAction =
+  | { type: "snapshot/record"; snapshot: EditorSnapshot }
+  | { type: "node/position-commit"; nodeId: string; position: CanvasPosition }
+  | { type: "node/semantic-commit"; nodeId: string; fields: EditableNodeFields }
+  | { type: "node/shape-commit"; nodeId: string; shape: FlowchartShape }
 export type SkippedEditorAction =
   | { type: "selection/set"; selection: EditorSelection }
   | { type: "tool/set"; tool: EditorTool }
@@ -25,10 +31,55 @@ export function createInitialEditorState(workflow: Workflow): EditorState {
   }
 }
 
+function recordSnapshot(state: EditorState, snapshot: EditorSnapshot): EditorState {
+  return {
+    ...state,
+    past: [...state.past, state.present].slice(-EDITOR_HISTORY_LIMIT),
+    present: snapshot,
+    future: [],
+    issues: validateWorkflowDraft(snapshot.workflow),
+  }
+}
+
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
     case "snapshot/record":
-      return { ...state, past: [...state.past, state.present].slice(-EDITOR_HISTORY_LIMIT), present: action.snapshot, future: [], issues: validateWorkflowDraft(action.snapshot.workflow) }
+      return action.snapshot === state.present ? state : recordSnapshot(state, action.snapshot)
+    case "node/position-commit": {
+      const presentation = state.present.nodePresentations[action.nodeId]
+      if (!presentation || (presentation.position.x === action.position.x && presentation.position.y === action.position.y)) return state
+      return recordSnapshot(state, {
+        ...state.present,
+        nodePresentations: {
+          ...state.present.nodePresentations,
+          [action.nodeId]: { ...presentation, position: { ...action.position } },
+        },
+      })
+    }
+    case "node/semantic-commit": {
+      const nodeIndex = state.present.workflow.nodes.findIndex((node) => node.id === action.nodeId)
+      if (nodeIndex === -1) return state
+      const currentNode = state.present.workflow.nodes[nodeIndex]
+      const nextNode = { ...currentNode, ...action.fields }
+      if (nextNode.title === currentNode.title && nextNode.description === currentNode.description && nextNode.application === currentNode.application) return state
+      const nodes = [...state.present.workflow.nodes]
+      nodes[nodeIndex] = nextNode
+      return recordSnapshot(state, {
+        ...state.present,
+        workflow: { ...state.present.workflow, nodes },
+      })
+    }
+    case "node/shape-commit": {
+      const presentation = state.present.nodePresentations[action.nodeId]
+      if (!presentation || presentation.shape === action.shape) return state
+      return recordSnapshot(state, {
+        ...state.present,
+        nodePresentations: {
+          ...state.present.nodePresentations,
+          [action.nodeId]: { ...presentation, shape: action.shape },
+        },
+      })
+    }
     case "history/undo": {
       const previous = state.past.at(-1)
       if (previous === undefined) return state

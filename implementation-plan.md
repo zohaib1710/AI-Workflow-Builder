@@ -195,7 +195,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 4: Add selection, node movement, and node inspection
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Enable controlled selection and editing of existing workflow nodes without coupling React Flow objects to domain state.
 - Dependencies/prerequisites: V2 Checkpoints 1-3 complete.
 - Files to create: `frontend/src/components/editor/NodeInspector.tsx`, `frontend/src/components/editor/InspectorPanel.tsx`, `frontend/src/test/node-editing.test.tsx`.
@@ -204,10 +204,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Single selection and clear selection; drag commits presentation only once; semantic workflow receives no coordinates; inspector edits semantic fields; shape edit changes presentation only; invalid blank required fields do not commit; mobile/manual and loading locks.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/node-editing.test.tsx src/test/editor-state.test.ts src/test/flowchart-nodes.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Existing nodes are selectable and movable only in the intended mode and viewport.
-  - [ ] Manual positions survive rerenders and semantic field edits.
-  - [ ] Inspector editing preserves safe text rendering and leaves semantic type fixed.
-  - [ ] Viewport movement and transient drag frames do not pollute undo history.
+  - [x] Existing nodes are selectable and movable only in the intended mode and viewport.
+  - [x] Manual positions survive rerenders and semantic field edits.
+  - [x] Inspector editing preserves safe text rendering and leaves semantic type fixed.
+  - [x] Viewport movement and transient drag frames do not pollute undo history.
 - Commit message: `feat(frontend): enable node selection and editing`
 - Stop conditions: Stop if dragging mutates semantic data, every pointer move creates history, multi-selection is required, or text-field keys trigger canvas deletion.
 
