@@ -112,3 +112,15 @@
 - Full Dagre layout runs initially and only later through explicit Auto Arrange, which intentionally overrides manual positions and remains undoable.
 - First implementation action: V2 Checkpoint 1, establish editor domain, validation, presentation, reducer, and history architecture.
 - Proposed planning commit title: `docs(plan): define version two workflow editor roadmap`.
+
+## Version 2 implementation
+
+- V2 Checkpoint 1 is complete.
+- The semantic `Workflow` remains coordinate-free; node positions, flowchart shapes, and annotations are held in separate editor presentation state.
+- Initial presentation records are derived from semantic workflows with the existing Dagre layout and exhaustive semantic-to-shape defaults.
+- Pure draft graph validation mirrors the Version 1 relationship rules while allowing temporary invalid editor states.
+- The reducer/context foundation uses explicit recorded and skipped actions, undo/redo branching, and a 100-snapshot history cap.
+- Selection, active tool, and async state remain transient and outside editor snapshots.
+- No external state library, persistence, UI behavior change, backend change, or dependency change was introduced.
+- Next action: implement V2 Checkpoint 2.
+- Proposed commit title: `refactor(frontend): establish editor state architecture`.

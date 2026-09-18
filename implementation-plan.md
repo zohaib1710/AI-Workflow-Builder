@@ -141,7 +141,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 1: Establish editor domain, validation, and state architecture
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Create the typed semantic-draft/presentation boundary and reducer foundation before changing the UI.
 - Dependencies/prerequisites: Clean, passing Version 1 baseline; no V2 checkpoint.
 - Files to create: `frontend/src/editor/types.ts`, `frontend/src/editor/ids.ts`, `frontend/src/editor/validation.ts`, `frontend/src/editor/presentation.ts`, `frontend/src/editor/editorReducer.ts`, `frontend/src/editor/EditorContext.tsx`, `frontend/src/test/editor-validation.test.ts`, `frontend/src/test/editor-state.test.ts`.
@@ -150,10 +150,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Semantic-to-presentation mapping; all V1 graph issue categories; no mutation; ID collision avoidance; recorded versus skipped actions; undo/redo branching; 100-entry cap; semantic data never receives positions/shapes/annotations.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/editor-validation.test.ts src/test/editor-state.test.ts src/test/layout.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Semantic workflow and canvas presentation types are separate and coordinate-free at the API boundary.
-  - [ ] Draft validation reports safe deterministic issues without blocking temporary graph-invalid states.
-  - [ ] Reducer history records only editor snapshot transactions and excludes transient state.
-  - [ ] No dependency, backend, UI behavior, persistence, or V1 contract changes are introduced.
+  - [x] Semantic workflow and canvas presentation types are separate and coordinate-free at the API boundary.
+  - [x] Draft validation reports safe deterministic issues without blocking temporary graph-invalid states.
+  - [x] Reducer history records only editor snapshot transactions and excludes transient state.
+  - [x] No dependency, backend, UI behavior, persistence, or V1 contract changes are introduced.
 - Commit message: `refactor(frontend): establish editor state architecture`
 - Stop conditions: Stop if the design requires coordinates in `Workflow`, a state library, backend changes, or weakening V1 schema validation.
 
