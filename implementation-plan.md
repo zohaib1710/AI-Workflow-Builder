@@ -159,19 +159,19 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 2: Build the full-screen editor shell and adaptive composer
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Replace the document-style page with the full-viewport editor while retaining V1 generation behavior.
 - Dependencies/prerequisites: V2 Checkpoint 1 complete.
 - Files to create: `frontend/src/components/editor/EditorShell.tsx`, `frontend/src/components/editor/WorkflowPromptComposer.tsx`, `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, `frontend/src/components/editor/EditorHeader.tsx`, `frontend/src/test/editor-shell.test.tsx`.
-- Files to modify: `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/src/test/app.test.tsx`, `frontend/src/test/setup.ts` only for a genuinely required shared browser mock.
-- Implementation instructions: Mount `EditorContext`, make the canvas fill `100dvh`, and preserve typed V1 generation through `generateWorkflow`. With no workflow, show the same composer centered with the generation placeholder. After success, adopt the semantic workflow, create initial Dagre presentation, keep the canvas visible, and move that composer to a bottom-center iteration position with the edit placeholder; iteration submission remains disabled until the backend capability exists. Add minimal top chrome and layer/reserve space for future left toolbar, right inspector, bottom composer, React Flow controls, and responsive notice. Do not add routing or manual editing yet.
+- Files to modify: `frontend/src/App.tsx`, `frontend/src/components/WorkflowCanvas.tsx`, `frontend/src/editor/EditorContext.tsx`, `frontend/src/index.css`, `frontend/src/test/app.test.tsx`, `frontend/src/test/setup.ts` only for a genuinely required shared browser mock.
+- Implementation instructions: Mount `EditorContext`, make a near-black canvas fill the complete `100dvh` viewport without gutters, and preserve typed V1 generation through `generateWorkflow`. With no workflow, show the same dark floating composer centered with the generation placeholder. After success, adopt the semantic workflow, create initial Dagre presentation, keep the canvas visible, and move that composer to a bottom-center iteration position with the edit placeholder; iteration submission remains disabled until the backend capability exists. Use compact floating product/title/New controls rather than a page-width header. Retain dark-styled React Flow navigation and the responsive notice without adding a toolbar, inspector, routing, or manual editing.
 - Required tests: Initial centered state; generation request and successful transition; failed generation remains centered; composer reuse rather than duplicate forms; generated canvas remains safe and navigation-only; under-768 manual-editing notice contract.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/editor-shell.test.tsx src/test/app.test.tsx src/test/api-client.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Empty and generated states occupy the full viewport with correct composer positions.
-  - [ ] Existing generation, loading, error, duplicate prevention, and Clear/New behavior remain safe.
-  - [ ] Generated semantic data and presentation state enter the editor through one reducer boundary.
-  - [ ] No AI edit call, manual mutation, persistence, or routing is implemented.
+  - [x] Empty and generated states occupy the full viewport with correct composer positions.
+  - [x] Existing generation, loading, error, duplicate prevention, and Clear/New behavior remain safe.
+  - [x] Generated semantic data and presentation state enter the editor through one reducer boundary.
+  - [x] No AI edit call, manual mutation, persistence, or routing is implemented.
 - Commit message: `feat(frontend): add full-screen workflow editor shell`
 - Stop conditions: Stop if V1 generation regresses, the composer is duplicated, canvas overlays conflict materially, or the shell requires unrelated navigation.
 

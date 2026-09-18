@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import App from "../App"
 import { WorkflowApiError } from "../api/client"
@@ -50,21 +50,21 @@ function enterPrompt(value = "  Create a lead qualification workflow  ") {
 }
 
 function submitPrompt() {
-  fireEvent.click(screen.getByRole("button", { name: "Generate Workflow" }))
+  fireEvent.click(screen.getByRole("button", { name: "Generate workflow" }))
 }
 
 describe("App workflow generation", () => {
-  it("renders the initial page controls without a workflow result", () => {
+  it("renders the initial editor controls without a generated workflow", () => {
     render(<App />)
 
     expect(screen.getByText("AI Workflow Builder")).toBeInTheDocument()
     expect(screen.getByRole("textbox", { name: "Workflow prompt" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Generate Workflow" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Generate workflow" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument()
-    expect(screen.queryByText("Workflow result")).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Empty workflow canvas")).toBeInTheDocument()
   })
 
-  it("submits the normalized prompt once and renders the generated result", async () => {
+  it("submits the normalized prompt once and renders the generated canvas", async () => {
     generateWorkflowMock.mockResolvedValue(responseFixture())
     render(<App />)
 
@@ -74,9 +74,7 @@ describe("App workflow generation", () => {
     expect(generateWorkflowMock).toHaveBeenCalledTimes(1)
     expect(generateWorkflowMock).toHaveBeenCalledWith({ prompt: "Create a lead qualification workflow" })
     expect(await screen.findByRole("heading", { name: "Lead qualification workflow" })).toBeInTheDocument()
-    expect(screen.getByText("The CRM is available.")).toBeInTheDocument()
-    expect(screen.getByText("Define the qualification threshold.")).toBeInTheDocument()
-    expect(screen.getByText("Review routing outcomes monthly.")).toBeInTheDocument()
+    expect(screen.getByLabelText("Read-only workflow diagram")).toBeInTheDocument()
   })
 
   it("shows loading, disables conflicting actions, and prevents duplicate submission", async () => {
@@ -120,26 +118,4 @@ describe("App workflow generation", () => {
     expect(screen.getByRole("textbox", { name: "Workflow prompt" })).toHaveValue("")
   })
 
-  it("keeps a previous result after a failed regeneration and Clear removes all state", async () => {
-    generateWorkflowMock
-      .mockResolvedValueOnce(responseFixture())
-      .mockRejectedValueOnce(new WorkflowApiError("Workflow generation timed out. Please try again.", "provider_timeout", 504, null))
-    render(<App />)
-
-    enterPrompt("Create a workflow")
-    submitPrompt()
-    expect(await screen.findByRole("heading", { name: "Lead qualification workflow" })).toBeInTheDocument()
-
-    enterPrompt("Try the workflow again")
-    submitPrompt()
-    expect(await screen.findByRole("alert")).toHaveTextContent("Workflow generation timed out. Please try again.")
-    expect(screen.getByRole("heading", { name: "Lead qualification workflow" })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole("button", { name: "Clear" }))
-    await waitFor(() => {
-      expect(screen.queryByRole("heading", { name: "Lead qualification workflow" })).not.toBeInTheDocument()
-    })
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    expect(screen.getByRole("textbox", { name: "Workflow prompt" })).toHaveValue("")
-  })
 })

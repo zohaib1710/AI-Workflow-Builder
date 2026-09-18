@@ -70,7 +70,7 @@ function WorkflowCanvasInner({ workflow }: WorkflowCanvasProps) {
         proOptions={{ hideAttribution: true }}
       >
         <FitViewAfterLayout layoutKey={layoutKey} />
-        <Background color="#cbd5e1" gap={24} size={1} />
+        <Background color="#303030" gap={24} size={1} />
         <Controls showInteractive={false} />
         <MiniMap nodeColor={minimapNodeColor} pannable zoomable />
       </ReactFlow>

@@ -124,3 +124,13 @@
 - No external state library, persistence, UI behavior change, backend change, or dependency change was introduced.
 - Next action: implement V2 Checkpoint 2.
 - Proposed commit title: `refactor(frontend): establish editor state architecture`.
+- V2 Checkpoint 2 is complete.
+- The app now mounts `EditorContext` around a full-screen editor shell with a near-black, edge-to-edge canvas and compact floating identity/New controls instead of page-style chrome.
+- Initial generation still uses the Version 1 typed API; successful workflows enter editor semantic and Dagre-derived presentation state through one adoption action with empty history.
+- Empty state uses one centered composer, and generated state reuses that composer at bottom-center with AI iteration submission disabled.
+- New workflow resets semantic, presentation, annotation, history, prompt, and error state without a backend call.
+- The generated canvas remains navigation-only, and a CSS-governed editing notice appears below 768px.
+- Successful validation: editor shell tests (6 passed), App regressions (4 passed), combined shell/App/API-client tests (30 passed), frontend production build, temporary desktop/narrow render capture, and `git diff --check`.
+- No manual editing, AI editing, routing, persistence, dependency, or backend change was added.
+- Next action: implement V2 Checkpoint 3.
+- Proposed commit title: `feat(frontend): add full-screen workflow editor shell`.
