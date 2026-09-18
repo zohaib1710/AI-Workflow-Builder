@@ -2,502 +2,424 @@
 
 ## Plan metadata
 
-- Status: COMPLETE
-- Version: Version 1
-- Planner model: Codex planning agent
-- Created: 2026-07-23
-- Last updated: 2026-09-18
+- Status: ACTIVE
+- Version: Version 2
+- Plan type: implementation roadmap only
+- Created: 2026-09-18
+- Version 1 baseline commit: `8dc8c57 docs(repo): document and verify version one`
 
 ## Objective
 
-Enable an internal user to enter a natural-language prompt and receive an automatically arranged, read-only visual workflow diagram in the browser. The flow is React frontend → FastAPI backend → Groq → validated workflow JSON → Dagre layout → React Flow visualization. Generated workflows exist only in browser memory and disappear on refresh.
+Turn the completed Version 1 prompt-to-workflow viewer into an in-memory, full-screen visual workflow editor. Version 2 supports manual editing and provider-agnostic natural-language iteration while preserving the coordinate-free semantic `Workflow` contract, safe validation, stable node identity, and user-owned canvas layout.
 
 ## Scope
 
-Version 1 includes React/TypeScript/Vite/Tailwind CSS, `@xyflow/react`, Dagre, Python 3.12/FastAPI/Pydantic/Pydantic Settings/`uv`, the Groq Python SDK, prompt submission, structured workflow generation, backend validation with one controlled invalid-output retry, workflow metadata and insights, loading/error states, a read-only React Flow canvas with custom nodes, labelled decision branches, left-to-right layout, zoom, pan, minimap, fit-to-view, grid background, backend and frontend tests, and local-development documentation.
+Version 2 includes:
+
+- A full-viewport editor shell with a centered initial composer and bottom-centered iteration composer.
+- Standard flowchart shapes, a compact floating toolbar, node/edge selection, node movement, node and edge creation/deletion, property inspectors, connection labels, and free-standing text annotations.
+- A frontend editor draft that may temporarily violate graph rules, visible validation feedback, in-memory undo/redo, and an explicit Auto Arrange command.
+- A separate provider-agnostic workflow-edit backend contract that returns a full revised semantic workflow.
+- Stable-ID reconciliation that preserves manual positions and shape overrides for retained nodes and deterministically places new nodes.
+- A collapsible insights surface, responsive editor constraints, focused automated coverage, and Version 2 documentation.
 
 ## Exclusions
 
-Do not implement:
-
-- Authentication
-- User accounts
-- PostgreSQL
-- Workflow persistence
-- Workflow saving
-- Manual node editing
-- Drag-and-drop editing
-- Node creation or deletion
-- Connection editing
-- AI refinement chat
-- Workflow versions
-- Workflow sharing
-- Public links
-- JSON export
-- JSON import
-- PNG export
-- PDF export
-- SVG export
-- Workflow execution
-- Integration credentials
-- Folders
-- Search
-- Collaboration
-- Comments
-- Admin pages
-- Docker
-- Cloud deployment
-- CI/CD
-- Redis
-- Background workers
-
-Do not add functionality from a future version. Do not commit `.env`, API keys, `node_modules`, Python virtual environments, or `.codex/commit-message.txt`.
+Do not add authentication, user accounts, database persistence, saved projects, server-side history, shared links, real-time collaboration, multi-user cursors, workflow execution, automation-platform deployment, integration credentials, provider-selection UI, streaming generation, exports, BPMN import/export, swimlanes, groups/containers, advanced styling, a plugin marketplace, Docker, deployment automation, or CI/CD. Refresh continues to clear all workflow/editor state.
 
 ## Repository observations
 
-- The repository already contains control documentation and placeholder `frontend/`, `backend/`, and `docs/` folders.
-- `context.md` records repository preparation and no application implementation.
-- The latest commit is `acfcf8b - create documented frontend, backend and project documentation placeholders`.
-- The working tree was clean at inspection time.
-- No application source, package manifest, lock file, installed dependency directory, or virtual environment exists.
-- Git is initialized; Git commands require `-c safe.directory=D:/AI-Workflow-Builder` in this environment because of an ownership warning.
+- Version 1 is complete at commit `8dc8c57`; the worktree was clean when this plan was created.
+- `frontend/src/App.tsx` currently owns prompt, loading, error, and generated result state. It must be decomposed before editor behavior grows.
+- The frontend `Workflow` type and backend Pydantic `Workflow` model are coordinate-free. React Flow nodes are currently derived view objects, and Dagre supplies all positions.
+- The Version 1 canvas deliberately disables dragging, selection, connections, focus, and deletion. Version 2 must enable only mode-specific editing behavior.
+- The backend already has a reusable `AIProvider`, `OpenAICompatibleProvider`, provider factory, strict workflow schema, graph validator, safe exception mapping, and one-correction retry pattern.
+- Current tests cover 48 frontend cases and 100 backend cases with mocked boundaries. No new end-to-end framework or live provider testing is needed.
+- Current dependencies are sufficient. Prefer no new runtime state or rendering dependency; update lock files only if an implementation checkpoint proves one is necessary.
+
+## Assumptions and dependencies
+
+- Version 2 builds on the existing ten semantic node types and does not change their backend meaning.
+- Browser support includes `crypto.randomUUID`; an editor ID helper will isolate generation for deterministic tests.
+- React Flow remains the interaction/canvas library and Dagre remains the full-layout engine.
+- AI editing requires a graph-valid current semantic workflow. Manual editing remains available without a provider key.
+- The backend API remains under `/api/v1` for compatibility; Version 2 adds a capability, not a breaking semantic schema version.
+- Every implementation session executes only the first incomplete checkpoint and preserves passing V1 behavior.
 
 ## Architecture decisions
 
-1. The frontend owns prompt state, request lifecycle, in-memory workflow state, layout calculation, and rendering. It must never receive or read `GROQ_API_KEY`.
-2. The backend owns configuration, prompt validation, Groq calls, structured-output parsing, domain validation, retry policy, and API error mapping. Route functions remain thin and call services.
-3. Groq is isolated behind a provider/service interface so automated tests mock it and the route is independent of SDK details.
-4. The AI returns domain workflow JSON only: it must not generate React Flow positions, HTML, executable code, or credentials. Dagre calculates positions after generation.
-5. Pydantic models are the boundary contract. The validator enforces supported node types, unique IDs, valid references, structural graph rules, and non-empty human-readable fields.
-6. The canvas is read-only: disable node dragging, connection creation, selection-based editing, node deletion, and mutation controls while retaining navigation controls.
-7. The browser uses a single main page with prompt and result sections. API errors are presented as controlled user-facing messages, while sensitive provider details stay server-side.
+### Semantic model and editor presentation
 
-## Workflow schema
+The backend and API continue to use coordinate-free `Workflow`. The frontend owns a separate editor model:
 
-The canonical workflow object contains exactly these conceptual fields: `title`, `description`, `nodes`, `edges`, `assumptions`, `missingRequirements`, and `suggestions`.
+```typescript
+type FlowchartShape =
+  | "terminator"
+  | "process"
+  | "decision"
+  | "input-output"
+  | "database"
+  | "document"
+  | "delay"
+  | "predefined-process"
+  | "manual-operation"
 
-Each node contains `id`, `type`, `title`, `description`, and `application`. `type` is an enum restricted exactly to `start`, `end`, `trigger`, `action`, `decision`, `api`, `database`, `wait`, `approval`, and `notification`. `application` may be an empty string when unspecified, but `id`, `title`, and `description` are required non-empty strings.
+type CanvasNodePresentation = {
+  nodeId: string
+  shape: FlowchartShape
+  position: { x: number; y: number }
+}
 
-Each edge contains `id`, `source`, `target`, and `label`; IDs are unique, source and target must reference existing nodes, and `label` may be empty except that decision branch labels must be retained and displayed.
-
-The validator must reject empty prompts, prompts over the configured limit, invalid JSON, missing title or description, an empty node list, duplicate node IDs or edge IDs, unsupported node types, missing-node edge references, start nodes with incoming edges, end nodes with outgoing edges, decision nodes with fewer than two outgoing edges, completely disconnected workflows, and empty node titles. It should also reject malformed graph data with a stable validation error response.
-
-## API contracts
-
-### `GET /api/v1/health`
-
-Return HTTP 200 with a small stable JSON object such as `{ "status": "ok" }`. It must not call Groq.
-
-### `POST /api/v1/workflows/generate`
-
-Request:
-
-```json
-{ "prompt": "Create a lead qualification workflow." }
-```
-
-Successful response HTTP 200:
-
-```json
-{
-  "workflow": {
-    "title": "Lead Qualification Workflow",
-    "description": "Qualifies and routes new leads.",
-    "nodes": [],
-    "edges": [],
-    "assumptions": [],
-    "missingRequirements": [],
-    "suggestions": []
-  },
-  "generation": {
-    "model": "configured-model-name",
-    "durationMs": 0
-  }
+type CanvasAnnotation = {
+  id: string
+  text: string
+  position: { x: number; y: number }
 }
 ```
 
-Use a stable error envelope with a user-safe `code` and `message`, and optional field details, for request validation, provider failure, timeout, rate limit, invalid credentials, and invalid structured output. Return 4xx for invalid input and 5xx/controlled provider errors for backend/provider failures. Retry exactly once only when Groq returns parseable-but-domain-invalid or otherwise invalid structured output; do not retry invalid credentials, rate limits, timeouts, or general API failures.
+The editor snapshot contains the semantic draft workflow, node-presentation records, and annotations. Selection, active tool, async request state, composer text, drawer state, and viewport are transient UI state and are not part of semantic data or history snapshots.
 
-## Frontend component structure
+### Draft validation model
 
-The planned frontend structure is:
+Use draft-state editing (Model B). Manual actions must keep data structurally well formed—unique generated IDs, nonblank required node fields, and existing endpoints for newly created edges—but may temporarily create graph-invalid states such as disconnected nodes or a decision with one branch. A pure frontend validator mirrors the backend graph rules and produces small user-facing issues. AI iteration is disabled until the draft is graph-valid; the backend independently revalidates the submitted current workflow. Auto Arrange may run on a structurally well-formed draft even when graph issues remain. No draft is sent to execution, persistence, or export because those capabilities are excluded.
 
-- `frontend/package.json`, `frontend/package-lock.json`, `frontend/tsconfig*.json`, `frontend/vite.config.ts`, `frontend/index.html`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`
-- `frontend/src/types/workflow.ts` for API/domain types and the exact node-type union
-- `frontend/src/api/client.ts` for the typed health/generation HTTP calls and normalized errors
-- `frontend/src/components/Header.tsx`
-- `frontend/src/components/PromptPanel.tsx` for textarea, example prompt, count, Generate, Clear, loading, and error UI
-- `frontend/src/components/WorkflowResult.tsx` for title, description, canvas, and insight panels
-- `frontend/src/components/WorkflowCanvas.tsx` for read-only React Flow, controls, minimap, grid, custom node registry, and edge labels
-- `frontend/src/components/nodes/WorkflowNode.tsx` and `frontend/src/components/nodes/nodeTypes.ts` for safe custom node rendering
-- `frontend/src/components/InsightPanel.tsx`
-- `frontend/src/lib/layout.ts` for Dagre left-to-right conversion from domain nodes/edges to React Flow nodes/edges
-- `frontend/src/lib/constants.ts` for limits and example text
-- `frontend/src/test/` for component and layout tests
+### State management and history
 
-The page must show product name/description, prompt textarea, Generate Workflow, Clear, example prompt, character count, loading state, errors, workflow title/description, canvas, assumptions, missing requirements, and suggestions. The canvas must expose zoom, pan, minimap, fit-to-view, background grid, custom visual nodes, and labelled decision branches.
+Use built-in React `useReducer` plus split state/dispatch contexts; do not add Redux or Zustand. The editor surface is cohesive enough for a reducer, and history needs explicit domain transactions rather than generic store middleware. React Flow keeps local drag-preview nodes for smooth pointer movement, then dispatches one position transaction on drag stop. Inspector forms keep local input drafts and commit one transaction on apply or blur.
 
-## Backend module structure
+History stores at most 100 editor snapshots, clears redo after a new recorded action, and excludes viewport, selection, tool changes, request status, and prompt typing. Node move, add/delete, field/shape changes, edge changes, annotation changes, AI edits, and Auto Arrange each create one history entry.
 
-The planned backend structure is:
+### Shape system
 
-- `backend/pyproject.toml`, `backend/uv.lock`, `backend/.env.example`
-- `backend/app/main.py` for application creation and router registration
-- `backend/app/config.py` for Pydantic Settings and safe environment configuration
-- `backend/app/api/routes/health.py` and `backend/app/api/routes/workflows.py` for thin route handlers
-- `backend/app/api/errors.py` for stable error mapping
-- `backend/app/schemas/workflow.py` for request, response, node, edge, generation, and error models
-- `backend/app/domain/validation.py` for graph/domain validation
-- `backend/app/services/workflow_generation.py` for orchestration and one-retry policy
-- `backend/app/services/groq_provider.py` for the isolated Groq SDK adapter
-- `backend/app/prompts/workflow_generation.py` for the constrained system/user prompt and schema instructions
-- `backend/tests/` for route, schema, validation, service, and provider-mocking tests
+Implement all nine listed shapes in Version 2 using authored, fixed SVG geometry inside custom React Flow nodes with an HTML text overlay and safe React text rendering. Do not accept generated SVG or HTML. A shared shape registry owns geometry, sizing, accessible labels, default semantic mappings, and handle locations. Semantic type and visual shape remain independent: initial/default shapes derive from semantic type, while inspector shape changes modify presentation only. Semantic type is read-only in the Version 2 node inspector; AI edits or creation presets establish semantic type.
 
-The app must configure CORS only for `FRONTEND_URL`, use request/response Pydantic models, avoid logging secrets or full sensitive prompts, and keep all Groq access in the backend service.
+Default mappings are: `start` and `end` to terminator, `trigger` to terminator, `action` to process, `decision` to decision, `api` to input-output, `database` to database, `wait` to delay, `approval` to decision, and `notification` to document. Predefined-process and manual-operation remain available creation/shape choices without adding semantic node types. Changing any default shape later updates presentation only.
 
-## Environment variables
+### AI edit strategy and identity
 
-Create safe examples only. Backend `backend/.env.example`:
+`POST /api/v1/workflows/edit` accepts `{ instruction, workflow }`, where `instruction` is a trimmed nonblank string of at most 5,000 characters and `workflow` is the current semantic workflow. It returns `{ workflow, generation }` using a dedicated `EditWorkflowResponse`. `WorkflowEditService` requests a full revised workflow rather than patch operations because the existing schema, validation, correction retry, and provider boundary already secure complete candidates. The edit prompt requires unchanged and modified nodes to retain IDs, deleted IDs to disappear, and new nodes to receive unique IDs.
 
-```env
-GROQ_API_KEY=
-GROQ_MODEL=
-GROQ_TEMPERATURE=0.2
-GROQ_MAX_TOKENS=8000
-FRONTEND_URL=http://localhost:5173
-```
+The frontend reconciles by exact ID only; it never guesses identity from titles. Retained IDs keep positions and shape overrides, deleted IDs lose presentation records, and new IDs receive deterministic local placement. If both old and new workflows are nonempty and share no node IDs, treat the response as unstable identity, keep the current editor state unchanged, and show a controlled retry message. Partial churn is accepted: unmatched old nodes are removals and unmatched new nodes are additions.
 
-Frontend `frontend/.env.example`:
+### Position reconciliation and Auto Arrange
 
-```env
-VITE_API_BASE_URL=http://localhost:8000/api/v1
-```
+Initial generation lays out every node with Dagre. AI edits do not run full Dagre. Each new node is placed after the first positioned predecessor at a fixed horizontal offset; otherwise before the first positioned successor; otherwise near the current canvas center. Multiple or colliding new nodes move down a fixed grid step in semantic node order until clear. Existing positions and shape overrides are never changed by reconciliation.
 
-The frontend may read only `VITE_API_BASE_URL`; the Groq key must never be included in frontend variables, source, responses, or logs.
+Auto Arrange is the only post-generation command that intentionally runs Dagre across the entire semantic draft and replaces every workflow-node position. It preserves shape overrides and annotations. The action is a single undoable history transaction.
 
-## Dependencies
+### Manual interactions
 
-Frontend: React, React DOM, TypeScript, Vite, Tailwind CSS, `@xyflow/react`, Dagre-compatible package (`@dagrejs/dagre`), and a test stack using Vitest plus Testing Library. Backend: Python 3.12, FastAPI, Uvicorn, Pydantic, Pydantic Settings, `uv`, Groq Python SDK, HTTPX for tests, and pytest/pytest-asyncio as needed. Select current stable compatible versions at implementation time only where pinning is operationally necessary; use npm and `uv` to generate and commit `package-lock.json` and `uv.lock`. Never commit generated environments or secret files.
+- The node inspector edits title, description, application, and visual shape; semantic type is displayed read-only. Delete cascades incident semantic edges and removes the node presentation.
+- The connector tool enables handle dragging; select mode does not create connections. A decision-source connection requests a branch label before commit. The edge inspector edits label and deletes the selected edge.
+- The text tool adds presentation-only annotations at the next canvas click. Annotation text and movement are undoable and are never sent to the backend or AI.
+- During an AI edit, semantic/manual mutation controls are disabled, while pan and zoom remain available. Failure preserves the current workflow and all presentation state.
+
+### Toolbar and responsive behavior
+
+The left floating toolbar contains: New/close, AI-focus, Select, Add shape, Connect, Text, Auto Arrange, Undo, and Redo. There is no separate generic line or arrow tool; semantic connections cover that need. Tool buttons are small components with labels/tooltips and keyboard-accessible pressed/disabled state.
+
+Tool effects are explicit:
+
+| Tool | Purpose and mode | State affected |
+| --- | --- | --- |
+| New/close | Confirm and reset the in-memory editor | Semantic, presentation, history |
+| AI-focus | Focus the composer; does not alter the graph | Transient UI only |
+| Select | Select and move one node, edge, or annotation | Selection; presentation on move |
+| Add shape | Choose a semantic preset and place one node | Semantic and presentation |
+| Connect | Enable source-handle to target-handle edge creation | Semantic |
+| Text | Place and edit one annotation | Presentation only |
+| Auto Arrange | Replace all workflow-node positions through Dagre | Presentation only |
+| Undo/Redo | Traverse recorded editor snapshots | Semantic and/or presentation |
+
+The canvas fills `100dvh`. The initial composer is centered above the empty canvas; after generation the same component switches to iteration mode at bottom-center. Toolbar, composer, inspectors, insights, and React Flow controls use explicit non-overlapping layers. At widths below 768px, generation/iteration and canvas navigation remain available, but manual drag/create/connect/property editing is disabled with a concise notice; Version 2 does not attempt a touch-optimized diagram editor.
+
+### V1 compatibility and intentional changes
+
+Preserve provider isolation, strict semantic schema, backend graph validation, safe error envelopes, bounded invalid-output retry, safe text rendering, typed frontend API boundaries, Dagre, React Flow, and insights. Intentional changes are an editable canvas in supported modes, movable nodes, editable semantic drafts and edges, full-screen layout, standard flowchart shapes, and the adaptive prompt composer.
 
 ## Ordered implementation checkpoints
 
-### Checkpoint 1: Scaffold frontend and backend applications
+### V2 Checkpoint 1: Establish editor domain, validation, and state architecture
 
-- Status: COMPLETE
-- Purpose: Create minimal runnable React/Vite/Tailwind and Python/FastAPI/`uv` application boundaries without Version 1 behavior.
-- Files to create: `frontend/package.json`, `frontend/package-lock.json`, `frontend/tsconfig*.json`, `frontend/vite.config.ts`, `frontend/index.html`, `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/src/vite-env.d.ts`, `backend/pyproject.toml`, `backend/uv.lock`, `backend/app/main.py`, `backend/app/__init__.py`, `backend/tests/__init__.py`.
-- Files to modify: root `.gitignore` only if generated tooling requires a missing safe ignore; do not alter control docs.
-- Implementation instructions: Use Vite’s React TypeScript structure and Tailwind’s current Vite integration. Create a minimal FastAPI app that starts and returns a temporary root response only; do not add generation, Groq, persistence, auth, or UI functionality. Generate lock files with npm and `uv` and keep all source inside the planned directories.
-- Validation commands: `npm ci --prefix frontend`; `npm run build --prefix frontend`; `uv run --project backend python -c "from app.main import app; print(app.title)"`.
+- Status: INCOMPLETE
+- Purpose: Create the typed semantic-draft/presentation boundary and reducer foundation before changing the UI.
+- Dependencies/prerequisites: Clean, passing Version 1 baseline; no V2 checkpoint.
+- Files to create: `frontend/src/editor/types.ts`, `frontend/src/editor/ids.ts`, `frontend/src/editor/validation.ts`, `frontend/src/editor/presentation.ts`, `frontend/src/editor/editorReducer.ts`, `frontend/src/editor/EditorContext.tsx`, `frontend/src/test/editor-validation.test.ts`, `frontend/src/test/editor-state.test.ts`.
+- Files to modify: `frontend/src/lib/layout.ts` only if a position-only Dagre helper is required; preserve existing exports and tests.
+- Implementation instructions: Define `FlowchartShape`, `CanvasNodePresentation`, `CanvasAnnotation`, `EditorSnapshot`, selection/tool unions, async state, and reducer actions. Keep `Workflow` unchanged and coordinate-free. Add default semantic-to-shape mappings, safe ID generation, initial Dagre presentation creation, pure frontend graph issue detection, and a 100-entry snapshot history mechanism with explicit record/skip transactions. Keep viewport and transient UI out of snapshots. Do not add an external state package or editor UI.
+- Required tests: Semantic-to-presentation mapping; all V1 graph issue categories; no mutation; ID collision avoidance; recorded versus skipped actions; undo/redo branching; 100-entry cap; semantic data never receives positions/shapes/annotations.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/editor-validation.test.ts src/test/editor-state.test.ts src/test/layout.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] Both projects have standard manifests and lock files.
-  - [x] Frontend build succeeds.
-  - [x] Backend imports under Python 3.12.
-  - [x] No database, Docker, deployment, or auth files exist.
-- Commit message: `build(repo): scaffold version one applications`
-- Stop conditions: Stop if scaffolding introduces unrelated directories, dependencies cannot be locked, or a generator proposes application features beyond the empty shells.
+  - [ ] Semantic workflow and canvas presentation types are separate and coordinate-free at the API boundary.
+  - [ ] Draft validation reports safe deterministic issues without blocking temporary graph-invalid states.
+  - [ ] Reducer history records only editor snapshot transactions and excludes transient state.
+  - [ ] No dependency, backend, UI behavior, persistence, or V1 contract changes are introduced.
+- Commit message: `refactor(frontend): establish editor state architecture`
+- Stop conditions: Stop if the design requires coordinates in `Workflow`, a state library, backend changes, or weakening V1 schema validation.
 
-### Checkpoint 2: Add backend configuration and health endpoint
+### V2 Checkpoint 2: Build the full-screen editor shell and adaptive composer
 
-- Status: COMPLETE
-- Purpose: Establish safe settings, CORS, app wiring, and the required health contract.
-- Files to create: `backend/app/config.py`, `backend/app/api/__init__.py`, `backend/app/api/routes/__init__.py`, `backend/app/api/routes/health.py`, `backend/.env.example`, `backend/tests/test_health.py`.
-- Files to modify: `backend/app/main.py`, `backend/pyproject.toml`, `backend/uv.lock`.
-- Implementation instructions: Load the specified settings with Pydantic Settings, require no secret for health, allow CORS only from `FRONTEND_URL`, register `GET /api/v1/health`, and return `{ "status": "ok" }`. Do not expose configuration values or call Groq.
-- Validation commands: `uv run --project backend pytest backend/tests/test_health.py`; `uv run --project backend python -c "from app.config import Settings; print(Settings.model_fields.keys())"`; `uv run --project backend python -c "from app.main import app; print(app.title)"`; `git diff --check`.
+- Status: INCOMPLETE
+- Purpose: Replace the document-style page with the full-viewport editor while retaining V1 generation behavior.
+- Dependencies/prerequisites: V2 Checkpoint 1 complete.
+- Files to create: `frontend/src/components/editor/EditorShell.tsx`, `frontend/src/components/editor/WorkflowPromptComposer.tsx`, `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, `frontend/src/components/editor/EditorHeader.tsx`, `frontend/src/test/editor-shell.test.tsx`.
+- Files to modify: `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/src/test/app.test.tsx`, `frontend/src/test/setup.ts` only for a genuinely required shared browser mock.
+- Implementation instructions: Mount `EditorContext`, make the canvas fill `100dvh`, and preserve typed V1 generation through `generateWorkflow`. With no workflow, show the same composer centered with the generation placeholder. After success, adopt the semantic workflow, create initial Dagre presentation, keep the canvas visible, and move that composer to a bottom-center iteration position with the edit placeholder; iteration submission remains disabled until the backend capability exists. Add minimal top chrome and layer/reserve space for future left toolbar, right inspector, bottom composer, React Flow controls, and responsive notice. Do not add routing or manual editing yet.
+- Required tests: Initial centered state; generation request and successful transition; failed generation remains centered; composer reuse rather than duplicate forms; generated canvas remains safe and navigation-only; under-768 manual-editing notice contract.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/editor-shell.test.tsx src/test/app.test.tsx src/test/api-client.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] `GET /api/v1/health` returns HTTP 200.
-  - [x] The response is exactly `{ "status": "ok" }`.
-  - [x] Settings fields match the required environment contract.
-  - [x] `GROQ_TEMPERATURE` defaults to `0.2`.
-  - [x] `GROQ_MAX_TOKENS` defaults to `8000`.
-  - [x] `FRONTEND_URL` defaults to `http://localhost:5173`.
-  - [x] Backend startup does not require a real Groq API key.
-  - [x] No API key is printed or exposed.
-  - [x] CORS allows only the configured frontend URL.
-  - [x] CORS does not use a wildcard origin.
-  - [x] Health route functions remain thin.
-  - [x] No Groq call occurs.
-  - [x] No authentication or persistence behavior is added.
-  - [x] Required tests and validation commands pass.
-  - [x] No unrelated files are changed.
-- Commit message: `feat(backend): add configuration and health endpoint`
-- Stop conditions: Stop if startup requires a real Groq key, CORS becomes permissive by default, or unrelated auth/persistence behavior appears.
+  - [ ] Empty and generated states occupy the full viewport with correct composer positions.
+  - [ ] Existing generation, loading, error, duplicate prevention, and Clear/New behavior remain safe.
+  - [ ] Generated semantic data and presentation state enter the editor through one reducer boundary.
+  - [ ] No AI edit call, manual mutation, persistence, or routing is implemented.
+- Commit message: `feat(frontend): add full-screen workflow editor shell`
+- Stop conditions: Stop if V1 generation regresses, the composer is duplicated, canvas overlays conflict materially, or the shell requires unrelated navigation.
 
-### Checkpoint 3: Define workflow schemas and graph validation
+### V2 Checkpoint 3: Render standard flowchart shapes
 
-- Status: COMPLETE
-- Purpose: Create the single validated domain contract used by AI, API, and frontend.
-- Files to create: `backend/app/schemas/workflow.py`, `backend/app/domain/__init__.py`, `backend/app/domain/validation.py`, `backend/tests/test_workflow_schemas.py`, `backend/tests/test_workflow_validation.py`.
-- Files to modify: `backend/app/main.py` only if shared validation error handling must be registered.
-- Implementation instructions: Define the exact workflow, node, edge, request, response, generation, error, and supported-node enum models. Enforce all listed input and graph rules, including disconnected graphs and decision fan-out. Keep coordinates out of the backend schema and preserve decision edge labels. Use deterministic, testable validation functions.
-- Validation commands: `uv run --project backend pytest backend/tests/test_workflow_schemas.py backend/tests/test_workflow_validation.py`.
+- Status: INCOMPLETE
+- Purpose: Replace automation-card nodes with a safe, extensible standard flowchart visual system.
+- Dependencies/prerequisites: V2 Checkpoints 1-2 complete.
+- Files to create: `frontend/src/components/editor/nodes/FlowchartNode.tsx`, `frontend/src/components/editor/nodes/shapeRegistry.ts`, `frontend/src/components/editor/nodes/shapeGeometry.tsx`, `frontend/src/test/flowchart-nodes.test.tsx`.
+- Files to modify: `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, `frontend/src/index.css`, `frontend/src/test/workflow-canvas.test.tsx` as needed to retire V1 card expectations without duplicating coverage.
+- Implementation instructions: Implement authored SVG backgrounds with safe HTML text overlays and generous hit areas for terminator, process, decision, input-output, database, document, delay, predefined-process, and manual-operation shapes. Register one React Flow node renderer whose data includes semantic text plus presentation shape. Provide defaults for all ten semantic types while allowing shape override independent of semantic type. Include accessible names, selection styling hooks, and source/target handle locations; do not enable mutation yet or inject generated markup.
+- Required tests: Every shape renders; every semantic type has a default shape; semantic type and selected shape can differ; titles/descriptions/applications render as text; handle rules for start/end/regular nodes; unsupported shapes fail safely.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/flowchart-nodes.test.tsx src/test/workflow-canvas.test.tsx src/test/editor-shell.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] The supported-node enum contains exactly the ten Version 1 node types.
-  - [x] A representative valid workflow parses.
-  - [x] Workflow request and response models match the Version 1 contract.
-  - [x] Safe error response models exist.
-  - [x] Unknown schema fields are rejected.
-  - [x] Coordinates are rejected.
-  - [x] Execution fields are rejected.
-  - [x] Persistence identifiers are not part of the schema.
-  - [x] Prompt validation enforces non-empty input and the 5,000-character limit.
-  - [x] Duplicate node IDs fail safely.
-  - [x] Duplicate edge IDs fail safely.
-  - [x] Missing source references fail safely.
-  - [x] Missing target references fail safely.
-  - [x] Self-referencing edges fail safely.
-  - [x] Start nodes with incoming edges fail safely.
-  - [x] End nodes with outgoing edges fail safely.
-  - [x] Decision nodes require at least two outgoing edges.
-  - [x] Decision outgoing edges require meaningful labels.
-  - [x] Valid decision edge labels are preserved.
-  - [x] Disconnected multi-node workflows fail safely.
-  - [x] Single-node workflows may pass without edges.
-  - [x] Validation functions are deterministic.
-  - [x] Validation does not mutate workflow data.
-  - [x] Validation errors are safe and actionable.
-  - [x] No Groq communication is implemented.
-  - [x] No API generation route is implemented.
-  - [x] No frontend files are modified.
-  - [x] Existing health tests still pass.
-  - [x] All required schema and validation tests pass.
-  - [x] No unrelated files are changed.
-- Commit message: `feat(backend): define and validate workflow schema`
-- Stop conditions: Stop if the schema adds unsupported node types, execution semantics, coordinates, persistence identifiers, or silently coerces invalid graph data.
+  - [ ] All nine required flowchart shapes use authored safe geometry and readable labels.
+  - [ ] Visual shape is presentation state and never changes semantic type or API data.
+  - [ ] V1 custom-card appearance is removed from the active editor canvas.
+  - [ ] Navigation and safe plain-text rendering remain intact.
+- Commit message: `feat(frontend): render standard flowchart shapes`
+- Stop conditions: Stop if shapes require unsafe SVG/HTML injection, semantic schema changes, or an unnecessary graphics dependency.
 
-### Checkpoint 4: Implement provider-agnostic structured workflow generation
+### V2 Checkpoint 4: Add selection, node movement, and node inspection
 
-- Status: COMPLETE
-- Purpose: Convert a natural-language prompt into validated workflow data through a provider-agnostic AI boundary.
-- Files to create: `backend/app/providers/__init__.py`, `backend/app/providers/base.py`, `backend/app/providers/exceptions.py`, `backend/app/providers/factory.py`, `backend/app/providers/openai_compatible.py`, `backend/app/services/__init__.py`, `backend/app/services/workflow_generation.py`, `backend/app/prompts/__init__.py`, `backend/app/prompts/workflow_generation.py`, `backend/tests/test_provider_factory.py`, `backend/tests/test_openai_compatible_provider.py`, `backend/tests/test_generation_service.py`.
-- Files to modify: `backend/app/config.py`, `backend/.env.example`, `backend/pyproject.toml`, `backend/uv.lock`, `instructions.md`, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
-- Implementation instructions: Replace Groq-specific settings with generic `AI_*` settings and use `httpx` as the only provider transport. Define an `AIProvider` protocol, generic provider exceptions, an environment-driven factory, and one `OpenAICompatibleProvider` adapter. Configure Groq through the OpenAI-compatible base URL without hardcoding its hostname or using any vendor SDK. Keep the workflow service dependent only on `AIProvider`; generate the Pydantic `Workflow` JSON Schema, request constrained JSON, parse strictly, run Pydantic and graph validation, and retry exactly once only for invalid candidate output. Never retry provider/configuration/credential/rate-limit/timeout/connection/response failures. Do not add the public generation route.
-- Validation commands: `uv run --project backend pytest backend/tests/test_provider_factory.py backend/tests/test_openai_compatible_provider.py backend/tests/test_generation_service.py`; `uv run --project backend pytest backend/tests/test_health.py backend/tests/test_workflow_schemas.py backend/tests/test_workflow_validation.py`; `uv run --project backend pytest backend/tests`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`; `uv run --project backend python -c "from app.providers.base import AIProvider; from app.providers.factory import create_ai_provider; from app.providers.openai_compatible import OpenAICompatibleProvider; from app.services.workflow_generation import WorkflowGenerationService; print('provider-agnostic-generation-ok')"`; `git diff --check`.
+- Status: INCOMPLETE
+- Purpose: Enable controlled selection and editing of existing workflow nodes without coupling React Flow objects to domain state.
+- Dependencies/prerequisites: V2 Checkpoints 1-3 complete.
+- Files to create: `frontend/src/components/editor/NodeInspector.tsx`, `frontend/src/components/editor/InspectorPanel.tsx`, `frontend/src/test/node-editing.test.tsx`.
+- Files to modify: `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, `frontend/src/editor/editorReducer.ts`, `frontend/src/editor/types.ts`, `frontend/src/index.css`.
+- Implementation instructions: Enable single-node selection and node dragging only in Select mode and only at widths of at least 768px. Keep smooth drag previews local to the canvas and commit the final position once on drag stop. Show a compact inspector for title, description, application, shape, read-only semantic type, and a reserved delete action completed in Checkpoint 5. Enforce nonblank title/description locally; normalize optional application; commit semantic fields and shape changes as separate undoable transactions. Lock mutation controls during generation/edit requests while leaving pan/zoom usable.
+- Required tests: Single selection and clear selection; drag commits presentation only once; semantic workflow receives no coordinates; inspector edits semantic fields; shape edit changes presentation only; invalid blank required fields do not commit; mobile/manual and loading locks.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/node-editing.test.tsx src/test/editor-state.test.ts src/test/flowchart-nodes.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] The Checkpoint 4 plan text is updated to the provider-agnostic architecture.
-  - [x] Permanent project instructions reflect the provider-agnostic architecture.
-  - [x] `httpx` is the only provider transport dependency; no provider SDK is installed.
-  - [x] `AIProvider` is the generic provider contract.
-  - [x] `OpenAICompatibleProvider` is the only implemented adapter and has no hardcoded Groq hostname.
-  - [x] Groq and another compatible provider can be selected through settings without service changes.
-  - [x] Unknown providers and missing credentials fail safely without startup network access.
-  - [x] Generic provider errors are classified and never retried.
-  - [x] The workflow schema is generated from the Checkpoint 3 Pydantic model.
-  - [x] Prompts require supported node types, assumptions, missing requirements, suggestions, and prohibit coordinates, HTML, code, credentials, and persistence fields.
-  - [x] Candidate JSON is parsed strictly and always passes Pydantic and graph validation.
-  - [x] Invalid candidates retry exactly once and never exceed two provider calls.
-  - [x] Invalid output after retry raises a controlled validation exception.
-  - [x] Automated provider tests use mocked HTTP and service tests use fake providers; no live network occurs.
-  - [x] No frontend files or public generation endpoint are added.
-  - [x] Existing backend tests and all Checkpoint 4 tests pass.
-  - [x] No unrelated files are changed.
-- Commit message: `feat(backend): add provider-agnostic workflow generation`
-- Stop conditions: Stop if a provider SDK is needed, the service references a vendor, the adapter hardcodes Groq, raw output bypasses validation, retries exceed two calls, provider failures retry, tests require network/credentials, or Checkpoint 5 becomes necessary.
+  - [ ] Existing nodes are selectable and movable only in the intended mode and viewport.
+  - [ ] Manual positions survive rerenders and semantic field edits.
+  - [ ] Inspector editing preserves safe text rendering and leaves semantic type fixed.
+  - [ ] Viewport movement and transient drag frames do not pollute undo history.
+- Commit message: `feat(frontend): enable node selection and editing`
+- Stop conditions: Stop if dragging mutates semantic data, every pointer move creates history, multi-selection is required, or text-field keys trigger canvas deletion.
 
-### Checkpoint 5: Expose the workflow generation API
+### V2 Checkpoint 5: Add node creation, deletion, toolbar, and validation feedback
 
-- Status: COMPLETE
-- Purpose: Provide the required POST endpoint with thin routing and stable request/error/response behavior.
-- Files to create: `backend/app/api/errors.py`, `backend/app/api/routes/workflows.py`, `backend/tests/test_workflow_routes.py`.
-- Files to modify: `backend/app/main.py`, `backend/app/schemas/workflow.py`, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
-- Implementation instructions: Add `POST /api/v1/workflows/generate` over the provider-agnostic `WorkflowGenerationService`. Validate the canonical request before service invocation, resolve the service through FastAPI dependency injection and the provider factory, measure `durationMs`, return the configured model name, and map provider-agnostic exceptions through centralized safe handlers. The route must not call Groq or any provider directly, parse model output, validate graphs, retry, persist, or expose provider internals, credentials, raw responses, or candidate output.
-- Validation commands: `uv run --project backend pytest backend/tests/test_workflow_routes.py backend/tests/test_health.py`; `uv run --project backend pytest backend/tests/test_provider_factory.py backend/tests/test_openai_compatible_provider.py backend/tests/test_generation_service.py`; `uv run --project backend pytest backend/tests/test_workflow_schemas.py backend/tests/test_workflow_validation.py`; `uv run --project backend pytest backend/tests`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`; `git diff --check`.
+- Status: INCOMPLETE
+- Purpose: Complete the core node lifecycle and expose it through a compact, mode-aware left toolbar.
+- Dependencies/prerequisites: V2 Checkpoints 1-4 complete.
+- Files to create: `frontend/src/components/editor/EditorToolbar.tsx`, `frontend/src/components/editor/EditorToolButton.tsx`, `frontend/src/components/editor/ShapeMenu.tsx`, `frontend/src/components/editor/ValidationIndicator.tsx`, `frontend/src/test/node-tools.test.tsx`.
+- Files to modify: `frontend/src/components/editor/EditorShell.tsx`, `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, `frontend/src/components/editor/NodeInspector.tsx`, `frontend/src/editor/editorReducer.ts`, `frontend/src/editor/ids.ts`, `frontend/src/index.css`.
+- Implementation instructions: Add Select and Add-shape modes plus semantic creation presets for start, end, trigger, action/process, decision/approval, API/input-output, database, notification/document, wait/delay, predefined process, and manual operation. On the next canvas click, create a node with a collision-safe ID, chosen semantic type/shape, title `New step`, description `Describe this step.`, and `application: null`. Permit the resulting disconnected draft and display concise graph issues. Implement node deletion as one transaction that removes incident edges, presentation, and selection; allow an empty draft. Complete the inspector delete action. Toolbar New/close resets only after confirmation when state exists.
+- Required tests: Preset-to-semantic/shape mapping; deterministic placement; valid default fields; disconnected issue; node deletion cascade; deleting the last node; toolbar pressed/disabled accessibility; AI-invalid draft disables iteration without blocking manual repair.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/node-tools.test.tsx src/test/node-editing.test.tsx src/test/editor-validation.test.ts src/test/editor-state.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] Provider-agnostic Checkpoint 5 wording is defined.
-  - [x] `POST /api/v1/workflows/generate` returns validated workflow data and generation metadata.
-  - [x] Configured model and non-negative integer `durationMs` are returned.
-  - [x] Empty, whitespace-only, oversized, non-string, malformed, and unknown-field requests return safe HTTP 422 responses before service invocation.
-  - [x] Known generation and provider errors map to deterministic safe HTTP responses.
-  - [x] Unexpected errors return generic HTTP 500 responses.
-  - [x] Error responses expose no provider internals, credentials, raw output, request headers, or tracebacks.
-  - [x] Route code remains orchestration-only and provider-agnostic.
-  - [x] Dependency overrides replace the generation service in tests.
-  - [x] No live provider calls, persistence, execution behavior, or frontend changes are introduced.
-  - [x] Existing backend and Checkpoint 5 tests pass.
-  - [x] No unrelated files are changed.
-- Commit message: `feat(backend): expose workflow generation endpoint`
-- Stop conditions: Stop if the route calls a provider directly, exposes internal errors or secrets, accepts execution fields, persists data, makes live calls in tests, or requires Checkpoint 6.
+  - [ ] Users can add and delete nodes without introducing schema-invalid field values.
+  - [ ] Temporarily graph-invalid drafts remain editable and show compact actionable issues.
+  - [ ] Node deletion cleans semantic edges and presentation records atomically.
+  - [ ] Toolbar scope remains bounded; no line, styling, group, or multi-select tools appear.
+- Commit message: `feat(frontend): add node creation and validation tools`
+- Stop conditions: Stop if creation needs backend coordinates, invalid drafts reach the AI endpoint, or deletion leaves dangling references.
 
-### Checkpoint 6: Build frontend prompt page and API client
+### V2 Checkpoint 6: Add editable connections and edge inspection
 
-- Status: COMPLETE
-- Purpose: Let an internal user enter a prompt, submit it to the backend, clear it, and hold a typed result in memory.
-- Files to create: `frontend/src/types/workflow.ts`, `frontend/src/api/client.ts`, `frontend/src/components/Header.tsx`, `frontend/src/components/PromptPanel.tsx`, `frontend/src/lib/constants.ts`.
-- Files to modify: `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/.env.example` (no package changes required).
-- Implementation instructions: Create one responsive main page with product header, prompt textarea, example prompt, character count and limit, Generate Workflow, Clear, loading state, and controlled error display. Use `VITE_API_BASE_URL` only, typed request/response models, and an in-memory result callback. Prevent duplicate submissions and clear both prompt/result/error as specified; do not add persistence or routing.
-- Validation commands: `npm ci --prefix frontend`; `npm run build --prefix frontend`.
+- Status: INCOMPLETE
+- Purpose: Support controlled edge creation, labelling, selection, and deletion with graph feedback.
+- Dependencies/prerequisites: V2 Checkpoints 1-5 complete.
+- Files to create: `frontend/src/components/editor/EdgeInspector.tsx`, `frontend/src/components/editor/ConnectionLabelDialog.tsx`, `frontend/src/test/edge-editing.test.tsx`.
+- Files to modify: `frontend/src/components/editor/EditorToolbar.tsx`, `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, `frontend/src/components/editor/InspectorPanel.tsx`, `frontend/src/editor/editorReducer.ts`, `frontend/src/editor/validation.ts`, `frontend/src/index.css`.
+- Implementation instructions: Add Connect mode and enable handle dragging only in that mode. Reject missing endpoints, duplicate IDs, and self-connections before commit. Request a nonblank label before committing an outgoing decision edge; non-decision labels default to `null` and remain editable. Support single-edge selection, label changes, and deletion through the edge inspector. Blank labels normalize to `null`, allowing the validator to flag an existing decision edge if edited invalid. Every edge action is one history transaction; default React Flow deletion remains disabled outside explicit commands.
+- Required tests: Mode-gated connection creation; safe edge ID generation; self-edge rejection; decision label prompt; non-decision optional label; edge selection/label edit/delete; validation issue updates; no dangling endpoints.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/edge-editing.test.tsx src/test/editor-validation.test.ts src/test/editor-state.test.ts src/test/workflow-canvas.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] UI renders the required prompt controls.
-  - [x] Client posts exactly `{prompt}` to the configured API.
-  - [x] Response and error parsing are typed.
-  - [x] Groq credentials are absent from frontend environment and source.
-  - [x] Generated state is held only in memory and is lost on refresh.
-- Commit message: `feat(frontend): add prompt generation page`
-- Stop conditions: Stop if local storage, accounts, export, editing controls, or direct provider calls are introduced.
+  - [ ] Users can create, label, select, edit, and delete semantic connections deliberately.
+  - [ ] Decision-branch requirements are enforced at creation and visible during later draft edits.
+  - [ ] React Flow cannot mutate edges outside the reducer transaction boundary.
+  - [ ] No provider, persistence, multi-edge selection, or generic drawing tool is added.
+- Commit message: `feat(frontend): add editable workflow connections`
+- Stop conditions: Stop if connection creation bypasses semantic state, creates dangling edges, or enables unrestricted React Flow mutation.
 
-### Checkpoint 7: Add custom React Flow node rendering
+### V2 Checkpoint 7: Add annotations, keyboard interactions, and remaining toolbar behavior
 
-- Status: COMPLETE
-- Purpose: Render validated workflow nodes and labelled edges as a read-only visual canvas.
-- Files to create: `frontend/src/components/WorkflowCanvas.tsx`, `frontend/src/components/WorkflowResult.tsx`, `frontend/src/components/nodes/WorkflowNode.tsx`, `frontend/src/components/nodes/nodeTypes.ts`, `frontend/src/test/workflow-canvas.test.tsx`.
-- Files to modify: `frontend/src/App.tsx`, `frontend/src/index.css`, `frontend/package.json`, `frontend/package-lock.json`, `frontend/vite.config.ts`.
-- Implementation instructions: Map each supported domain node type to a distinct safe visual treatment, show title/description/application, use React Flow handles appropriate for the direction, and render edge labels. Configure the canvas as read-only by disabling dragging, connecting, editing, deletion, and mutation controls while retaining navigation. Add `MiniMap`, controls, fit behavior, and grid background, but do not calculate layout here.
-- Validation commands: `npm.cmd ci --prefix frontend`; `npm.cmd run build --prefix frontend`; `npm.cmd run test --prefix frontend -- --run src/test/workflow-canvas.test.tsx`; `git diff --check`.
+- Status: INCOMPLETE
+- Purpose: Finish the bounded manual editor toolset without mixing annotations into workflow semantics.
+- Dependencies/prerequisites: V2 Checkpoints 1-6 complete.
+- Files to create: `frontend/src/components/editor/nodes/AnnotationNode.tsx`, `frontend/src/components/editor/AnnotationInspector.tsx`, `frontend/src/hooks/useEditorShortcuts.ts`, `frontend/src/test/annotations-shortcuts.test.tsx`.
+- Files to modify: `frontend/src/components/editor/EditorToolbar.tsx`, `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, `frontend/src/components/editor/InspectorPanel.tsx`, `frontend/src/editor/editorReducer.ts`, `frontend/src/index.css`.
+- Implementation instructions: Add Text mode: the next canvas click creates a presentation-only annotation with a safe ID, `Text` default, and clicked position. Render annotations as a distinct React Flow view-node type, selectable/movable only in Select mode, editable/deletable through its inspector, and absent from semantic workflow/API payloads. Add AI-focus, New/close, and Escape behaviors. Implement Delete/Backspace for selected editable elements and Ctrl/Cmd+Z plus Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y dispatch hooks, but do nothing when an input, textarea, select, or contenteditable element owns focus. Undo/redo buttons may remain disabled until Checkpoint 12 exposes final history controls.
+- Required tests: Annotation create/edit/move/delete and API exclusion; Escape selection/tool reset; guarded deletion while typing; shortcut dispatch; New confirmation; toolbar keyboard labels and disabled states.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/annotations-shortcuts.test.tsx src/test/node-tools.test.tsx src/test/edge-editing.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] `@xyflow/react` is installed and its stylesheet is loaded globally.
-  - [x] All ten supported types have explicit, distinct visual registry entries.
-  - [x] Nodes and edges preserve IDs, data, source/target references, and labels.
-  - [x] Temporary sequential positions are deterministic and do not mutate domain data.
-  - [x] Start/end/regular handle rules are enforced.
-  - [x] MiniMap, Controls, Background, fit view, pan, and zoom are enabled.
-  - [x] Dragging, connecting, selection, focus editing, deletion, and mutation callbacks are disabled.
-  - [x] Unsupported runtime node types show a controlled error and are not remapped.
-  - [x] Generated title, description, application, and edge values render as text only.
-  - [x] The focused canvas test passes without backend or provider calls.
-- Commit message: `feat(frontend): render read-only workflow nodes`
-- Stop conditions: Stop if unsupported node types are silently rendered as executable elements, arbitrary HTML is injected, or editing behavior is added.
+  - [ ] Annotations remain presentation-only and safely rendered.
+  - [ ] Core keyboard actions work without intercepting text editing.
+  - [ ] The toolbar contains only the planned V2 tools and is keyboard accessible.
+  - [ ] No annotation, selection, viewport, or tool state is sent to the backend.
+- Commit message: `feat(frontend): add annotations and editor shortcuts`
+- Stop conditions: Stop if annotations become semantic nodes, shortcuts delete while typing, or scope expands to freehand drawing or advanced styling.
 
-### Checkpoint 8: Add Dagre left-to-right automatic layout
+### V2 Checkpoint 8: Implement provider-agnostic workflow edit schemas and service
 
-- Status: COMPLETE
-- Purpose: Calculate stable React Flow positions from domain graph data after generation.
-- Files to create: `frontend/src/lib/layout.ts`, `frontend/src/test/layout.test.ts`.
-- Files to modify: `frontend/src/components/WorkflowCanvas.tsx`, `frontend/src/index.css`, `frontend/src/test/workflow-canvas.test.tsx`, `frontend/package.json`, `frontend/package-lock.json`.
-- Implementation instructions: Build a Dagre graph with left-to-right direction, map domain nodes/edges without coordinates from the API, calculate positions in a pure function, and translate the result to React Flow nodes/edges. Preserve IDs, node data, edge labels, and graph order. Re-run layout when workflow changes and fit the view after nodes mount.
-- Validation commands: `npm.cmd ci --prefix frontend`; `npm.cmd run test --prefix frontend -- --run src/test/layout.test.ts`; `npm.cmd run test --prefix frontend -- --run src/test/workflow-canvas.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
+- Status: INCOMPLETE
+- Purpose: Add a safe backend service that revises a validated semantic workflow from a natural-language instruction.
+- Dependencies/prerequisites: Version 1 backend contracts remain passing; frontend V2 checkpoints do not block this backend work.
+- Files to create: `backend/app/schemas/workflow_edit.py`, `backend/app/prompts/workflow_edit.py`, `backend/app/services/workflow_candidates.py`, `backend/app/services/workflow_edit.py`, `backend/tests/test_workflow_edit_schemas.py`, `backend/tests/test_workflow_edit_service.py`.
+- Files to modify: `backend/app/services/workflow_generation.py`, `backend/tests/test_generation_service.py` only as needed to reuse shared candidate parsing/feedback without behavior change.
+- Implementation instructions: Define strict `EditWorkflowRequest` (`instruction`, `workflow`) and `EditWorkflowResponse` (`workflow`, `generation`) models; cap and normalize instruction like the generation prompt. Extract reusable candidate JSON/Pydantic/graph validation helpers while preserving generation exports and retry behavior. `WorkflowEditService` validates the current graph before any provider call, depends only on `AIProvider`, sends the current workflow serialized by API aliases plus the instruction, and requests a full revised `Workflow`. The prompt must preserve IDs for retained/modified nodes, allocate unique IDs for additions, omit deletions, return no coordinates/presentation/annotations/HTML/code/secrets, and preserve all required fields. Retry exactly once only for invalid candidate content. Define separate safe input-invalid and revised-output-invalid exceptions; provider errors pass through unchanged and are never retried.
+- Required tests: Strict request/response fields; normalized instruction; invalid current graph causes zero provider calls; full-workflow prompt includes current semantics and identity rules; valid revision; malformed/schema-invalid/graph-invalid correction once; second invalid response stops at two calls; provider failures are not retried; no presentation fields or secret leakage.
+- Validation commands: `uv run --project backend pytest backend/tests/test_workflow_edit_schemas.py backend/tests/test_workflow_edit_service.py backend/tests/test_generation_service.py`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`; `git diff --check`.
 - Acceptance criteria:
-  - [x] `@dagrejs/dagre` is installed and `dagre` is not installed.
-  - [x] `layoutWorkflow` is pure, coordinate-free at the domain boundary, deterministic, and left-to-right.
-  - [x] Every node receives a finite position while node IDs, data, and order are preserved.
-  - [x] Edge IDs, source/target IDs, labels, and order are preserved, including parallel edges.
-  - [x] Input workflow data is not mutated and single-node workflows remain valid without fabricated edges.
-  - [x] The temporary sequential layout is removed and layout reruns for a new workflow.
-  - [x] React Flow fits the laid-out viewport after nodes initialize and remains read-only.
-  - [x] Backend validation remains responsible for disconnected or invalid graph input.
-  - [x] Layout and canvas regression tests pass; no Checkpoint 9 UI is implemented.
-- Commit message: `feat(frontend): add Dagre workflow layout`
-- Stop conditions: Stop if coordinates are requested from Groq, layout mutates domain data, or manual positioning/editing is introduced.
+  - [ ] Editing uses a dedicated service over the existing provider abstraction and returns a full validated workflow.
+  - [ ] Current and revised workflows both pass strict semantic and graph validation at the correct boundaries.
+  - [ ] Identity-preservation instructions are explicit, and provider failures remain non-retryable.
+  - [ ] Existing generation behavior, provider transport, API routes, and frontend remain unchanged.
+- Commit message: `feat(backend): add provider-agnostic workflow editing`
+- Stop conditions: Stop if patches are required, the service becomes vendor-specific, current invalid input reaches the provider, or retries exceed one correction.
 
-### Checkpoint 9: Add workflow metadata and insight panels
+### V2 Checkpoint 9: Expose the workflow edit API and typed frontend client
 
-- Status: COMPLETE
-- Purpose: Display the generated workflow’s title, description, assumptions, missing requirements, and suggestions beside the canvas.
-- Files to create: `frontend/src/components/InsightPanel.tsx`, `frontend/src/test/workflow-result.test.tsx`.
-- Files to modify: `frontend/src/components/WorkflowResult.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`.
-- Implementation instructions: Render title and description as text, provide distinct sections for each insight array, handle empty arrays without fabricated content, and keep the result read-only. Preserve the single-page layout and avoid adding save/export/share actions.
-- Validation commands: `npm run build --prefix frontend`; `npm run test --prefix frontend -- --run src/test/workflow-result.test.tsx`.
+- Status: INCOMPLETE
+- Purpose: Publish the edit service through a thin safe route and establish the frontend contract without wiring editor UI.
+- Dependencies/prerequisites: V2 Checkpoint 8 complete; Version 1 route/client tests passing.
+- Files to create: `backend/tests/test_workflow_edit_routes.py`, `frontend/src/test/edit-api-client.test.ts`.
+- Files to modify: `backend/app/api/routes/workflows.py`, `backend/app/api/errors.py`, `backend/app/schemas/workflow_edit.py`, `frontend/src/types/workflow.ts`, `frontend/src/api/client.ts`, `backend/tests/test_error_mapping.py`, `frontend/src/test/api-client.test.ts` only when shared helpers move.
+- Implementation instructions: Register `POST /api/v1/workflows/edit` with dependency-injected `WorkflowEditService`. Return the revised workflow plus configured model and non-negative duration metadata. Map invalid submitted workflow/instruction to safe 422 responses, invalid revised candidates after correction to controlled 502, and reuse all existing provider handlers. Add typed `editWorkflow({ instruction, workflow })` with the same 30-second abort, safe error mappings, no retry, and strict success-shape validation as generation; refactor shared client parsing only when it reduces duplication. Send exactly semantic fields—never presentation, annotations, selection, viewport, or provider data.
+- Required tests: Request validation before service call; valid response metadata; dependency override; each new error mapping; no leakage; exact frontend body and URL; timeout/network/non-JSON/malformed-success behavior; one fetch only; generation route/client regressions.
+- Validation commands: `uv run --project backend pytest backend/tests/test_workflow_edit_routes.py backend/tests/test_error_mapping.py backend/tests/test_workflow_routes.py`; `npm.cmd run test --prefix frontend -- --run src/test/edit-api-client.test.ts src/test/api-client.test.ts`; `uv run --project backend ruff check backend`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] Workflow title, description, assumptions, missing requirements, and suggestions are visibly represented as plain text.
-  - [x] Insight sections preserve backend order and remain visible with deterministic category-specific empty states.
-  - [x] The existing read-only React Flow canvas and Dagre layout behavior remain intact.
-  - [x] Metadata remains in browser memory with no persistence, export, share, execution, or editing UI.
-  - [x] Workflow result, canvas, and layout tests pass, and the frontend production build succeeds.
-- Commit message: `feat(frontend): display workflow metadata and insights`
-- Stop conditions: Stop if content is rendered as HTML, insights are invented client-side, or excluded actions appear.
+  - [ ] The edit endpoint is thin, provider-agnostic, strictly typed, and safely mapped.
+  - [ ] The frontend client posts only instruction plus the semantic workflow and validates the complete response.
+  - [ ] Edit failures never expose provider internals or trigger frontend retry.
+  - [ ] Existing generation and health contracts remain unchanged.
+- Commit message: `feat(api): expose workflow editing endpoint`
+- Stop conditions: Stop if the route performs prompting/validation/retry itself, presentation leaks into the request, or tests require network credentials.
 
-### Checkpoint 10: Complete loading, error, and UX states
+### V2 Checkpoint 10: Reconcile canvas presentation across semantic revisions
 
-- Status: COMPLETE
-- Purpose: Make generation behavior predictable for slow, invalid, and failed requests.
-- Files to create: `frontend/src/test/prompt-panel.test.tsx`, `frontend/src/test/api-client.test.ts`.
-- Files to modify: `frontend/src/App.tsx`, `frontend/src/components/PromptPanel.tsx`, `frontend/src/api/client.ts`, `frontend/src/index.css`.
-- Implementation instructions: Show an accessible loading state and disable duplicate submission, preserve or clear prior results according to the request lifecycle, normalize backend errors into safe messages, handle network/timeout/non-JSON failures, and keep Clear deterministic. Do not expose stack traces, API keys, or raw provider responses.
-- Validation commands: `npm run test --prefix frontend -- --run src/test/prompt-panel.test.tsx src/test/api-client.test.ts`; `npm run build --prefix frontend`.
+- Status: INCOMPLETE
+- Purpose: Preserve user-owned layout and shape choices when a full revised workflow arrives.
+- Dependencies/prerequisites: V2 Checkpoint 1 presentation types and V2 Checkpoint 9 response types complete.
+- Files to create: `frontend/src/editor/reconcileWorkflow.ts`, `frontend/src/test/reconcile-workflow.test.ts`.
+- Files to modify: `frontend/src/editor/types.ts`, `frontend/src/editor/presentation.ts`.
+- Implementation instructions: Implement a pure reconciliation function receiving previous workflow, previous presentation map, revised workflow, and a canvas-center fallback. Retain exact-ID records unchanged; remove records for deleted IDs; place new nodes in revised semantic order after the first retained predecessor, otherwise before the first retained successor, otherwise near the supplied center. Use fixed horizontal/vertical spacing and deterministic downward collision resolution. Assign new nodes their semantic default shape. Return a typed identity-instability result rather than presentation when both workflows contain nodes but share zero IDs. Do not use title/type heuristics, mutate inputs, run full Dagre, or alter annotations.
+- Required tests: Unchanged and modified same-ID nodes retain positions/shapes; deletion removes presentation; new predecessor/successor/center placement; multiple-new-node collision avoidance; deterministic output; input immutability; annotations unaffected by caller transaction; zero-overlap identity instability; partial ID churn accepted.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/reconcile-workflow.test.ts src/test/editor-state.test.ts src/test/layout.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] Accessible loading state and disabled controls prevent duplicate or conflicting actions during requests.
-  - [x] Empty, whitespace-only, and oversized prompts are blocked locally; valid submissions create one request.
-  - [x] Prior results remain during regeneration and after failures, successful results replace them, and idle Clear removes all current state.
-  - [x] Network, timeout, backend-envelope, non-JSON, empty, and HTML failures map to controlled safe errors.
-  - [x] Malformed successful workflow, generation, node, edge, and insight data is rejected before reaching application state.
-  - [x] The frontend performs no retries, exposes no provider internals, and adds no persistence.
-  - [x] Focused, regression, and complete frontend tests pass, and the production build succeeds.
-- Commit message: `fix(frontend): handle generation loading and errors`
-- Stop conditions: Stop if errors expose provider internals, retries are duplicated in the frontend, or a stateful persistence mechanism is added.
+  - [ ] Existing manual positions and shape overrides survive ordinary AI revisions.
+  - [ ] New nodes receive deterministic local positions without moving retained nodes.
+  - [ ] Removed nodes lose presentation and excessive identity churn is surfaced safely.
+  - [ ] Reconciliation remains a pure module independent of React components and network code.
+- Commit message: `feat(frontend): preserve canvas state across workflow edits`
+- Stop conditions: Stop if reconciliation requires coordinates from the backend, heuristic identity remapping, automatic full Dagre, or mutation of previous state.
 
-### Checkpoint 11: Expand backend automated coverage
+### V2 Checkpoint 11: Integrate prompt-based AI workflow iteration
 
-- Status: COMPLETE
-- Purpose: Lock down all Version 1 backend validation and provider behavior before final integration.
-- Files to create: `backend/tests/test_error_mapping.py`; create `backend/tests/conftest.py` only when shared fixtures materially reduce duplication.
-- Files to modify: `backend/tests/test_workflow_validation.py`, `backend/tests/test_provider_factory.py`, `backend/tests/test_openai_compatible_provider.py`, `backend/tests/test_generation_service.py`, `backend/tests/test_workflow_routes.py`, `backend/tests/test_health.py`.
-- Implementation instructions: Audit existing coverage first and add only missing high-value cases. Test `AIProvider` behavior through `OpenAICompatibleProvider` with mocked HTTP, use fake providers and services for generation and routes, assert bounded call counts and safe errors, and keep health independent from AI configuration. Do not add provider SDKs or live provider calls.
-- Validation commands: `uv run --project backend pytest`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`.
+- Status: INCOMPLETE
+- Purpose: Turn the generated-state composer into a safe natural-language editor using the new API and reconciliation boundary.
+- Dependencies/prerequisites: V2 Checkpoints 9-10 complete; editor shell and reducer complete.
+- Files to create: `frontend/src/test/ai-iteration.test.tsx`.
+- Files to modify: `frontend/src/App.tsx`, `frontend/src/components/editor/WorkflowPromptComposer.tsx`, `frontend/src/components/editor/EditorShell.tsx`, `frontend/src/components/editor/EditorToolbar.tsx`, `frontend/src/editor/editorReducer.ts`, `frontend/src/api/client.ts` only if integration exposes a contract defect, `frontend/src/index.css`.
+- Implementation instructions: In existing-workflow mode, submit the trimmed composer value through `editWorkflow` with only the current semantic draft. Require a nonempty graph-valid draft; otherwise focus validation feedback instead of calling the API. Keep the workflow visible while editing, show an accessible editing status, prevent duplicate requests, and disable all semantic/manual mutation tools while retaining pan/zoom. On success, reconcile presentation, update insights from the revised workflow, clear the instruction, and commit the whole semantic/presentation change as one history transaction. On provider, validation, malformed-response, or identity-instability failure, keep workflow, presentation, annotations, and history unchanged and display one controlled message. Initial generation behavior remains separate.
+- Required tests: Exact edit call; bottom composer mode; loading lock with navigation retained; duplicate prevention; successful semantic/insight update; positions and shape overrides preserved; new/deleted nodes reconciled; invalid draft makes zero calls; safe provider failure and identity instability preserve prior editor state; no annotation/presentation leakage.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/ai-iteration.test.tsx src/test/editor-shell.test.tsx src/test/reconcile-workflow.test.ts src/test/edit-api-client.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] Existing schema, graph, provider, generation, route, error, leakage, and health coverage was audited before adding tests.
-  - [x] Missing decision-label and graph-invalid correction-retry cases have direct coverage without duplicating established tests.
-  - [x] Provider failures and centralized API exception mappings have direct parametrized coverage with stable status and error codes.
-  - [x] Retry call counts remain bounded to two, provider failures are not retried, and one focused secret-leakage regression exists.
-  - [x] Provider HTTP is mocked, generation and route tests use fakes, and health is independent from local AI credentials.
-  - [x] No required tests are skipped, no provider SDK or excluded feature tests were added, and no live network is required.
-  - [x] The complete backend suite, Ruff, and Python compilation pass.
-- Commit message: `test(backend): cover workflow generation behavior`
-- Stop conditions: Stop if tests require network credentials, skip required cases, or reveal secrets in fixtures/output.
+  - [ ] Natural-language instructions revise the visible workflow through the backend edit contract.
+  - [ ] Failed edits never destroy or partially replace current editor state.
+  - [ ] Manual layout and shape choices survive successful edits by stable ID.
+  - [ ] AI-edit loading behavior is deterministic, accessible, and mutation-safe.
+- Commit message: `feat(frontend): add AI workflow iteration`
+- Stop conditions: Stop if invalid drafts reach the backend, manual state is cleared on failure, duplicate submissions occur, or provider details enter frontend code.
 
-### Checkpoint 12: Add frontend automated coverage
+### V2 Checkpoint 12: Add explicit Auto Arrange and complete undo/redo
 
-- Status: COMPLETE
-- Purpose: Verify the prompt flow, rendering, layout, read-only canvas, and controlled states in a browser-like test environment.
-- Files created: `frontend/src/test/setup.ts`, `frontend/src/test/app.test.tsx`.
-- Existing test files audited and reused: `frontend/src/test/workflow-canvas.test.tsx`, `frontend/src/test/workflow-result.test.tsx`, `frontend/src/test/prompt-panel.test.tsx`, `frontend/src/test/api-client.test.ts`, `frontend/src/test/layout.test.ts`.
-- Files modified: `frontend/vite.config.ts`, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
-- Implementation instructions: Configure the test environment, mock the frontend API boundary, add focused App integration coverage for the initial, success, loading, controlled-failure, previous-result, and Clear flows, and retain existing direct coverage for custom nodes, decision labels, read-only settings, safe rendering, API behavior, and Dagre. Do not use snapshot-heavy tests or real network calls.
-- Validation commands: `npm run test --prefix frontend -- --run`; `npm run build --prefix frontend`.
+- Status: INCOMPLETE
+- Purpose: Give users intentional full-layout control and expose reliable history across all editor transactions.
+- Dependencies/prerequisites: V2 Checkpoints 1-11 complete so all recordable action types exist.
+- Files to create: `frontend/src/test/history-auto-arrange.test.tsx`.
+- Files to modify: `frontend/src/lib/layout.ts`, `frontend/src/editor/presentation.ts`, `frontend/src/editor/editorReducer.ts`, `frontend/src/components/editor/EditorToolbar.tsx`, `frontend/src/hooks/useEditorShortcuts.ts`, `frontend/src/components/editor/WorkflowEditorCanvas.tsx` only if viewport fit integration is required.
+- Implementation instructions: Implement Auto Arrange by running Dagre over all current semantic nodes/edges and replacing workflow-node positions only; preserve shape overrides and annotations, then fit view once. Permit structurally safe graph-invalid drafts supported by Dagre and handle empty/single-node drafts deterministically. Expose reducer undo/redo through toolbar and existing shortcuts, with accurate disabled state. Confirm every manual semantic/presentation action, AI edit, and Auto Arrange is one history entry; drag preview, selection, active tool, prompt typing, request state, drawer state, and pan/zoom remain unrecorded. Undo/redo restores snapshot data and clears incompatible current selection.
+- Required tests: Auto Arrange overrides manual positions but preserves shapes/annotations/semantics; one undo restores pre-arrange layout; redo reapplies it; each action category round-trips; AI edit is one step; drag is one step; new action clears redo; history cap; empty/single/draft-invalid behavior; viewport is absent from history.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/history-auto-arrange.test.tsx src/test/editor-state.test.ts src/test/layout.test.ts src/test/node-editing.test.tsx src/test/edge-editing.test.tsx src/test/annotations-shortcuts.test.tsx src/test/ai-iteration.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] Existing frontend coverage was audited first and duplicate cases were avoided.
-  - [x] Shared browser-like setup is configured and the focused App integration suite exists.
-  - [x] Initial controls, successful generation, loading, duplicate prevention, controlled failure, previous-result preservation, and Clear behavior have App-level coverage.
-  - [x] App tests mock `generateWorkflow`; API-client tests mock `fetch`; no test requires live services, credentials, or network access.
-  - [x] Existing suites continue to cover result insights, safe text rendering, every supported node type, decision labels, read-only canvas behavior, and deterministic Dagre output.
-  - [x] No snapshot-heavy strategy, excluded UI behavior, backend change, production feature, or new dependency was introduced.
-  - [x] The complete frontend suite and production build pass; lint is not configured.
-- Commit message: `test(frontend): cover workflow visualization flow`
-- Stop conditions: Stop if tests require a live backend/Groq key, depend on unstable implementation details unnecessarily, or introduce excluded UI behavior.
+  - [ ] Auto Arrange is explicit, undoable, and the only post-generation full-layout operation.
+  - [ ] Undo/redo covers every required editor mutation without recording viewport or transient UI.
+  - [ ] Toolbar and keyboard history controls remain synchronized and input-focus safe.
+  - [ ] Manual positions are otherwise preserved across editing and AI iteration.
+- Commit message: `feat(frontend): add auto arrange and edit history`
+- Stop conditions: Stop if Auto Arrange runs implicitly, annotations/shapes are lost, viewport enters history, or one drag produces many undo steps.
 
-### Checkpoint 13: Document local development and perform final verification
+### V2 Checkpoint 13: Add insights drawer, responsive polish, and lean editor coverage
 
-- Status: COMPLETE
-- Purpose: Make Version 1 locally understandable and verify the complete bounded feature.
-- Files created: `docs/specifications/version-1-workflow.md`, `docs/architecture/version-1.md`.
-- Files modified: `README.md`, `frontend/README.md`, `backend/README.md`, `backend/.env.example`, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
-- Implementation instructions: Document prerequisites (Node/npm, Python 3.12, `uv`), dependency installation from committed manifests/locks, safe env setup, frontend/backend start commands, health check, generation flow, test commands, read-only/in-memory behavior, and explicit Version 1 exclusions. Verify no secret or generated environment is documented as a committed file.
-- Validation commands: `npm ci --prefix frontend`; `npm run test --prefix frontend -- --run`; `npm run build --prefix frontend`; `uv sync --project backend --locked`; `uv run --project backend pytest`; `uv run --project backend ruff check backend`; `git -c safe.directory=D:/AI-Workflow-Builder diff --check`; `git -c safe.directory=D:/AI-Workflow-Builder status --short`.
+- Status: INCOMPLETE
+- Purpose: Keep the canvas dominant, make insights accessible, and close only genuine cross-feature coverage gaps.
+- Dependencies/prerequisites: V2 Checkpoints 1-12 complete.
+- Files to create: `frontend/src/components/editor/InsightsDrawer.tsx`, `frontend/src/test/editor-integration.test.tsx` only if existing focused suites do not already cover the full critical flow.
+- Files to modify: `frontend/src/components/InsightPanel.tsx`, `frontend/src/components/editor/EditorShell.tsx`, `frontend/src/components/editor/EditorHeader.tsx`, `frontend/src/index.css`, and existing frontend tests only where an audited gap exists.
+- Implementation instructions: Move assumptions, missing requirements, and suggestions into a floating/collapsible read-only drawer that does not permanently consume canvas width and preserves category order/empty states. Finalize layer spacing, focus management, status/error announcements, compact labels/tooltips, inspector overflow, and the under-768 navigation/AI-only limitation. Audit all V2 acceptance criteria before adding integration cases; prefer existing pure/component tests and one compact flow covering generation, manual edit, AI iteration, undo, and Auto Arrange. Do not add snapshot-heavy tests, an E2E framework, or unrelated visual features.
+- Required tests: Drawer open/close and safe text; canvas remains available; mobile mutation controls disabled while generation/iteration/navigation remain; focus/accessible naming; only audited integration gaps; complete frontend regression suite.
+- Validation commands: `npm.cmd run test --prefix frontend -- --run`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [x] Root, frontend, backend, architecture, and workflow-contract documentation accurately describe Version 1 and local development.
-  - [x] Provider configuration is documented generically, with Groq only as an OpenAI-compatible example and no real secret.
-  - [x] All ten node types, implemented graph rules, safe errors, read-only behavior, in-memory lifecycle, security boundaries, and explicit exclusions are documented.
-  - [x] Locked frontend install, full frontend tests, frontend build, locked backend sync, full backend tests, Ruff, backend compilation, and diff checks pass.
-  - [x] Lock files are tracked; real environment files, temporary commit message, dependencies, and virtual environment are ignored.
-  - [x] Automated validation uses mocks or fakes and requires no provider key, provider network request, new test, source change, or Version 2 feature.
-- Commit message: `docs(repo): document and verify version one`
-- Stop conditions: Stop if final validation needs a real secret/network provider, an excluded service, or any source/config change outside Version 1.
+  - [ ] Insights remain accessible and read-only without displacing the primary canvas.
+  - [ ] Desktop editor layers do not obscure core controls, composer, inspector, or React Flow navigation.
+  - [ ] Narrow screens clearly expose the intended AI/navigation-only limitation.
+  - [ ] Lean frontend coverage proves the critical V2 flow without duplicate or unstable tests.
+- Commit message: `feat(frontend): polish workflow editor experience`
+- Stop conditions: Stop if polish expands into theming/design-system work, insights become editable, or tests depend on live services or third-party DOM internals.
 
-## Final Version 1 validation
+### V2 Checkpoint 14: Document and perform final Version 2 verification
 
-Run from a clean working tree after all checkpoint commits, with Groq mocked for automated checks and a safe local key only for an optional manual smoke test:
+- Status: INCOMPLETE
+- Purpose: Make the completed editor reproducible for developers and verify the bounded Version 2 feature set end to end without live providers.
+- Dependencies/prerequisites: V2 Checkpoints 1-13 complete and individually validated.
+- Files to create: `docs/architecture/version-2.md`, `docs/specifications/version-2-editor.md`.
+- Files to modify: `README.md`, `frontend/README.md`, `backend/README.md`, `docs/architecture/version-1.md` and `docs/specifications/version-1-workflow.md` only for clearly labelled supersession links, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
+- Implementation instructions: Document setup, full-screen modes, semantic-versus-presentation architecture, draft validation, manual tools, shape mappings, AI edit API/full-workflow strategy, identity/layout preservation, Auto Arrange, history, annotations, insights, responsive limitations, safe errors/security, in-memory behavior, and explicit exclusions. Do not imply persistence, collaboration, execution, or production deployment. Audit dependencies and commands against manifests, run locked installs and all tests/build/lint/compile checks once, verify ignored secrets/environments and tracked locks, and perform no real provider request. Mark Version 2 complete only after validation.
+- Required tests: No new tests unless final verification exposes a real uncovered defect; rely on the completed focused suites and mocked boundaries.
+- Validation commands: `npm.cmd ci --prefix frontend`; `npm.cmd run test --prefix frontend -- --run`; `npm.cmd run build --prefix frontend`; `uv sync --project backend --locked`; `uv run --project backend pytest`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`; `git -c safe.directory=D:/AI-Workflow-Builder diff --check`; `git -c safe.directory=D:/AI-Workflow-Builder check-ignore backend/.env frontend/.env .codex/commit-message.txt frontend/node_modules backend/.venv`; `git -c safe.directory=D:/AI-Workflow-Builder status --short`.
+- Acceptance criteria:
+  - [ ] Version 2 documentation matches implemented editor behavior and API contracts.
+  - [ ] Locked frontend/backend setup, all automated tests, frontend build, Ruff, and compilation pass without a real provider key or request.
+  - [ ] Semantic/presentation separation, stable-ID reconciliation, explicit Auto Arrange, history, safe rendering, and V1 regressions are verified.
+  - [ ] Lock files remain tracked; secrets/generated environments remain ignored; excluded architecture remains absent.
+  - [ ] `context.md` and this plan record Version 2 complete only after all checks pass.
+- Commit message: `docs(repo): document and verify version two`
+- Stop conditions: Stop if verification needs a live provider, exposes a secret, finds an unresolved editor/data-loss defect, or requires an excluded capability.
 
-1. `npm ci --prefix frontend` and `npm run test --prefix frontend -- --run`.
-2. `npm run build --prefix frontend`.
-3. `uv sync --project backend --locked` and `uv run --project backend pytest`.
-4. `uv run --project backend ruff check backend` and `uv run --project backend python -m compileall -q backend`.
-5. Start backend/frontend using documented commands; verify `GET /api/v1/health` and one manual generation only when a local key is intentionally supplied outside Git.
-6. Confirm response validation, exactly one invalid-output retry, read-only canvas, Dagre left-to-right layout, controls, decision labels, insights, loading/error states, and refresh-cleared memory state.
-7. Confirm no authentication, persistence/database, execution, export, sharing, deployment, Docker, CI/CD, Redis, worker, or credential-integration artifacts exist.
-8. `git -c safe.directory=D:/AI-Workflow-Builder diff --check`; `git -c safe.directory=D:/AI-Workflow-Builder status --short`; `git -c safe.directory=D:/AI-Workflow-Builder check-ignore .env .codex/commit-message.txt node_modules frontend/node_modules backend/.venv`.
+## Final Version 2 validation
+
+After all checkpoint commits, verify from a clean worktree:
+
+1. Install exactly from `frontend/package-lock.json` and `backend/uv.lock`.
+2. Run the complete frontend and backend suites, frontend production build, Ruff, and Python compilation.
+3. Confirm initial generation, centered-to-bottom composer transition, manual node/edge/annotation editing, draft issues, AI iteration, layout reconciliation, Auto Arrange, undo/redo, insights, and responsive limitations through automated mocked coverage.
+4. Confirm the semantic API payload contains no coordinates, shapes, annotations, selection, viewport, history, or provider details.
+5. Confirm an AI edit failure or identity-instability response preserves the current editor snapshot.
+6. Confirm no authentication, persistence, collaboration, execution, export, Docker, deployment, or CI artifacts were introduced.
+7. Verify tracked locks and ignored secrets/environments, then run `git diff --check` and inspect `git status --short`.
+
+An optional manual provider smoke test may be documented but is not required for completion and must never be automated with a real credential.
 
 ## Risks
 
-- Groq structured output may vary by model; strict schema validation and one bounded retry reduce malformed results without creating retry loops.
-- Graph rules such as decision fan-out and start/end direction can reject plausible but ambiguous workflows; clear validation messages and assumptions should guide the user.
-- React Flow and Dagre dimensions can produce cramped layouts; use fixed measured node dimensions and fit-to-view, then address only observed Version 1 layout defects.
-- Dependency APIs may change; use current compatible packages and committed npm/`uv` locks, without redesigning the architecture.
-- Provider latency and rate limits can affect UX; surface controlled errors and loading state without adding background workers or persistence.
-- User-provided and AI-generated text is untrusted; render text safely and never render AI-generated HTML directly.
+- Draft-state rules duplicated in TypeScript and Python can drift. Keep the frontend issue codes aligned with backend tests and treat backend validation as authoritative at the API boundary.
+- React Flow controlled dragging can create excessive renders or history entries. Keep drag previews local and commit only on drag stop.
+- Authored SVG shapes can produce poor hit areas or label overflow. Use common wrappers, fixed tested dimensions, and safe text constraints rather than per-shape interaction logic.
+- AI providers may ignore stable-ID instructions. Exact-ID reconciliation plus zero-overlap rejection prevents silent wholesale layout loss, but partial ID churn may still place changed IDs as new nodes.
+- Local new-node placement can overlap dense manual diagrams. Deterministic collision stepping and explicit Auto Arrange provide a bounded V2 solution; localized graph layout remains future work.
+- Allowing graph-invalid drafts can confuse users. Keep structural data safe, show concise issues immediately, and disable AI iteration until valid.
+- Context/reducer updates can rerender a large editor. Split read/dispatch contexts and keep high-frequency previews inside the canvas before considering a state dependency.
 
 ## Escalation conditions
 
-Escalate before implementation when a requirement needs an excluded feature, a provider behavior cannot support the exact contract, a dependency requires a materially different architecture, a live credential/network is required for automated validation, graph validity rules conflict, or a requested change would exceed the current checkpoint. Escalate rather than weakening validation, exposing secrets, adding persistence, or implementing future-version functionality.
+Escalate before implementation if React Flow cannot support safe authored shapes and mode-gated handles without a new rendering architecture; if stable-ID preservation cannot be made safe without changing the semantic schema; if the edit provider cannot return the full strict workflow contract; if draft validation conflicts materially with backend graph rules; if a required dependency introduces an incompatible license or lockfile change; if automated validation requires a live key/network; or if the requested work expands into persistence, collaboration, execution, export, deployment, or another excluded feature.
 
 ## Plan completion and cleanup
 
-After all checkpoints pass, run final validation, update `context.md` with the verified Version 1 state, prepare the final commit message without committing `.codex/commit-message.txt`, and commit only when explicitly authorized. Archive this plan only if it contains an important lasting architectural decision; otherwise reset `implementation-plan.md` to the repository’s empty template after the completed work is committed. Do not mark a checkpoint complete until its acceptance criteria and validation commands pass.
+Each implementer completes only the first incomplete checkpoint, runs its required validation, updates `context.md`, marks that checkpoint complete, and prepares the checkpoint commit message without committing unless authorized. After Checkpoint 14 passes, run final validation, record Version 2 complete, commit when authorized, and then reset or archive this disposable plan according to the permanent project instructions. Do not start Version 3 work from this plan.

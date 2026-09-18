@@ -99,3 +99,16 @@
 - Current known issues: no Checkpoint 13 implementation issues.
 - Next action: commit Checkpoint 13, then perform plan cleanup separately if desired.
 - Proposed commit title: `docs(repo): document and verify version one`.
+
+## Version 2 planning
+
+- Version 1 is complete and committed at `8dc8c57`.
+- Version 2 planning is complete with 14 implementation checkpoints; no Version 2 application code, dependency, lock file, or test was changed during planning.
+- Version 2 targets an in-memory full-screen workflow editor with manual editing, standard flowchart shapes, natural-language iteration, explicit Auto Arrange, undo/redo, annotations, and a collapsible insights surface.
+- The semantic `Workflow` remains coordinate-free. Positions, shape overrides, annotations, selection, viewport, tools, and history are frontend editor concerns.
+- Manual editing uses a temporarily graph-invalid draft model with concise validation issues; structurally invalid data is still blocked, and AI iteration requires a graph-valid draft.
+- State management uses React reducer/context with bounded in-memory snapshot history; no external store is planned.
+- AI editing returns a full revised validated workflow through a provider-agnostic `/api/v1/workflows/edit` capability. Exact stable IDs preserve positions/shapes; new nodes receive deterministic local placement; zero-overlap identity churn is rejected without replacing current state.
+- Full Dagre layout runs initially and only later through explicit Auto Arrange, which intentionally overrides manual positions and remains undoable.
+- First implementation action: V2 Checkpoint 1, establish editor domain, validation, presentation, reducer, and history architecture.
+- Proposed planning commit title: `docs(plan): define version two workflow editor roadmap`.
