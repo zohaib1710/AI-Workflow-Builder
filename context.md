@@ -163,3 +163,14 @@
 - Successful validation: focused node-tools tests (17 passed); focused editor-state tests (10 passed); required combined node-tools/node-editing/editor-validation/editor-state suites (49 passed); frontend production build; `git diff --check`.
 - Next action: implement V2 Checkpoint 6.
 - Proposed commit title: `feat(frontend): add node creation and validation tools`.
+- V2 Checkpoint 6 is complete.
+- Connect mode now creates semantic connections through React Flow handles only when desktop manual mutation is enabled; missing endpoints and self-connections are rejected before commit.
+- Edge IDs use the existing collision-safe generator. Non-decision edges commit immediately with null labels, while decision outgoing edges require a nonblank branch label in a transient accessible dialog.
+- Single-edge selection and a compact EdgeInspector show safe source/target titles, commit trimmed labels as one transaction, normalize blank labels to null, and delete edges explicitly.
+- Draft validation refreshes after edge creation, label editing, and deletion, including visible invalid decision-label and disconnected-graph feedback without blocking manual repair.
+- React Flow edges continue to derive exclusively from semantic `WorkflowEdge` records; pending connections remain transient and unrestricted edge mutation, reconnecting, and keyboard deletion remain disabled.
+- Connect and edge mutation controls lock below 768px and during async loading while pan and zoom remain available.
+- No edge styling, generic drawing tools, annotations, AI editing, provider behavior, persistence, dependency, API-contract, or backend changes were added.
+- Successful validation: focused edge-editing tests (9 passed); focused editor-state/node-editing regressions (18 passed); required combined edge-editing/editor-validation/editor-state/workflow-canvas suites (41 passed); frontend production build; `git diff --check`.
+- Next action: implement V2 Checkpoint 7.
+- Proposed commit title: `feat(frontend): add editable workflow connections`.

@@ -5,6 +5,7 @@ import {
   ReactFlow,
   useNodesInitialized,
   useReactFlow,
+  type Connection,
   type Edge,
   type Node,
   type ReactFlowInstance,
@@ -14,6 +15,7 @@ import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { createUniqueEditorId } from "../../editor/ids"
 import { DEFAULT_SHAPE_BY_NODE_TYPE } from "../../editor/types"
 import { isSupportedNodeType, workflowVisualConfig } from "../nodes/nodeTypes"
+import ConnectionLabelDialog from "./ConnectionLabelDialog"
 import { flowchartNodeTypes, type FlowchartFlowNode, type FlowchartNodeData } from "./nodes/FlowchartNode"
 
 export interface WorkflowEditorCanvasProps {
@@ -32,15 +34,20 @@ function FitViewAfterLayout({ layoutKey }: { layoutKey: string }) {
   return null
 }
 
-function buildEdges(edges: { id: string; source: string; target: string; label: string | null }[]): Edge[] {
+function buildEdges(
+  edges: { id: string; source: string; target: string; label: string | null }[],
+  selectedEdgeId: string | null,
+  selectable: boolean,
+): Edge[] {
   return edges.map((edge) => ({
     id: edge.id,
     source: edge.source,
     target: edge.target,
     type: "smoothstep",
     label: edge.label,
-    selectable: false,
-    focusable: false,
+    selectable,
+    focusable: selectable,
+    selected: edge.id === selectedEdgeId,
     labelShowBg: edge.label !== null,
     labelBgPadding: [6, 3] as [number, number],
     labelBgBorderRadius: 4,
@@ -57,10 +64,12 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
   const [flowInstance, setFlowInstance] = useState<ReactFlowInstance<FlowchartFlowNode> | null>(null)
+  const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null)
   const workflow = editorState?.present.workflow ?? null
   const mutationsEnabled = Boolean(editorState && editingViewport && editorState.asyncState.status === "idle")
   const canEdit = Boolean(mutationsEnabled && editorState?.activeTool === "select")
   const canPlaceNode = Boolean(mutationsEnabled && editorState?.activeTool === "shape" && editorState.pendingNodePreset)
+  const canConnect = Boolean(mutationsEnabled && editorState?.activeTool === "connector")
   const derivedNodes = useMemo<FlowchartFlowNode[]>(() => {
     if (!editorState || !workflow) return []
     return workflow.nodes.map((node, index) => {
@@ -77,19 +86,26 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           shape: presentation?.shape ?? DEFAULT_SHAPE_BY_NODE_TYPE[node.type],
         },
         draggable: canEdit,
-        connectable: false,
+        connectable: canConnect,
         selectable: canEdit,
         deletable: false,
         focusable: canEdit,
         selected: editorState.selection.kind === "node" && editorState.selection.nodeId === node.id,
       }
     })
-  }, [canEdit, editorState, workflow])
+  }, [canConnect, canEdit, editorState, workflow])
   const [nodes, setNodes] = useState<FlowchartFlowNode[]>(derivedNodes)
-  const edges = useMemo(() => buildEdges(workflow?.edges ?? []), [workflow?.edges])
+  const selectedEdgeId = editorState?.selection.kind === "edge" ? editorState.selection.edgeId : null
+  const edges = useMemo(
+    () => buildEdges(workflow?.edges ?? [], selectedEdgeId, canEdit),
+    [canEdit, selectedEdgeId, workflow?.edges],
+  )
   const layoutKey = workflow ? `${workflow.nodes.map((node) => node.id).join(",")}|${workflow.edges.map((edge) => edge.id).join(",")}` : "empty"
 
   useEffect(() => setNodes(derivedNodes), [derivedNodes])
+  useEffect(() => {
+    if (!canConnect) setPendingConnection(null)
+  }, [canConnect])
 
   if (!workflow || !editorState) {
     return (
@@ -107,6 +123,24 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     )
   }
 
+  const commitConnection = (source: string, target: string, label: string | null) => {
+    if (!canConnect) return
+    const edgeId = createUniqueEditorId("edge", new Set(workflow.edges.map((edge) => edge.id)))
+    dispatch({ type: "edge/create", edge: { id: edgeId, source, target, label } })
+  }
+
+  const requestConnection = (connection: Connection) => {
+    if (!canConnect || !connection.source || !connection.target || connection.source === connection.target) return
+    const sourceNode = workflow.nodes.find((node) => node.id === connection.source)
+    const targetExists = workflow.nodes.some((node) => node.id === connection.target)
+    if (!sourceNode || !targetExists) return
+    if (sourceNode.type === "decision") {
+      setPendingConnection({ source: connection.source, target: connection.target })
+      return
+    }
+    commitConnection(connection.source, connection.target, null)
+  }
+
   return (
     <section className={`editor-canvas${canPlaceNode ? " editor-canvas--placing" : ""}`} aria-label="Workflow canvas surface">
       <div className="workflow-canvas" aria-label="Read-only workflow diagram">
@@ -118,10 +152,10 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           fitView
           fitViewOptions={{ padding: 0.2, minZoom: 0.35, maxZoom: 1.2 }}
           nodesDraggable={canEdit}
-          nodesConnectable={false}
+          nodesConnectable={canConnect}
           elementsSelectable={canEdit}
           nodesFocusable={canEdit}
-          edgesFocusable={false}
+          edgesFocusable={canEdit}
           deleteKeyCode={null}
           multiSelectionKeyCode={null}
           selectionOnDrag={false}
@@ -132,6 +166,10 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           onNodeClick={(_, node) => {
             if (canEdit) dispatch({ type: "selection/set", selection: { kind: "node", nodeId: node.id } })
           }}
+          onEdgeClick={(_, edge) => {
+            if (canEdit) dispatch({ type: "selection/set", selection: { kind: "edge", edgeId: edge.id } })
+          }}
+          onConnect={requestConnection}
           onPaneClick={(event) => {
             if (canPlaceNode && editorState.pendingNodePreset && flowInstance) {
               const position = flowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
@@ -155,6 +193,16 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           <Controls showInteractive={false} />
           <MiniMap nodeColor={minimapNodeColor} pannable zoomable />
         </ReactFlow>
+        {pendingConnection && (
+          <ConnectionLabelDialog
+            disabled={!canConnect}
+            onCancel={() => setPendingConnection(null)}
+            onConfirm={(label) => {
+              commitConnection(pendingConnection.source, pendingConnection.target, label)
+              setPendingConnection(null)
+            }}
+          />
+        )}
       </div>
     </section>
   )

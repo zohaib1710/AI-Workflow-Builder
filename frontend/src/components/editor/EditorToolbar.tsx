@@ -51,6 +51,16 @@ function EditorToolbar({ editingViewport, onNewWorkflow }: EditorToolbarProps) {
         onClick={() => setIsShapeMenuOpen((open) => !open)}
       />
       {isShapeMenuOpen && <ShapeMenu disabled={manualToolsDisabled} onSelect={selectPreset} />}
+      <EditorToolButton
+        label="Connect"
+        icon="C"
+        pressed={state.activeTool === "connector"}
+        disabled={manualToolsDisabled}
+        onClick={() => {
+          dispatch({ type: "tool/set", tool: "connector" })
+          setIsShapeMenuOpen(false)
+        }}
+      />
     </nav>
   )
 }

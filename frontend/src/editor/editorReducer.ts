@@ -1,4 +1,4 @@
-import type { Workflow, WorkflowNode } from "../types/workflow"
+import type { Workflow, WorkflowEdge, WorkflowNode } from "../types/workflow"
 import { createInitialPresentation } from "./presentation"
 import { NODE_CREATION_PRESETS_BY_ID, type CanvasPosition, type EditorAsyncState, type EditorSelection, type EditorSnapshot, type EditorState, type EditorTool, type EditorValidationIssue, type FlowchartShape, type NodeCreationPresetId } from "./types"
 import { validateWorkflowDraft } from "./validation"
@@ -14,6 +14,9 @@ export type RecordedEditorAction =
   | { type: "node/shape-commit"; nodeId: string; shape: FlowchartShape }
   | { type: "node/create"; nodeId: string; presetId: NodeCreationPresetId; position: CanvasPosition }
   | { type: "node/delete"; nodeId: string }
+  | { type: "edge/create"; edge: WorkflowEdge }
+  | { type: "edge/label-commit"; edgeId: string; label: string | null }
+  | { type: "edge/delete"; edgeId: string }
 export type SkippedEditorAction =
   | { type: "selection/set"; selection: EditorSelection }
   | { type: "tool/set"; tool: EditorTool }
@@ -42,6 +45,17 @@ function recordSnapshot(state: EditorState, snapshot: EditorSnapshot): EditorSta
     future: [],
     issues: validateWorkflowDraft(snapshot.workflow),
   }
+}
+
+function selectionExists(selection: EditorSelection, snapshot: EditorSnapshot): boolean {
+  if (selection.kind === "none") return true
+  if (selection.kind === "node") return snapshot.workflow.nodes.some((node) => node.id === selection.nodeId)
+  if (selection.kind === "edge") return snapshot.workflow.edges.some((edge) => edge.id === selection.edgeId)
+  return snapshot.annotations.some((annotation) => annotation.id === selection.annotationId)
+}
+
+function selectionForSnapshot(selection: EditorSelection, snapshot: EditorSnapshot): EditorSelection {
+  return selectionExists(selection, snapshot) ? selection : { kind: "none" }
 }
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
@@ -130,15 +144,60 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       })
       return { ...recorded, selection: { kind: "none" } }
     }
+    case "edge/create": {
+      const { edge } = action
+      if (
+        !edge.id
+        || state.present.workflow.edges.some((candidate) => candidate.id === edge.id)
+        || edge.source === edge.target
+        || !state.present.workflow.nodes.some((node) => node.id === edge.source)
+        || !state.present.workflow.nodes.some((node) => node.id === edge.target)
+      ) return state
+      const sourceNode = state.present.workflow.nodes.find((node) => node.id === edge.source)
+      const label = edge.label?.trim() || null
+      if (sourceNode?.type === "decision" && label === null) return state
+      const recorded = recordSnapshot(state, {
+        ...state.present,
+        workflow: {
+          ...state.present.workflow,
+          edges: [...state.present.workflow.edges, { ...edge, label }],
+        },
+      })
+      return { ...recorded, selection: { kind: "edge", edgeId: edge.id } }
+    }
+    case "edge/label-commit": {
+      const edgeIndex = state.present.workflow.edges.findIndex((edge) => edge.id === action.edgeId)
+      if (edgeIndex === -1) return state
+      const normalizedLabel = action.label?.trim() || null
+      const currentEdge = state.present.workflow.edges[edgeIndex]
+      if (currentEdge.label === normalizedLabel) return state
+      const edges = [...state.present.workflow.edges]
+      edges[edgeIndex] = { ...currentEdge, label: normalizedLabel }
+      return recordSnapshot(state, {
+        ...state.present,
+        workflow: { ...state.present.workflow, edges },
+      })
+    }
+    case "edge/delete": {
+      if (!state.present.workflow.edges.some((edge) => edge.id === action.edgeId)) return state
+      const recorded = recordSnapshot(state, {
+        ...state.present,
+        workflow: {
+          ...state.present.workflow,
+          edges: state.present.workflow.edges.filter((edge) => edge.id !== action.edgeId),
+        },
+      })
+      return { ...recorded, selection: { kind: "none" } }
+    }
     case "history/undo": {
       const previous = state.past.at(-1)
       if (previous === undefined) return state
-      return { ...state, past: state.past.slice(0, -1), present: previous, future: [state.present, ...state.future], issues: validateWorkflowDraft(previous.workflow) }
+      return { ...state, past: state.past.slice(0, -1), present: previous, future: [state.present, ...state.future], selection: selectionForSnapshot(state.selection, previous), issues: validateWorkflowDraft(previous.workflow) }
     }
     case "history/redo": {
       const next = state.future[0]
       if (next === undefined) return state
-      return { ...state, past: [...state.past, state.present].slice(-EDITOR_HISTORY_LIMIT), present: next, future: state.future.slice(1), issues: validateWorkflowDraft(next.workflow) }
+      return { ...state, past: [...state.past, state.present].slice(-EDITOR_HISTORY_LIMIT), present: next, future: state.future.slice(1), selection: selectionForSnapshot(state.selection, next), issues: validateWorkflowDraft(next.workflow) }
     }
     case "selection/set": return { ...state, selection: action.selection }
     case "tool/set": return { ...state, activeTool: action.tool, pendingNodePreset: action.tool === "shape" ? state.pendingNodePreset : null }

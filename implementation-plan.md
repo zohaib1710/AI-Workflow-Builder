@@ -231,7 +231,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 6: Add editable connections and edge inspection
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Support controlled edge creation, labelling, selection, and deletion with graph feedback.
 - Dependencies/prerequisites: V2 Checkpoints 1-5 complete.
 - Files to create: `frontend/src/components/editor/EdgeInspector.tsx`, `frontend/src/components/editor/ConnectionLabelDialog.tsx`, `frontend/src/test/edge-editing.test.tsx`.
@@ -240,10 +240,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Mode-gated connection creation; safe edge ID generation; self-edge rejection; decision label prompt; non-decision optional label; edge selection/label edit/delete; validation issue updates; no dangling endpoints.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/edge-editing.test.tsx src/test/editor-validation.test.ts src/test/editor-state.test.ts src/test/workflow-canvas.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Users can create, label, select, edit, and delete semantic connections deliberately.
-  - [ ] Decision-branch requirements are enforced at creation and visible during later draft edits.
-  - [ ] React Flow cannot mutate edges outside the reducer transaction boundary.
-  - [ ] No provider, persistence, multi-edge selection, or generic drawing tool is added.
+  - [x] Users can create, label, select, edit, and delete semantic connections deliberately.
+  - [x] Decision-branch requirements are enforced at creation and visible during later draft edits.
+  - [x] React Flow cannot mutate edges outside the reducer transaction boundary.
+  - [x] No provider, persistence, multi-edge selection, or generic drawing tool is added.
 - Commit message: `feat(frontend): add editable workflow connections`
 - Stop conditions: Stop if connection creation bypasses semantic state, creates dangling edges, or enables unrestricted React Flow mutation.
 
