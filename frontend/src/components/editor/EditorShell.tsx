@@ -3,7 +3,9 @@ import { generateWorkflow, WorkflowApiError } from "../../api/client"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { EXAMPLE_PROMPT, PROMPT_MAX_LENGTH } from "../../lib/constants"
 import EditorHeader from "./EditorHeader"
+import EditorToolbar from "./EditorToolbar"
 import InspectorPanel from "./InspectorPanel"
+import ValidationIndicator from "./ValidationIndicator"
 import WorkflowEditorCanvas from "./WorkflowEditorCanvas"
 import WorkflowPromptComposer from "./WorkflowPromptComposer"
 
@@ -76,7 +78,8 @@ function EditorShell() {
   }
 
   const handleReset = () => {
-    if (requestInFlight.current) return
+    if (requestInFlight.current || editorState?.asyncState.status === "loading") return
+    if (editorState && window.confirm("Discard this workflow and start a new one?") === false) return
     dispatch({ type: "workflow/reset" })
     setPrompt("")
     setError(null)
@@ -98,6 +101,8 @@ function EditorShell() {
     <main className="editor-shell" data-testid="editor-shell">
       <WorkflowEditorCanvas editingViewport={editingViewport} />
       <EditorHeader workflowTitle={workflow?.title ?? null} onNewWorkflow={handleReset} />
+      <EditorToolbar editingViewport={editingViewport} onNewWorkflow={handleReset} />
+      <ValidationIndicator />
       <InspectorPanel editingViewport={editingViewport} />
       <WorkflowPromptComposer
         mode={workflow ? "iterate" : "generate"}

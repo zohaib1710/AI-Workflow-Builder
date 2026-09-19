@@ -152,3 +152,14 @@
 - Successful validation: node-editing tests (8 passed); editor-state tests (10 passed); combined node-editing/editor-state/flowchart suites (41 passed); frontend production build; `git diff --check`.
 - Next action: implement V2 Checkpoint 5.
 - Proposed commit title: `feat(frontend): enable node selection and editing`.
+- V2 Checkpoint 5 is complete.
+- A compact left toolbar now provides bounded New, Select, and Add-shape controls with accessible pressed and disabled states.
+- Typed creation presets map semantic node types to presentation-only flowchart shapes; new nodes use collision-safe IDs, safe default semantic fields, and canvas-derived coordinates stored only in presentation state.
+- Temporary disconnected drafts remain manually repairable and surface concise validation feedback. Invalid drafts expose AI iteration as unavailable, and no AI editing endpoint was added.
+- Node deletion is one recorded transaction that removes the semantic node, every incident edge, its presentation record, and selection without leaving dangling references.
+- Deleting the final node preserves an empty editor session. Explicit New/reset remains separate, requires confirmation when state exists, and clears the session and history.
+- Manual mutation controls lock below 768px and during async loading while pan and zoom remain available.
+- No edge tools, annotations, AI editing, persistence, dependency, API-contract, or backend changes were added.
+- Successful validation: focused node-tools tests (17 passed); focused editor-state tests (10 passed); required combined node-tools/node-editing/editor-validation/editor-state suites (49 passed); frontend production build; `git diff --check`.
+- Next action: implement V2 Checkpoint 6.
+- Proposed commit title: `feat(frontend): add node creation and validation tools`.

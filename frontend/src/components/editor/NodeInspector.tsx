@@ -99,7 +99,14 @@ function NodeInspector({ node, presentation, disabled }: NodeInspectorProps) {
         <input value={node.type} readOnly disabled={disabled} aria-readonly="true" />
       </label>
 
-      <button className="node-inspector__delete" type="button" disabled>Delete node</button>
+      <button
+        className="node-inspector__delete"
+        type="button"
+        disabled={disabled}
+        onClick={() => dispatch({ type: "node/delete", nodeId: node.id })}
+      >
+        Delete node
+      </button>
     </div>
   )
 }

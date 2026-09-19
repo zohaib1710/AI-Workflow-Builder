@@ -176,7 +176,7 @@ describe("node editing", () => {
     expect(current.node.type).toBe("action")
     expect(screen.getByRole("textbox", { name: "Semantic type" })).toHaveValue("action")
     expect(screen.getByRole("textbox", { name: "Semantic type" })).toHaveAttribute("readonly")
-    expect(screen.getByRole("button", { name: "Delete node" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Delete node" })).toBeEnabled()
     expect(screen.getByTestId("history-count")).toHaveTextContent("1")
   })
 

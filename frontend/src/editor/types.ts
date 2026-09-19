@@ -46,6 +46,33 @@ export type EditorSelection =
 
 export type EditorTool = "select" | "shape" | "connector" | "text"
 
+export const NODE_CREATION_PRESETS = [
+  { id: "start", label: "Start", semanticType: "start", shape: "terminator" },
+  { id: "end", label: "End", semanticType: "end", shape: "terminator" },
+  { id: "trigger", label: "Trigger", semanticType: "trigger", shape: "terminator" },
+  { id: "process", label: "Process", semanticType: "action", shape: "process" },
+  { id: "decision", label: "Decision", semanticType: "decision", shape: "decision" },
+  { id: "approval", label: "Approval", semanticType: "approval", shape: "decision" },
+  { id: "input-output", label: "Input / Output", semanticType: "api", shape: "input-output" },
+  { id: "database", label: "Database", semanticType: "database", shape: "database" },
+  { id: "document", label: "Document", semanticType: "notification", shape: "document" },
+  { id: "delay", label: "Delay", semanticType: "wait", shape: "delay" },
+  { id: "predefined-process", label: "Predefined Process", semanticType: "action", shape: "predefined-process" },
+  { id: "manual-operation", label: "Manual Operation", semanticType: "action", shape: "manual-operation" },
+] as const satisfies readonly {
+  id: string
+  label: string
+  semanticType: SupportedNodeType
+  shape: FlowchartShape
+}[]
+
+export type NodeCreationPreset = (typeof NODE_CREATION_PRESETS)[number]
+export type NodeCreationPresetId = NodeCreationPreset["id"]
+
+export const NODE_CREATION_PRESETS_BY_ID = Object.fromEntries(
+  NODE_CREATION_PRESETS.map((preset) => [preset.id, preset]),
+) as Record<NodeCreationPresetId, NodeCreationPreset>
+
 export type EditorAsyncState =
   | { status: "idle" }
   | { status: "loading" }
@@ -82,6 +109,7 @@ export interface EditorState {
   future: EditorSnapshot[]
   selection: EditorSelection
   activeTool: EditorTool
+  pendingNodePreset: NodeCreationPresetId | null
   asyncState: EditorAsyncState
   issues: EditorValidationIssue[]
 }

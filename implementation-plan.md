@@ -213,7 +213,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 5: Add node creation, deletion, toolbar, and validation feedback
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Complete the core node lifecycle and expose it through a compact, mode-aware left toolbar.
 - Dependencies/prerequisites: V2 Checkpoints 1-4 complete.
 - Files to create: `frontend/src/components/editor/EditorToolbar.tsx`, `frontend/src/components/editor/EditorToolButton.tsx`, `frontend/src/components/editor/ShapeMenu.tsx`, `frontend/src/components/editor/ValidationIndicator.tsx`, `frontend/src/test/node-tools.test.tsx`.
@@ -222,10 +222,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Preset-to-semantic/shape mapping; deterministic placement; valid default fields; disconnected issue; node deletion cascade; deleting the last node; toolbar pressed/disabled accessibility; AI-invalid draft disables iteration without blocking manual repair.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/node-tools.test.tsx src/test/node-editing.test.tsx src/test/editor-validation.test.ts src/test/editor-state.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Users can add and delete nodes without introducing schema-invalid field values.
-  - [ ] Temporarily graph-invalid drafts remain editable and show compact actionable issues.
-  - [ ] Node deletion cleans semantic edges and presentation records atomically.
-  - [ ] Toolbar scope remains bounded; no line, styling, group, or multi-select tools appear.
+  - [x] Users can add and delete nodes without introducing schema-invalid field values.
+  - [x] Temporarily graph-invalid drafts remain editable and show compact actionable issues.
+  - [x] Node deletion cleans semantic edges and presentation records atomically.
+  - [x] Toolbar scope remains bounded; no line, styling, group, or multi-select tools appear.
 - Commit message: `feat(frontend): add node creation and validation tools`
 - Stop conditions: Stop if creation needs backend coordinates, invalid drafts reach the AI endpoint, or deletion leaves dangling references.
 

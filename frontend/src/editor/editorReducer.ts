@@ -1,6 +1,6 @@
 import type { Workflow, WorkflowNode } from "../types/workflow"
 import { createInitialPresentation } from "./presentation"
-import type { CanvasPosition, EditorAsyncState, EditorSelection, EditorSnapshot, EditorState, EditorTool, EditorValidationIssue, FlowchartShape } from "./types"
+import { NODE_CREATION_PRESETS_BY_ID, type CanvasPosition, type EditorAsyncState, type EditorSelection, type EditorSnapshot, type EditorState, type EditorTool, type EditorValidationIssue, type FlowchartShape, type NodeCreationPresetId } from "./types"
 import { validateWorkflowDraft } from "./validation"
 
 export const EDITOR_HISTORY_LIMIT = 100
@@ -12,9 +12,12 @@ export type RecordedEditorAction =
   | { type: "node/position-commit"; nodeId: string; position: CanvasPosition }
   | { type: "node/semantic-commit"; nodeId: string; fields: EditableNodeFields }
   | { type: "node/shape-commit"; nodeId: string; shape: FlowchartShape }
+  | { type: "node/create"; nodeId: string; presetId: NodeCreationPresetId; position: CanvasPosition }
+  | { type: "node/delete"; nodeId: string }
 export type SkippedEditorAction =
   | { type: "selection/set"; selection: EditorSelection }
   | { type: "tool/set"; tool: EditorTool }
+  | { type: "node-preset/set"; presetId: NodeCreationPresetId }
   | { type: "async/set"; asyncState: EditorAsyncState }
   | { type: "issues/set"; issues: EditorValidationIssue[] }
 export type EditorAction = RecordedEditorAction | SkippedEditorAction | { type: "history/undo" } | { type: "history/redo" }
@@ -26,7 +29,7 @@ export function createEditorSnapshot(workflow: Workflow): EditorSnapshot {
 export function createInitialEditorState(workflow: Workflow): EditorState {
   return {
     past: [], future: [], present: createEditorSnapshot(workflow),
-    selection: { kind: "none" }, activeTool: "select", asyncState: { status: "idle" },
+    selection: { kind: "none" }, activeTool: "select", pendingNodePreset: null, asyncState: { status: "idle" },
     issues: validateWorkflowDraft(workflow),
   }
 }
@@ -80,6 +83,53 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         },
       })
     }
+    case "node/create": {
+      if (state.present.workflow.nodes.some((node) => node.id === action.nodeId)) return state
+      const preset = NODE_CREATION_PRESETS_BY_ID[action.presetId]
+      const recorded = recordSnapshot(state, {
+        ...state.present,
+        workflow: {
+          ...state.present.workflow,
+          nodes: [...state.present.workflow.nodes, {
+            id: action.nodeId,
+            type: preset.semanticType,
+            title: "New step",
+            description: "Describe this step.",
+            application: null,
+          }],
+        },
+        nodePresentations: {
+          ...state.present.nodePresentations,
+          [action.nodeId]: {
+            nodeId: action.nodeId,
+            shape: preset.shape,
+            position: { ...action.position },
+          },
+        },
+      })
+      return {
+        ...recorded,
+        selection: { kind: "node", nodeId: action.nodeId },
+        activeTool: "select",
+        pendingNodePreset: null,
+      }
+    }
+    case "node/delete": {
+      if (!state.present.workflow.nodes.some((node) => node.id === action.nodeId)) return state
+      const nodePresentations = Object.fromEntries(
+        Object.entries(state.present.nodePresentations).filter(([nodeId]) => nodeId !== action.nodeId),
+      )
+      const recorded = recordSnapshot(state, {
+        ...state.present,
+        workflow: {
+          ...state.present.workflow,
+          nodes: state.present.workflow.nodes.filter((node) => node.id !== action.nodeId),
+          edges: state.present.workflow.edges.filter((edge) => edge.source !== action.nodeId && edge.target !== action.nodeId),
+        },
+        nodePresentations,
+      })
+      return { ...recorded, selection: { kind: "none" } }
+    }
     case "history/undo": {
       const previous = state.past.at(-1)
       if (previous === undefined) return state
@@ -91,7 +141,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, past: [...state.past, state.present].slice(-EDITOR_HISTORY_LIMIT), present: next, future: state.future.slice(1), issues: validateWorkflowDraft(next.workflow) }
     }
     case "selection/set": return { ...state, selection: action.selection }
-    case "tool/set": return { ...state, activeTool: action.tool }
+    case "tool/set": return { ...state, activeTool: action.tool, pendingNodePreset: action.tool === "shape" ? state.pendingNodePreset : null }
+    case "node-preset/set": return { ...state, activeTool: "shape", pendingNodePreset: action.presetId, selection: { kind: "none" } }
     case "async/set": return { ...state, asyncState: action.asyncState }
     case "issues/set": return { ...state, issues: [...action.issues] }
   }

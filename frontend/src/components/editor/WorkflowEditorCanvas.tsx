@@ -7,9 +7,11 @@ import {
   useReactFlow,
   type Edge,
   type Node,
+  type ReactFlowInstance,
 } from "@xyflow/react"
 import { useEffect, useMemo, useState } from "react"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
+import { createUniqueEditorId } from "../../editor/ids"
 import { DEFAULT_SHAPE_BY_NODE_TYPE } from "../../editor/types"
 import { isSupportedNodeType, workflowVisualConfig } from "../nodes/nodeTypes"
 import { flowchartNodeTypes, type FlowchartFlowNode, type FlowchartNodeData } from "./nodes/FlowchartNode"
@@ -54,8 +56,11 @@ function minimapNodeColor(node: Node<FlowchartNodeData>): string {
 function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
+  const [flowInstance, setFlowInstance] = useState<ReactFlowInstance<FlowchartFlowNode> | null>(null)
   const workflow = editorState?.present.workflow ?? null
-  const canEdit = Boolean(editorState && editingViewport && editorState.activeTool === "select" && editorState.asyncState.status === "idle")
+  const mutationsEnabled = Boolean(editorState && editingViewport && editorState.asyncState.status === "idle")
+  const canEdit = Boolean(mutationsEnabled && editorState?.activeTool === "select")
+  const canPlaceNode = Boolean(mutationsEnabled && editorState?.activeTool === "shape" && editorState.pendingNodePreset)
   const derivedNodes = useMemo<FlowchartFlowNode[]>(() => {
     if (!editorState || !workflow) return []
     return workflow.nodes.map((node, index) => {
@@ -103,12 +108,13 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   }
 
   return (
-    <section className="editor-canvas" aria-label="Workflow canvas surface">
+    <section className={`editor-canvas${canPlaceNode ? " editor-canvas--placing" : ""}`} aria-label="Workflow canvas surface">
       <div className="workflow-canvas" aria-label="Read-only workflow diagram">
         <ReactFlow<FlowchartFlowNode>
           nodes={nodes}
           edges={edges}
           nodeTypes={flowchartNodeTypes}
+          onInit={setFlowInstance}
           fitView
           fitViewOptions={{ padding: 0.2, minZoom: 0.35, maxZoom: 1.2 }}
           nodesDraggable={canEdit}
@@ -126,7 +132,15 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           onNodeClick={(_, node) => {
             if (canEdit) dispatch({ type: "selection/set", selection: { kind: "node", nodeId: node.id } })
           }}
-          onPaneClick={() => dispatch({ type: "selection/set", selection: { kind: "none" } })}
+          onPaneClick={(event) => {
+            if (canPlaceNode && editorState.pendingNodePreset && flowInstance) {
+              const position = flowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+              const nodeId = createUniqueEditorId("node", new Set(workflow.nodes.map((node) => node.id)))
+              dispatch({ type: "node/create", nodeId, presetId: editorState.pendingNodePreset, position })
+              return
+            }
+            dispatch({ type: "selection/set", selection: { kind: "none" } })
+          }}
           onNodeDrag={(_, draggedNode) => {
             if (!canEdit) return
             setNodes((current) => current.map((node) => node.id === draggedNode.id ? { ...node, position: { ...draggedNode.position } } : node))
