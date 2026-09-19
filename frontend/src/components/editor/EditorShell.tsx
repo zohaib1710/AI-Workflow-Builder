@@ -101,7 +101,12 @@ function EditorShell() {
     <main className="editor-shell" data-testid="editor-shell">
       <WorkflowEditorCanvas editingViewport={editingViewport} />
       <EditorHeader workflowTitle={workflow?.title ?? null} onNewWorkflow={handleReset} />
-      <EditorToolbar editingViewport={editingViewport} onNewWorkflow={handleReset} />
+      <EditorToolbar
+        editingViewport={editingViewport}
+        onNewWorkflow={handleReset}
+        onFocusPrompt={() => document.getElementById("workflow-prompt")?.focus()}
+        isRequestLoading={isLoading}
+      />
       <ValidationIndicator />
       <InspectorPanel editingViewport={editingViewport} />
       <WorkflowPromptComposer

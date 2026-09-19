@@ -249,7 +249,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 7: Add annotations, keyboard interactions, and remaining toolbar behavior
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Finish the bounded manual editor toolset without mixing annotations into workflow semantics.
 - Dependencies/prerequisites: V2 Checkpoints 1-6 complete.
 - Files to create: `frontend/src/components/editor/nodes/AnnotationNode.tsx`, `frontend/src/components/editor/AnnotationInspector.tsx`, `frontend/src/hooks/useEditorShortcuts.ts`, `frontend/src/test/annotations-shortcuts.test.tsx`.
@@ -258,10 +258,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Annotation create/edit/move/delete and API exclusion; Escape selection/tool reset; guarded deletion while typing; shortcut dispatch; New confirmation; toolbar keyboard labels and disabled states.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/annotations-shortcuts.test.tsx src/test/node-tools.test.tsx src/test/edge-editing.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Annotations remain presentation-only and safely rendered.
-  - [ ] Core keyboard actions work without intercepting text editing.
-  - [ ] The toolbar contains only the planned V2 tools and is keyboard accessible.
-  - [ ] No annotation, selection, viewport, or tool state is sent to the backend.
+  - [x] Annotations remain presentation-only and safely rendered.
+  - [x] Core keyboard actions work without intercepting text editing.
+  - [x] The toolbar contains only the planned V2 tools and is keyboard accessible.
+  - [x] No annotation, selection, viewport, or tool state is sent to the backend.
 - Commit message: `feat(frontend): add annotations and editor shortcuts`
 - Stop conditions: Stop if annotations become semantic nodes, shortcuts delete while typing, or scope expands to freehand drawing or advanced styling.
 

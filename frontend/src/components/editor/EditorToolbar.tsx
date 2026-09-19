@@ -7,15 +7,16 @@ import ShapeMenu from "./ShapeMenu"
 export interface EditorToolbarProps {
   editingViewport: boolean
   onNewWorkflow: () => void
+  onFocusPrompt?: () => void
+  isRequestLoading?: boolean
 }
 
-function EditorToolbar({ editingViewport, onNewWorkflow }: EditorToolbarProps) {
+function EditorToolbar({ editingViewport, onNewWorkflow, onFocusPrompt, isRequestLoading = false }: EditorToolbarProps) {
   const state = useEditorState()
   const dispatch = useEditorDispatch()
   const [isShapeMenuOpen, setIsShapeMenuOpen] = useState(false)
-  if (!state) return null
 
-  const isLoading = state.asyncState.status === "loading"
+  const isLoading = isRequestLoading || state?.asyncState.status === "loading"
   const manualToolsDisabled = !editingViewport || isLoading
 
   const selectPreset = (presetId: NodeCreationPresetId) => {
@@ -33,34 +34,53 @@ function EditorToolbar({ editingViewport, onNewWorkflow }: EditorToolbarProps) {
         onClick={onNewWorkflow}
       />
       <EditorToolButton
-        label="Select"
-        icon="S"
-        pressed={state.activeTool === "select"}
-        disabled={manualToolsDisabled}
-        onClick={() => {
-          dispatch({ type: "tool/set", tool: "select" })
-          setIsShapeMenuOpen(false)
-        }}
+        label="Focus AI prompt"
+        icon="*"
+        onClick={onFocusPrompt}
       />
-      <EditorToolButton
-        label="Add shape"
-        icon="A"
-        pressed={state.activeTool === "shape"}
-        disabled={manualToolsDisabled}
-        aria-expanded={isShapeMenuOpen}
-        onClick={() => setIsShapeMenuOpen((open) => !open)}
-      />
-      {isShapeMenuOpen && <ShapeMenu disabled={manualToolsDisabled} onSelect={selectPreset} />}
-      <EditorToolButton
-        label="Connect"
-        icon="C"
-        pressed={state.activeTool === "connector"}
-        disabled={manualToolsDisabled}
-        onClick={() => {
-          dispatch({ type: "tool/set", tool: "connector" })
-          setIsShapeMenuOpen(false)
-        }}
-      />
+      {state && (
+        <>
+          <EditorToolButton
+            label="Select"
+            icon="S"
+            pressed={state.activeTool === "select"}
+            disabled={manualToolsDisabled}
+            onClick={() => {
+              dispatch({ type: "tool/set", tool: "select" })
+              setIsShapeMenuOpen(false)
+            }}
+          />
+          <EditorToolButton
+            label="Add shape"
+            icon="A"
+            pressed={state.activeTool === "shape"}
+            disabled={manualToolsDisabled}
+            aria-expanded={isShapeMenuOpen}
+            onClick={() => setIsShapeMenuOpen((open) => !open)}
+          />
+          {isShapeMenuOpen && <ShapeMenu disabled={manualToolsDisabled} onSelect={selectPreset} />}
+          <EditorToolButton
+            label="Connect"
+            icon="C"
+            pressed={state.activeTool === "connector"}
+            disabled={manualToolsDisabled}
+            onClick={() => {
+              dispatch({ type: "tool/set", tool: "connector" })
+              setIsShapeMenuOpen(false)
+            }}
+          />
+          <EditorToolButton
+            label="Add text"
+            icon="T"
+            pressed={state.activeTool === "text"}
+            disabled={manualToolsDisabled}
+            onClick={() => {
+              dispatch({ type: "tool/set", tool: "text" })
+              setIsShapeMenuOpen(false)
+            }}
+          />
+        </>
+      )}
     </nav>
   )
 }

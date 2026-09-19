@@ -1,6 +1,6 @@
 import type { Workflow, WorkflowEdge, WorkflowNode } from "../types/workflow"
 import { createInitialPresentation } from "./presentation"
-import { NODE_CREATION_PRESETS_BY_ID, type CanvasPosition, type EditorAsyncState, type EditorSelection, type EditorSnapshot, type EditorState, type EditorTool, type EditorValidationIssue, type FlowchartShape, type NodeCreationPresetId } from "./types"
+import { NODE_CREATION_PRESETS_BY_ID, type CanvasAnnotation, type CanvasPosition, type EditorAsyncState, type EditorSelection, type EditorSnapshot, type EditorState, type EditorTool, type EditorValidationIssue, type FlowchartShape, type NodeCreationPresetId } from "./types"
 import { validateWorkflowDraft } from "./validation"
 
 export const EDITOR_HISTORY_LIMIT = 100
@@ -17,6 +17,10 @@ export type RecordedEditorAction =
   | { type: "edge/create"; edge: WorkflowEdge }
   | { type: "edge/label-commit"; edgeId: string; label: string | null }
   | { type: "edge/delete"; edgeId: string }
+  | { type: "annotation/create"; annotation: CanvasAnnotation }
+  | { type: "annotation/text-commit"; annotationId: string; text: string }
+  | { type: "annotation/position-commit"; annotationId: string; position: CanvasPosition }
+  | { type: "annotation/delete"; annotationId: string }
 export type SkippedEditorAction =
   | { type: "selection/set"; selection: EditorSelection }
   | { type: "tool/set"; tool: EditorTool }
@@ -186,6 +190,54 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           ...state.present.workflow,
           edges: state.present.workflow.edges.filter((edge) => edge.id !== action.edgeId),
         },
+      })
+      return { ...recorded, selection: { kind: "none" } }
+    }
+    case "annotation/create": {
+      if (state.present.annotations.some((annotation) => annotation.id === action.annotation.id)) return state
+      const annotation = {
+        ...action.annotation,
+        text: action.annotation.text.trim() || "Text",
+        position: { ...action.annotation.position },
+      }
+      const recorded = recordSnapshot(state, {
+        ...state.present,
+        annotations: [...state.present.annotations, annotation],
+      })
+      return {
+        ...recorded,
+        selection: { kind: "annotation", annotationId: annotation.id },
+        activeTool: "select",
+        pendingNodePreset: null,
+      }
+    }
+    case "annotation/text-commit": {
+      const annotationIndex = state.present.annotations.findIndex((annotation) => annotation.id === action.annotationId)
+      if (annotationIndex === -1) return state
+      const text = action.text.trim() || "Text"
+      const currentAnnotation = state.present.annotations[annotationIndex]
+      if (currentAnnotation.text === text) return state
+      const annotations = [...state.present.annotations]
+      annotations[annotationIndex] = { ...currentAnnotation, text }
+      return recordSnapshot(state, { ...state.present, annotations })
+    }
+    case "annotation/position-commit": {
+      const annotationIndex = state.present.annotations.findIndex((annotation) => annotation.id === action.annotationId)
+      if (annotationIndex === -1) return state
+      const currentAnnotation = state.present.annotations[annotationIndex]
+      if (
+        currentAnnotation.position.x === action.position.x
+        && currentAnnotation.position.y === action.position.y
+      ) return state
+      const annotations = [...state.present.annotations]
+      annotations[annotationIndex] = { ...currentAnnotation, position: { ...action.position } }
+      return recordSnapshot(state, { ...state.present, annotations })
+    }
+    case "annotation/delete": {
+      if (!state.present.annotations.some((annotation) => annotation.id === action.annotationId)) return state
+      const recorded = recordSnapshot(state, {
+        ...state.present,
+        annotations: state.present.annotations.filter((annotation) => annotation.id !== action.annotationId),
       })
       return { ...recorded, selection: { kind: "none" } }
     }

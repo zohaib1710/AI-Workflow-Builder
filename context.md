@@ -174,3 +174,11 @@
 - Successful validation: focused edge-editing tests (9 passed); focused editor-state/node-editing regressions (18 passed); required combined edge-editing/editor-validation/editor-state/workflow-canvas suites (41 passed); frontend production build; `git diff --check`.
 - Next action: implement V2 Checkpoint 7.
 - Proposed commit title: `feat(frontend): add editable workflow connections`.
+- V2 Checkpoint 7 is complete.
+- Text mode creates safe presentation-only annotations at canvas coordinates. Annotations render as distinct plain-text React Flow nodes, remain excluded from semantic workflow data, and support select-mode movement plus inspector editing and deletion.
+- Editor shortcuts now provide input-safe Escape, selected-item Delete/Backspace, undo, and redo behavior. Text-entry and contenteditable targets retain native editing behavior, while mobile and active-request mutation locks remain enforced.
+- The compact toolbar now includes bounded Text and AI prompt-focus actions alongside the existing New, Select, shape, and Connect controls; New Workflow retains its existing confirmation and reset behavior.
+- No annotation, selection, viewport, tool, history, or presentation state is sent to the backend. No backend, dependency, persistence, AI-editing, or generic drawing behavior was added.
+- Successful validation: focused annotations/shortcuts tests (10 passed); focused editor-state regression tests (10 passed); required combined annotations-shortcuts/node-tools/edge-editing suites (36 passed); frontend production build; `git diff --check`.
+- Next action: implement V2 Checkpoint 8.
+- Proposed commit title: `feat(frontend): add annotations and editor shortcuts`.

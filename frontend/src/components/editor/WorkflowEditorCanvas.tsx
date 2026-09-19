@@ -10,17 +10,22 @@ import {
   type Node,
   type ReactFlowInstance,
 } from "@xyflow/react"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { createUniqueEditorId } from "../../editor/ids"
 import { DEFAULT_SHAPE_BY_NODE_TYPE } from "../../editor/types"
+import useEditorShortcuts from "../../hooks/useEditorShortcuts"
 import { isSupportedNodeType, workflowVisualConfig } from "../nodes/nodeTypes"
 import ConnectionLabelDialog from "./ConnectionLabelDialog"
+import { annotationNodeTypes, type AnnotationFlowNode, type AnnotationNodeData } from "./nodes/AnnotationNode"
 import { flowchartNodeTypes, type FlowchartFlowNode, type FlowchartNodeData } from "./nodes/FlowchartNode"
 
 export interface WorkflowEditorCanvasProps {
   editingViewport: boolean
 }
+
+type EditorFlowNode = FlowchartFlowNode | AnnotationFlowNode
+const editorNodeTypes = { ...flowchartNodeTypes, ...annotationNodeTypes }
 
 function FitViewAfterLayout({ layoutKey }: { layoutKey: string }) {
   const nodesInitialized = useNodesInitialized()
@@ -56,23 +61,26 @@ function buildEdges(
   }))
 }
 
-function minimapNodeColor(node: Node<FlowchartNodeData>): string {
-  return workflowVisualConfig[node.data.nodeType]?.minimapColor ?? "#94a3b8"
+function minimapNodeColor(node: Node<FlowchartNodeData | AnnotationNodeData>): string {
+  const nodeType = node.data.nodeType
+  if (typeof nodeType !== "string" || !isSupportedNodeType(nodeType)) return "#a1a1aa"
+  return workflowVisualConfig[nodeType].minimapColor
 }
 
 function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
-  const [flowInstance, setFlowInstance] = useState<ReactFlowInstance<FlowchartFlowNode> | null>(null)
+  const [flowInstance, setFlowInstance] = useState<ReactFlowInstance<EditorFlowNode> | null>(null)
   const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null)
   const workflow = editorState?.present.workflow ?? null
   const mutationsEnabled = Boolean(editorState && editingViewport && editorState.asyncState.status === "idle")
   const canEdit = Boolean(mutationsEnabled && editorState?.activeTool === "select")
   const canPlaceNode = Boolean(mutationsEnabled && editorState?.activeTool === "shape" && editorState.pendingNodePreset)
+  const canPlaceAnnotation = Boolean(mutationsEnabled && editorState?.activeTool === "text")
   const canConnect = Boolean(mutationsEnabled && editorState?.activeTool === "connector")
-  const derivedNodes = useMemo<FlowchartFlowNode[]>(() => {
+  const derivedNodes = useMemo<EditorFlowNode[]>(() => {
     if (!editorState || !workflow) return []
-    return workflow.nodes.map((node, index) => {
+    const workflowNodes: FlowchartFlowNode[] = workflow.nodes.map((node, index) => {
       const presentation = editorState.present.nodePresentations[node.id]
       return {
         id: node.id,
@@ -93,8 +101,21 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
         selected: editorState.selection.kind === "node" && editorState.selection.nodeId === node.id,
       }
     })
+    const annotationNodes: AnnotationFlowNode[] = editorState.present.annotations.map((annotation) => ({
+      id: annotation.id,
+      type: "annotation",
+      position: annotation.position,
+      data: { text: annotation.text },
+      draggable: canEdit,
+      connectable: false,
+      selectable: canEdit,
+      deletable: false,
+      focusable: canEdit,
+      selected: editorState.selection.kind === "annotation" && editorState.selection.annotationId === annotation.id,
+    }))
+    return [...workflowNodes, ...annotationNodes]
   }, [canConnect, canEdit, editorState, workflow])
-  const [nodes, setNodes] = useState<FlowchartFlowNode[]>(derivedNodes)
+  const [nodes, setNodes] = useState<EditorFlowNode[]>(derivedNodes)
   const selectedEdgeId = editorState?.selection.kind === "edge" ? editorState.selection.edgeId : null
   const edges = useMemo(
     () => buildEdges(workflow?.edges ?? [], selectedEdgeId, canEdit),
@@ -106,6 +127,12 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   useEffect(() => {
     if (!canConnect) setPendingConnection(null)
   }, [canConnect])
+  const cancelPendingInteraction = useCallback(() => {
+    if (!pendingConnection) return false
+    setPendingConnection(null)
+    return true
+  }, [pendingConnection])
+  useEditorShortcuts({ editingViewport, cancelPendingInteraction })
 
   if (!workflow || !editorState) {
     return (
@@ -142,12 +169,12 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   }
 
   return (
-    <section className={`editor-canvas${canPlaceNode ? " editor-canvas--placing" : ""}`} aria-label="Workflow canvas surface">
+    <section className={`editor-canvas${canPlaceNode || canPlaceAnnotation ? " editor-canvas--placing" : ""}`} aria-label="Workflow canvas surface">
       <div className="workflow-canvas" aria-label="Read-only workflow diagram">
-        <ReactFlow<FlowchartFlowNode>
+        <ReactFlow<EditorFlowNode>
           nodes={nodes}
           edges={edges}
-          nodeTypes={flowchartNodeTypes}
+          nodeTypes={editorNodeTypes}
           onInit={setFlowInstance}
           fitView
           fitViewOptions={{ padding: 0.2, minZoom: 0.35, maxZoom: 1.2 }}
@@ -164,7 +191,13 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           zoomOnPinch
           proOptions={{ hideAttribution: true }}
           onNodeClick={(_, node) => {
-            if (canEdit) dispatch({ type: "selection/set", selection: { kind: "node", nodeId: node.id } })
+            if (!canEdit) return
+            dispatch({
+              type: "selection/set",
+              selection: node.type === "annotation"
+                ? { kind: "annotation", annotationId: node.id }
+                : { kind: "node", nodeId: node.id },
+            })
           }}
           onEdgeClick={(_, edge) => {
             if (canEdit) dispatch({ type: "selection/set", selection: { kind: "edge", edgeId: edge.id } })
@@ -177,6 +210,18 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
               dispatch({ type: "node/create", nodeId, presetId: editorState.pendingNodePreset, position })
               return
             }
+            if (canPlaceAnnotation && flowInstance) {
+              const position = flowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+              const annotationId = createUniqueEditorId(
+                "annotation",
+                new Set(editorState.present.annotations.map((annotation) => annotation.id)),
+              )
+              dispatch({
+                type: "annotation/create",
+                annotation: { id: annotationId, text: "Text", position },
+              })
+              return
+            }
             dispatch({ type: "selection/set", selection: { kind: "none" } })
           }}
           onNodeDrag={(_, draggedNode) => {
@@ -185,7 +230,11 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           }}
           onNodeDragStop={(_, draggedNode) => {
             if (!canEdit) return
-            dispatch({ type: "node/position-commit", nodeId: draggedNode.id, position: { ...draggedNode.position } })
+            if (draggedNode.type === "annotation") {
+              dispatch({ type: "annotation/position-commit", annotationId: draggedNode.id, position: { ...draggedNode.position } })
+            } else {
+              dispatch({ type: "node/position-commit", nodeId: draggedNode.id, position: { ...draggedNode.position } })
+            }
           }}
         >
           <FitViewAfterLayout layoutKey={layoutKey} />
