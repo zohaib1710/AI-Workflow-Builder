@@ -303,7 +303,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 10: Reconcile canvas presentation across semantic revisions
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Preserve user-owned layout and shape choices when a full revised workflow arrives.
 - Dependencies/prerequisites: V2 Checkpoint 1 presentation types and V2 Checkpoint 9 response types complete.
 - Files to create: `frontend/src/editor/reconcileWorkflow.ts`, `frontend/src/test/reconcile-workflow.test.ts`.
@@ -312,10 +312,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Unchanged and modified same-ID nodes retain positions/shapes; deletion removes presentation; new predecessor/successor/center placement; multiple-new-node collision avoidance; deterministic output; input immutability; annotations unaffected by caller transaction; zero-overlap identity instability; partial ID churn accepted.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/reconcile-workflow.test.ts src/test/editor-state.test.ts src/test/layout.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Existing manual positions and shape overrides survive ordinary AI revisions.
-  - [ ] New nodes receive deterministic local positions without moving retained nodes.
-  - [ ] Removed nodes lose presentation and excessive identity churn is surfaced safely.
-  - [ ] Reconciliation remains a pure module independent of React components and network code.
+  - [x] Existing manual positions and shape overrides survive ordinary AI revisions.
+  - [x] New nodes receive deterministic local positions without moving retained nodes.
+  - [x] Removed nodes lose presentation and excessive identity churn is surfaced safely.
+  - [x] Reconciliation remains a pure module independent of React components and network code.
 - Commit message: `feat(frontend): preserve canvas state across workflow edits`
 - Stop conditions: Stop if reconciliation requires coordinates from the backend, heuristic identity remapping, automatic full Dagre, or mutation of previous state.
 

@@ -200,3 +200,12 @@
 - Successful validation: focused edit-route tests (6 passed); error-mapping tests (12 passed); focused edit-client tests (5 passed); required backend route/error regressions (27 passed); required edit/generation client regressions (25 passed); Ruff; frontend production build; `git diff --check`.
 - Next action: implement V2 Checkpoint 10.
 - Proposed commit title: `feat(api): expose workflow editing endpoint`.
+- V2 Checkpoint 10 is complete.
+- Pure semantic-to-presentation reconciliation now uses exact stable node IDs to preserve manual positions and shape overrides across revised workflows.
+- Deleted IDs lose presentation records. New nodes receive canonical default shapes and deterministic local placement after a retained predecessor, before a retained successor, or at the supplied canvas center.
+- New-node position collisions resolve downward in fixed steps without moving retained nodes. Missing prior presentation records are rebuilt safely.
+- Zero shared IDs between two nonempty workflows returns a typed identity-instability result, while partial ID churn and empty workflow transitions remain supported.
+- Reconciliation does not mutate inputs and has no Dagre, React, network, annotation, reducer, backend, or API dependency. No dependency or lock-file change was added.
+- Successful validation: focused reconciliation tests (13 passed); required reconciliation/editor-state regressions (23 passed); frontend production build; `git diff --check`.
+- Next action: implement V2 Checkpoint 11.
+- Proposed commit title: `feat(frontend): preserve canvas state across workflow edits`.
