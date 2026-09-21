@@ -36,12 +36,13 @@ function useEditorShortcuts({ editingViewport, cancelPendingInteraction }: UseEd
       const historyModifier = event.ctrlKey || event.metaKey
       const redo = historyModifier && (key === "y" || (key === "z" && event.shiftKey))
       const undo = historyModifier && key === "z" && !event.shiftKey
-      if (undo && state.past.length > 0) {
+      const historyEnabled = editingViewport && state.asyncState.status !== "loading"
+      if (historyEnabled && undo && state.past.length > 0) {
         event.preventDefault()
         dispatch({ type: "history/undo" })
         return
       }
-      if (redo && state.future.length > 0) {
+      if (historyEnabled && redo && state.future.length > 0) {
         event.preventDefault()
         dispatch({ type: "history/redo" })
         return

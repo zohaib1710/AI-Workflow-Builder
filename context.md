@@ -220,3 +220,13 @@
 - No backend, dependency, lock-file, provider-specific, persistence, Auto Arrange, or visible history-control change was added.
 - Next action: implement V2 Checkpoint 12.
 - Proposed commit title: `feat(frontend): add AI workflow iteration`.
+- V2 Checkpoint 12 is complete.
+- Auto Arrange is an explicit user action that reuses the existing Dagre layout and never runs implicitly after manual or AI edits.
+- Auto Arrange replaces semantic-node positions only, preserves manual shape overrides and annotations, safely handles empty, single-node, invalid, and unusable-edge drafts, and fits the canvas once after a meaningful arrangement.
+- Each meaningful arrangement is one existing snapshot transaction; no-op arrangements create no history. One Undo restores all prior positions and Redo reapplies them.
+- Toolbar Undo/Redo now expose the existing editor history with synchronized availability and async/mobile locks. Keyboard history uses the same reducer actions and retains the input-focus guard.
+- Viewport, selection, active tool, prompt, async status, and other transient UI state remain outside snapshots. Existing manual and AI actions retain their one-transaction boundaries, redo branching, and 100-entry cap.
+- Successful validation: focused Auto Arrange/history tests (11 passed); required history/layout/shortcut regression set (36 passed); frontend production build; `git diff --check`.
+- No backend, API, dependency, lock-file, automatic post-generation layout, or second history system was added.
+- Next action: implement V2 Checkpoint 13.
+- Proposed commit title: `feat(frontend): add auto arrange and edit history`.

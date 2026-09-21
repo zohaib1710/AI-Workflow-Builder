@@ -1,8 +1,10 @@
 import { useState } from "react"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
+import { autoArrangePresentation } from "../../editor/presentation"
 import type { NodeCreationPresetId } from "../../editor/types"
 import EditorToolButton from "./EditorToolButton"
 import ShapeMenu from "./ShapeMenu"
+import { AUTO_ARRANGE_FIT_EVENT } from "./WorkflowEditorCanvas"
 
 export interface EditorToolbarProps {
   editingViewport: boolean
@@ -23,6 +25,20 @@ function EditorToolbar({ editingViewport, onNewWorkflow, onFocusPrompt, isReques
     if (manualToolsDisabled) return
     dispatch({ type: "node-preset/set", presetId })
     setIsShapeMenuOpen(false)
+  }
+
+  const autoArrange = () => {
+    if (!state || manualToolsDisabled) return
+    const nodePresentations = autoArrangePresentation(
+      state.present.workflow,
+      state.present.nodePresentations,
+    )
+    if (nodePresentations === state.present.nodePresentations) return
+    dispatch({
+      type: "snapshot/record",
+      snapshot: { ...state.present, nodePresentations },
+    })
+    window.dispatchEvent(new Event(AUTO_ARRANGE_FIT_EVENT))
   }
 
   return (
@@ -78,6 +94,24 @@ function EditorToolbar({ editingViewport, onNewWorkflow, onFocusPrompt, isReques
               dispatch({ type: "tool/set", tool: "text" })
               setIsShapeMenuOpen(false)
             }}
+          />
+          <EditorToolButton
+            label="Auto Arrange"
+            icon="F"
+            disabled={manualToolsDisabled}
+            onClick={autoArrange}
+          />
+          <EditorToolButton
+            label="Undo"
+            icon="U"
+            disabled={manualToolsDisabled || state.past.length === 0}
+            onClick={() => dispatch({ type: "history/undo" })}
+          />
+          <EditorToolButton
+            label="Redo"
+            icon="R"
+            disabled={manualToolsDisabled || state.future.length === 0}
+            onClick={() => dispatch({ type: "history/redo" })}
           />
         </>
       )}

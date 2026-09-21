@@ -339,7 +339,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 12: Add explicit Auto Arrange and complete undo/redo
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Give users intentional full-layout control and expose reliable history across all editor transactions.
 - Dependencies/prerequisites: V2 Checkpoints 1-11 complete so all recordable action types exist.
 - Files to create: `frontend/src/test/history-auto-arrange.test.tsx`.
@@ -348,10 +348,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Auto Arrange overrides manual positions but preserves shapes/annotations/semantics; one undo restores pre-arrange layout; redo reapplies it; each action category round-trips; AI edit is one step; drag is one step; new action clears redo; history cap; empty/single/draft-invalid behavior; viewport is absent from history.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/history-auto-arrange.test.tsx src/test/editor-state.test.ts src/test/layout.test.ts src/test/node-editing.test.tsx src/test/edge-editing.test.tsx src/test/annotations-shortcuts.test.tsx src/test/ai-iteration.test.tsx`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Auto Arrange is explicit, undoable, and the only post-generation full-layout operation.
-  - [ ] Undo/redo covers every required editor mutation without recording viewport or transient UI.
-  - [ ] Toolbar and keyboard history controls remain synchronized and input-focus safe.
-  - [ ] Manual positions are otherwise preserved across editing and AI iteration.
+  - [x] Auto Arrange is explicit, undoable, and the only post-generation full-layout operation.
+  - [x] Undo/redo covers every required editor mutation without recording viewport or transient UI.
+  - [x] Toolbar and keyboard history controls remain synchronized and input-focus safe.
+  - [x] Manual positions are otherwise preserved across editing and AI iteration.
 - Commit message: `feat(frontend): add auto arrange and edit history`
 - Stop conditions: Stop if Auto Arrange runs implicitly, annotations/shapes are lost, viewport enters history, or one drag produces many undo steps.
 

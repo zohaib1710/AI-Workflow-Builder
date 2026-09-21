@@ -24,6 +24,8 @@ export interface WorkflowEditorCanvasProps {
   editingViewport: boolean
 }
 
+export const AUTO_ARRANGE_FIT_EVENT = "workflow-editor:auto-arrange-fit"
+
 type EditorFlowNode = FlowchartFlowNode | AnnotationFlowNode
 const editorNodeTypes = { ...flowchartNodeTypes, ...annotationNodeTypes }
 
@@ -124,6 +126,20 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   const layoutKey = workflow ? `${workflow.nodes.map((node) => node.id).join(",")}|${workflow.edges.map((edge) => edge.id).join(",")}` : "empty"
 
   useEffect(() => setNodes(derivedNodes), [derivedNodes])
+  useEffect(() => {
+    const fitArrangedWorkflow = () => {
+      globalThis.requestAnimationFrame(() => {
+        void flowInstance?.fitView({
+          padding: 0.2,
+          minZoom: 0.2,
+          maxZoom: 1.25,
+          duration: 200,
+        })
+      })
+    }
+    window.addEventListener(AUTO_ARRANGE_FIT_EVENT, fitArrangedWorkflow)
+    return () => window.removeEventListener(AUTO_ARRANGE_FIT_EVENT, fitArrangedWorkflow)
+  }, [flowInstance])
   useEffect(() => {
     if (!canConnect) setPendingConnection(null)
   }, [canConnect])
