@@ -230,3 +230,13 @@
 - No backend, API, dependency, lock-file, automatic post-generation layout, or second history system was added.
 - Next action: implement V2 Checkpoint 13.
 - Proposed commit title: `feat(frontend): add auto arrange and edit history`.
+- V2 Checkpoint 13 is complete.
+- Assumptions, missing requirements, and suggestions now live in a compact, collapsible read-only drawer that floats over the canvas and reuses the existing safe insight renderer.
+- Drawer open/close, Escape, accessible naming, initial focus, and focus return were added without a modal dependency. The canvas stays mounted and available.
+- Overlay spacing was finalized for the header, drawer/inspector, validation indicator, bottom composer, and React Flow MiniMap. The inspector scrolls within the available viewport.
+- Narrow screens remain AI/navigation-only for editing: manual mutation controls stay disabled while generation, valid AI iteration, zoom/pan, and insights remain available. One concise notice explains the limitation.
+- Existing shell, insight, node, edge, annotation, AI iteration, and history suites were audited; only drawer and narrow-screen contract cases were added to the shell suite. No additional cross-feature integration file was necessary.
+- Successful validation: focused editor-shell tests (8 passed); complete frontend regression (18 files, 182 tests passed); frontend production build; `git diff --check`.
+- No backend, API, dependency, lock-file, E2E, or new product feature was added.
+- Next action: implement V2 Checkpoint 14.
+- Proposed commit title: `feat(frontend): polish workflow editor experience`.

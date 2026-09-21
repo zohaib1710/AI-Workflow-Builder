@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import EditorShell from "../components/editor/EditorShell"
 import { EditorProvider, useEditorState } from "../editor/EditorContext"
@@ -134,7 +134,7 @@ describe("EditorShell", () => {
     expect(generateWorkflowMock).toHaveBeenCalledTimes(1)
   })
 
-  it("shows the current manual toolbar without future history controls", async () => {
+  it("shows the current bounded editor toolbar", async () => {
     generateWorkflowMock.mockResolvedValue(responseFixture())
     renderShell()
     enterAndGenerate()
@@ -143,13 +143,74 @@ describe("EditorShell", () => {
     expect(screen.getByRole("button", { name: "Select" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Add shape" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /delete node|undo|redo/i })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Auto Arrange" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Redo" })).toBeDisabled()
     expect(screen.queryByText(/node inspector|edge inspector/i)).not.toBeInTheDocument()
   })
 
   it("exposes the CSS-governed narrow-screen editing notice", () => {
     renderShell()
-    const notice = screen.getByText("Workflow editing is optimized for tablet and desktop screens.")
+    const notice = screen.getByText("Manual editing is available on larger screens. AI editing and canvas navigation remain available here.")
     expect(notice).toHaveClass("editor-responsive-notice")
+  })
+
+  it("opens read-only insights without replacing the canvas and returns focus on close", async () => {
+    const response = responseFixture()
+    response.workflow.assumptions = ["The requester is known."]
+    response.workflow.missingRequirements = ["Define the reviewer."]
+    response.workflow.suggestions = ["Track response time."]
+    render(
+      <EditorProvider workflow={response.workflow}>
+        <EditorShell />
+      </EditorProvider>,
+    )
+
+    const trigger = screen.getByRole("button", { name: "Insights" })
+    expect(trigger).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("complementary", { name: "Workflow insights" })).not.toBeInTheDocument()
+    fireEvent.click(trigger)
+
+    const drawer = screen.getByRole("complementary", { name: "Workflow insights" })
+    expect(trigger).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByLabelText("Read-only workflow diagram")).toBeInTheDocument()
+    expect(within(drawer).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Assumptions", "Missing requirements", "Suggestions",
+    ])
+    expect(within(drawer).getByText("The requester is known.")).toBeInTheDocument()
+    expect(within(drawer).getByText("Define the reviewer.")).toBeInTheDocument()
+    expect(within(drawer).getByText("Track response time.")).toBeInTheDocument()
+    expect(within(drawer).queryByRole("textbox")).not.toBeInTheDocument()
+    expect(within(drawer).getByRole("heading", { name: "Workflow insights" })).toHaveFocus()
+
+    fireEvent.click(within(drawer).getByRole("button", { name: "Close insights" }))
+    await waitFor(() => expect(trigger).toHaveFocus())
+    expect(screen.queryByRole("complementary", { name: "Workflow insights" })).not.toBeInTheDocument()
+  })
+
+  it("keeps valid AI editing and navigation available on narrow screens while manual tools stay disabled", () => {
+    const originalMatchMedia = window.matchMedia
+    vi.stubGlobal("matchMedia", vi.fn(() => ({
+      matches: false,
+      media: "(min-width: 768px)",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })))
+    render(
+      <EditorProvider workflow={responseFixture().workflow}>
+        <EditorShell />
+      </EditorProvider>,
+    )
+
+    expect(screen.getByRole("button", { name: "Add shape" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Auto Arrange" })).toBeDisabled()
+    fireEvent.change(screen.getByRole("textbox", { name: "Workflow prompt" }), {
+      target: { value: "Add a review step." },
+    })
+    expect(screen.getByRole("button", { name: "Update workflow" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Zoom In" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Insights" })).toBeEnabled()
+    expect(screen.getByText(/AI editing and canvas navigation remain available here/)).toBeInTheDocument()
+    vi.stubGlobal("matchMedia", originalMatchMedia)
   })
 })

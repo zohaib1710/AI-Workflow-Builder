@@ -79,8 +79,15 @@ textarea {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  max-width: min(34rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
   pointer-events: none;
+}
+
+.editor-floating-controls__actions {
+  display: flex;
+  flex: none;
+  gap: 0.5rem;
+  pointer-events: auto;
 }
 
 .editor-floating-controls__identity {
@@ -424,7 +431,7 @@ textarea {
 .validation-indicator {
   position: absolute;
   z-index: var(--editor-layer-controls);
-  bottom: 1rem;
+  bottom: 11.75rem;
   left: 4.5rem;
   max-width: min(24rem, calc(100vw - 9rem));
   margin: 0;
@@ -464,17 +471,84 @@ textarea {
 .inspector-panel {
   position: absolute;
   z-index: var(--editor-layer-overlay);
-  top: 1rem;
+  top: 4.75rem;
   right: 1rem;
   width: min(18rem, calc(100vw - 2rem));
-  max-height: calc(100dvh - 9rem);
-  overflow: auto;
+  max-height: calc(100dvh - 16.5rem);
+  overflow-y: auto;
   border: 1px solid #3f3f46;
   border-radius: 0.75rem;
   background: rgb(28 28 28 / 0.96);
   padding: 0.875rem;
   box-shadow: 0 18px 42px rgb(0 0 0 / 0.38);
   backdrop-filter: blur(14px);
+}
+
+.insights-drawer {
+  position: absolute;
+  z-index: var(--editor-layer-overlay);
+  top: 4.75rem;
+  right: 1rem;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 16.5rem);
+  overflow-y: auto;
+  border: 1px solid #3f3f46;
+  border-radius: 0.75rem;
+  background: rgb(28 28 28 / 0.97);
+  padding: 0.875rem;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 0.38);
+  backdrop-filter: blur(14px);
+}
+
+.insights-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.insights-drawer__header h2 {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.insights-drawer__header button {
+  border: 1px solid #52525b;
+  border-radius: 0.45rem;
+  background: #292929;
+  padding: 0.35rem 0.55rem;
+  color: #f4f4f5;
+  font-size: 0.6875rem;
+  cursor: pointer;
+}
+
+.insights-drawer__header h2:focus-visible,
+.insights-drawer__header button:focus-visible {
+  outline: 2px solid #a1a1aa;
+  outline-offset: 2px;
+}
+
+.insights-drawer__content {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.insights-drawer .insight-panel {
+  border-color: #3f3f46;
+  background: #202020;
+  padding: 0.75rem;
+}
+
+.insights-drawer .insight-panel__heading {
+  color: #f4f4f5;
+  font-size: 0.75rem;
+}
+
+.insights-drawer .insight-panel__list,
+.insights-drawer .insight-panel__empty {
+  color: #d4d4d8;
+  font-size: 0.75rem;
 }
 
 .inspector-panel__header {
@@ -677,16 +751,19 @@ textarea {
   border-radius: 0.5rem;
   background: #1c1c1c;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.3);
+  bottom: 11.75rem !important;
 }
 
 @media (max-width: 767px) {
   .editor-toolbar {
     top: 4.75rem;
     left: 0.75rem;
+    max-height: calc(100dvh - 16rem);
+    overflow-y: auto;
   }
 
   .validation-indicator {
-    bottom: 0.75rem;
+    bottom: 11.75rem;
     left: 3.75rem;
     max-width: calc(100vw - 4.5rem);
   }
@@ -702,6 +779,21 @@ textarea {
 
   .editor-floating-controls__workflow-title {
     max-width: 42vw;
+  }
+
+  .editor-floating-controls__actions .editor-floating-controls__new:last-child {
+    display: none;
+  }
+
+  .insights-drawer {
+    top: 8rem;
+    right: 0.75rem;
+    width: min(22rem, calc(100vw - 1.5rem));
+    max-height: calc(100dvh - 19rem);
+  }
+
+  .editor-canvas .react-flow__minimap {
+    display: none;
   }
 
   .editor-composer {

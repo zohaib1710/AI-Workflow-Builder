@@ -357,7 +357,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 13: Add insights drawer, responsive polish, and lean editor coverage
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Keep the canvas dominant, make insights accessible, and close only genuine cross-feature coverage gaps.
 - Dependencies/prerequisites: V2 Checkpoints 1-12 complete.
 - Files to create: `frontend/src/components/editor/InsightsDrawer.tsx`, `frontend/src/test/editor-integration.test.tsx` only if existing focused suites do not already cover the full critical flow.
@@ -366,10 +366,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Drawer open/close and safe text; canvas remains available; mobile mutation controls disabled while generation/iteration/navigation remain; focus/accessible naming; only audited integration gaps; complete frontend regression suite.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Insights remain accessible and read-only without displacing the primary canvas.
-  - [ ] Desktop editor layers do not obscure core controls, composer, inspector, or React Flow navigation.
-  - [ ] Narrow screens clearly expose the intended AI/navigation-only limitation.
-  - [ ] Lean frontend coverage proves the critical V2 flow without duplicate or unstable tests.
+  - [x] Insights remain accessible and read-only without displacing the primary canvas.
+  - [x] Desktop editor layers do not obscure core controls, composer, inspector, or React Flow navigation.
+  - [x] Narrow screens clearly expose the intended AI/navigation-only limitation.
+  - [x] Lean frontend coverage proves the critical V2 flow without duplicate or unstable tests.
 - Commit message: `feat(frontend): polish workflow editor experience`
 - Stop conditions: Stop if polish expands into theming/design-system work, insights become editable, or tests depend on live services or third-party DOM internals.
 

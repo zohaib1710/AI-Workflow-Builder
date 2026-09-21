@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { editWorkflow, generateWorkflow, WorkflowApiError } from "../../api/client"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { reconcileWorkflowPresentation } from "../../editor/reconcileWorkflow"
@@ -7,6 +7,7 @@ import { validateWorkflowDraft } from "../../editor/validation"
 import { EXAMPLE_PROMPT, PROMPT_MAX_LENGTH } from "../../lib/constants"
 import EditorHeader from "./EditorHeader"
 import EditorToolbar from "./EditorToolbar"
+import InsightsDrawer from "./InsightsDrawer"
 import InspectorPanel from "./InspectorPanel"
 import ValidationIndicator from "./ValidationIndicator"
 import WorkflowEditorCanvas from "./WorkflowEditorCanvas"
@@ -64,6 +65,7 @@ function EditorShell() {
   const [prompt, setPrompt] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [insightsOpen, setInsightsOpen] = useState(false)
   const requestInFlight = useRef(false)
   const isMounted = useRef(true)
   const editingViewport = useEditingViewport()
@@ -190,7 +192,13 @@ function EditorShell() {
     dispatch({ type: "workflow/reset" })
     setPrompt("")
     setError(null)
+    setInsightsOpen(false)
   }
+
+  const closeInsights = useCallback(() => {
+    setInsightsOpen(false)
+    globalThis.requestAnimationFrame(() => document.getElementById("insights-trigger")?.focus())
+  }, [])
 
   const handlePromptChange = (value: string) => {
     if (requestInFlight.current) return
@@ -207,7 +215,12 @@ function EditorShell() {
   return (
     <main className="editor-shell" data-testid="editor-shell">
       <WorkflowEditorCanvas editingViewport={editingViewport} />
-      <EditorHeader workflowTitle={workflow?.title ?? null} onNewWorkflow={handleReset} />
+      <EditorHeader
+        workflowTitle={workflow?.title ?? null}
+        onNewWorkflow={handleReset}
+        insightsOpen={insightsOpen}
+        onToggleInsights={() => setInsightsOpen((open) => !open)}
+      />
       <EditorToolbar
         editingViewport={editingViewport}
         onNewWorkflow={handleReset}
@@ -215,7 +228,8 @@ function EditorShell() {
         isRequestLoading={isRequestLoading}
       />
       <ValidationIndicator />
-      <InspectorPanel editingViewport={editingViewport} />
+      {insightsOpen && workflow && <InsightsDrawer workflow={workflow} onClose={closeInsights} />}
+      {!insightsOpen && <InspectorPanel editingViewport={editingViewport} />}
       <WorkflowPromptComposer
         mode={workflow ? "iterate" : "generate"}
         value={prompt}
@@ -227,7 +241,7 @@ function EditorShell() {
         onUseExample={handleUseExample}
       />
       <p className="editor-responsive-notice">
-        Workflow editing is optimized for tablet and desktop screens.
+        Manual editing is available on larger screens. AI editing and canvas navigation remain available here.
       </p>
     </main>
   )
