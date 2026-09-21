@@ -47,7 +47,7 @@ FastAPI exposes `GET /api/v1/health` and `POST /api/v1/workflows/generate`. Pyda
 
 ## Validation layers
 
-- The prompt is a strict, non-blank string of at most 5,000 characters.
+- The prompt is a strict, non-blank string of at most 2,000 characters.
 - The Pydantic workflow model rejects missing, incorrectly typed, and unknown fields.
 - Domain graph validation rejects duplicate IDs, missing references, self-references, invalid start/end connections, invalid decision fan-out or labels, and disconnected multi-node graphs.
 - The frontend validates response structure and supported node types again before display.

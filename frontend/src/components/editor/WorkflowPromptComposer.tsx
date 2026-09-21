@@ -72,7 +72,7 @@ function WorkflowPromptComposer({
           disabled={isLoading}
           className="editor-composer__textarea"
         />
-        <p id="prompt-guidance" className="sr-only">Enter no more than 5,000 characters.</p>
+        <p id="prompt-guidance" className="sr-only">Enter no more than 2,000 characters.</p>
         {isIteration && (
           <p id="iteration-guidance" className="editor-composer__guidance">
             Describe the change you want AI to make to this workflow.

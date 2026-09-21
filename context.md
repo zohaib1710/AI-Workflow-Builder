@@ -240,3 +240,9 @@
 - No backend, API, dependency, lock-file, E2E, or new product feature was added.
 - Next action: implement V2 Checkpoint 14.
 - Proposed commit title: `feat(frontend): polish workflow editor experience`.
+
+## Prompt-length correction
+
+- Generation prompts and AI edit instructions now accept at most 2,000 characters in both the frontend and backend; the editor counter, guidance, error text, and API documentation match.
+- Boundary-rejection tests now use 2,001 characters. Full frontend suite (182 passed), full backend suite (128 passed), frontend production build, Ruff, and `git diff --check` passed.
+- V2 Checkpoint 14 remains incomplete; its documentation and final verification work has not been started by this correction.

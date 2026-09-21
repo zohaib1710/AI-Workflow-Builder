@@ -14,7 +14,7 @@ Version 1 converts one natural-language business-process prompt into a validated
 }
 ```
 
-`prompt` must be a string, is trimmed, must not be blank, and is limited to 5,000 characters. Unknown request fields are rejected.
+`prompt` must be a string, is trimmed, must not be blank, and is limited to 2,000 characters. Unknown request fields are rejected.
 
 ## Workflow response contract
 

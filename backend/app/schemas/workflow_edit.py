@@ -4,7 +4,7 @@ from app.schemas.workflow import GenerationMetadata, StrictModel, Workflow
 
 
 class EditWorkflowRequest(StrictModel):
-    instruction: StrictStr = Field(min_length=1, max_length=5000)
+    instruction: StrictStr = Field(min_length=1, max_length=2000)
     workflow: Workflow
 
     @field_validator("instruction", mode="before")

@@ -115,7 +115,7 @@ class Workflow(StrictModel):
 
 
 class GenerateWorkflowRequest(StrictModel):
-    prompt: NonEmptyString = Field(max_length=5000)
+    prompt: NonEmptyString = Field(max_length=2000)
 
     _normalize_prompt = field_validator("prompt", mode="before")(_strip_required)
 

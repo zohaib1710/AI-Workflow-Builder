@@ -55,7 +55,7 @@ function PromptPanel({
             className="block w-full resize-y rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base leading-7 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isLoading}
           />
-          <p id="prompt-guidance" className="sr-only">Enter no more than 5,000 characters.</p>
+          <p id="prompt-guidance" className="sr-only">Enter no more than 2,000 characters.</p>
           <p id="prompt-count" className={`prompt-count${isOverLimit ? " prompt-count--warning" : ""}`}>
             {value.length} / {PROMPT_MAX_LENGTH}
           </p>

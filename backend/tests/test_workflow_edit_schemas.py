@@ -39,6 +39,7 @@ def workflow_payload() -> dict[str, object]:
 
 
 def test_valid_request_has_exact_fields_and_normalizes_instruction() -> None:
+    assert len(EditWorkflowRequest(instruction='x' * 2000, workflow=workflow_payload()).instruction) == 2000
     request = EditWorkflowRequest(
         instruction="  Rename the final step.  ",
         workflow=workflow_payload(),
@@ -48,7 +49,7 @@ def test_valid_request_has_exact_fields_and_normalizes_instruction() -> None:
     assert set(request.model_dump()) == {"instruction", "workflow"}
 
 
-@pytest.mark.parametrize("instruction", ["", "   ", "x" * 5001])
+@pytest.mark.parametrize("instruction", ["", "   ", "x" * 2001])
 def test_invalid_instruction_is_rejected(instruction: str) -> None:
     with pytest.raises(ValidationError):
         EditWorkflowRequest(instruction=instruction, workflow=workflow_payload())

@@ -88,7 +88,7 @@ function EditorShell() {
       return
     }
     if (normalizedPrompt.length > PROMPT_MAX_LENGTH) {
-      setError("The workflow prompt must be 5,000 characters or fewer.")
+      setError("The workflow prompt must be 2,000 characters or fewer.")
       return
     }
 
@@ -122,7 +122,7 @@ function EditorShell() {
       return
     }
     if (normalizedInstruction.length > PROMPT_MAX_LENGTH) {
-      setError("The edit instruction must be 5,000 characters or fewer.")
+      setError("The edit instruction must be 2,000 characters or fewer.")
       return
     }
     if (workflow.nodes.length === 0 || validateWorkflowDraft(workflow).length > 0) {

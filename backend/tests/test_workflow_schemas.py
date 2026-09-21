@@ -71,10 +71,11 @@ def test_blank_required_fields_fail(model: type[object], payload: dict[str, obje
 
 
 def test_valid_prompt_is_normalized() -> None:
+    assert len(GenerateWorkflowRequest(prompt='x' * 2000).prompt) == 2000
     assert GenerateWorkflowRequest(prompt="  Build a workflow.  ").prompt == "Build a workflow."
 
 
-@pytest.mark.parametrize("prompt", ["", "   ", "x" * 5001])
+@pytest.mark.parametrize("prompt", ["", "   ", "x" * 2001])
 def test_invalid_prompt_fails(prompt: str) -> None:
     with pytest.raises(ValidationError):
         GenerateWorkflowRequest(prompt=prompt)
