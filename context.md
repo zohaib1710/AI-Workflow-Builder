@@ -182,3 +182,12 @@
 - Successful validation: focused annotations/shortcuts tests (10 passed); focused editor-state regression tests (10 passed); required combined annotations-shortcuts/node-tools/edge-editing suites (36 passed); frontend production build; `git diff --check`.
 - Next action: implement V2 Checkpoint 8.
 - Proposed commit title: `feat(frontend): add annotations and editor shortcuts`.
+- V2 Checkpoint 8 is complete.
+- A dedicated provider-agnostic workflow editing service now returns a complete revised semantic `Workflow` through the existing `AIProvider` boundary.
+- Edit request/response schemas normalize bounded instructions, reuse canonical workflow/generation models, reject unknown fields, and keep editor presentation data outside the backend contract.
+- The current workflow graph is validated before provider access. Edit prompts serialize public API aliases and explicitly require stable IDs for retained logical steps, unique IDs for additions, and omission of deleted nodes and edges.
+- Shared candidate JSON parsing, strict schema validation, safe feedback, and graph validation are reused by generation and editing. Candidate-content failures receive at most one correction attempt, while provider failures remain non-retryable.
+- Existing generation behavior remains unchanged. No edit API route, frontend integration, provider transport change, dependency change, patch protocol, or presentation awareness was added.
+- Successful validation: edit-schema tests (7 passed); edit-service tests (13 passed); generation-service regressions (16 passed); required combined suites (36 passed); Ruff; backend compilation; `git diff --check`.
+- Next action: implement V2 Checkpoint 9.
+- Proposed commit title: `feat(backend): add provider-agnostic workflow editing`.

@@ -267,7 +267,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 8: Implement provider-agnostic workflow edit schemas and service
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Add a safe backend service that revises a validated semantic workflow from a natural-language instruction.
 - Dependencies/prerequisites: Version 1 backend contracts remain passing; frontend V2 checkpoints do not block this backend work.
 - Files to create: `backend/app/schemas/workflow_edit.py`, `backend/app/prompts/workflow_edit.py`, `backend/app/services/workflow_candidates.py`, `backend/app/services/workflow_edit.py`, `backend/tests/test_workflow_edit_schemas.py`, `backend/tests/test_workflow_edit_service.py`.
@@ -276,10 +276,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Strict request/response fields; normalized instruction; invalid current graph causes zero provider calls; full-workflow prompt includes current semantics and identity rules; valid revision; malformed/schema-invalid/graph-invalid correction once; second invalid response stops at two calls; provider failures are not retried; no presentation fields or secret leakage.
 - Validation commands: `uv run --project backend pytest backend/tests/test_workflow_edit_schemas.py backend/tests/test_workflow_edit_service.py backend/tests/test_generation_service.py`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Editing uses a dedicated service over the existing provider abstraction and returns a full validated workflow.
-  - [ ] Current and revised workflows both pass strict semantic and graph validation at the correct boundaries.
-  - [ ] Identity-preservation instructions are explicit, and provider failures remain non-retryable.
-  - [ ] Existing generation behavior, provider transport, API routes, and frontend remain unchanged.
+  - [x] Editing uses a dedicated service over the existing provider abstraction and returns a full validated workflow.
+  - [x] Current and revised workflows both pass strict semantic and graph validation at the correct boundaries.
+  - [x] Identity-preservation instructions are explicit, and provider failures remain non-retryable.
+  - [x] Existing generation behavior, provider transport, API routes, and frontend remain unchanged.
 - Commit message: `feat(backend): add provider-agnostic workflow editing`
 - Stop conditions: Stop if patches are required, the service becomes vendor-specific, current invalid input reaches the provider, or retries exceed one correction.
 

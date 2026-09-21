@@ -1,9 +1,5 @@
-import json
 from collections.abc import Iterable
 
-from pydantic import ValidationError
-
-from app.domain.validation import WorkflowGraphValidationError, validate_workflow_graph
 from app.prompts.workflow_generation import (
     SYSTEM_PROMPT,
     build_correction_prompt,
@@ -16,6 +12,12 @@ from app.schemas.workflow import (
     GenerateWorkflowRequest,
     ValidationErrorDetail,
     Workflow,
+)
+from app.services.workflow_candidates import (
+    CANDIDATE_VALIDATION_ERRORS,
+    feedback_from_candidate_error,
+    validate_workflow_candidate,
+    validation_details,
 )
 
 
@@ -43,9 +45,9 @@ class WorkflowGenerationService:
             schema=schema,
         )
         try:
-            return self._validate_candidate(candidate)
-        except (json.JSONDecodeError, ValidationError, WorkflowGraphValidationError) as exc:
-            feedback = self._feedback_from_exception(exc)
+            return validate_workflow_candidate(candidate)
+        except CANDIDATE_VALIDATION_ERRORS as exc:
+            feedback = feedback_from_candidate_error(exc)
             corrected = await self.provider.generate_structured(
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=build_correction_prompt(
@@ -55,42 +57,8 @@ class WorkflowGenerationService:
                 schema=schema,
             )
             try:
-                return self._validate_candidate(corrected)
-            except (json.JSONDecodeError, ValidationError, WorkflowGraphValidationError) as final_exc:
+                return validate_workflow_candidate(corrected)
+            except CANDIDATE_VALIDATION_ERRORS as final_exc:
                 raise WorkflowGenerationValidationError(
-                    self._details_from_feedback(self._feedback_from_exception(final_exc))
+                    validation_details(feedback_from_candidate_error(final_exc))
                 ) from final_exc
-
-    @staticmethod
-    def _validate_candidate(candidate: str) -> Workflow:
-        parsed = json.loads(candidate)
-        if not isinstance(parsed, dict):
-            raise ValidationError.from_exception_data(
-                "Workflow", [{"type": "dict_type", "loc": (), "input": parsed}]
-            )
-        workflow = Workflow.model_validate(parsed)
-        validate_workflow_graph(workflow)
-        return workflow
-
-    @staticmethod
-    def _feedback_from_exception(
-        exception: json.JSONDecodeError | ValidationError | WorkflowGraphValidationError,
-    ) -> list[tuple[str, str, str | None]]:
-        if isinstance(exception, json.JSONDecodeError):
-            return [("invalid_json", "Candidate was not valid JSON.", None)]
-        if isinstance(exception, WorkflowGraphValidationError):
-            return [(error.code, error.message, error.field) for error in exception.errors]
-        feedback: list[tuple[str, str, str | None]] = []
-        for error in exception.errors():
-            location = ".".join(str(part) for part in error.get("loc", ())) or "workflow"
-            feedback.append(("invalid_workflow", f"Workflow candidate failed validation at {location}.", location))
-        return feedback
-
-    @staticmethod
-    def _details_from_feedback(
-        feedback: Iterable[tuple[str, str, str | None]],
-    ) -> tuple[ValidationErrorDetail, ...]:
-        return tuple(
-            ValidationErrorDetail(code=code, message=message, field=field)
-            for code, message, field in feedback
-        )
