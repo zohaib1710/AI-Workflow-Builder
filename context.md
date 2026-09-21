@@ -209,3 +209,14 @@
 - Successful validation: focused reconciliation tests (13 passed); required reconciliation/editor-state regressions (23 passed); frontend production build; `git diff --check`.
 - Next action: implement V2 Checkpoint 11.
 - Proposed commit title: `feat(frontend): preserve canvas state across workflow edits`.
+- V2 Checkpoint 11 is complete.
+- The bottom composer now performs natural-language workflow iteration through `editWorkflow`, while initial generation remains a separate `generateWorkflow` path.
+- Only nonempty, graph-valid semantic drafts are submitted. Presentation, annotations, selection, tools, viewport, and history never enter the edit request.
+- AI-edit loading keeps the current workflow visible, locks semantic/manual mutation and duplicate submission, and leaves React Flow navigation available.
+- Successful edits reconcile semantic revisions with existing presentation by stable ID, using the presentation bounds center as a flow-coordinate fallback. Retained manual positions and shape overrides survive, new/deleted nodes reconcile without full Dagre, and annotations remain unchanged.
+- Each successful AI edit records exactly one history transaction and normalizes selection when a selected semantic object was removed. Revised workflow insight fields are adopted with the semantic workflow.
+- API and identity-instability failures preserve the complete prior editor snapshot, history, annotations, and instruction while showing a controlled error.
+- Successful validation: focused AI-iteration integration tests (6 passed); reconciliation and edit-client regressions (18 passed); editor-shell regressions after two stale assertion corrections (6 passed); frontend production build.
+- No backend, dependency, lock-file, provider-specific, persistence, Auto Arrange, or visible history-control change was added.
+- Next action: implement V2 Checkpoint 12.
+- Proposed commit title: `feat(frontend): add AI workflow iteration`.

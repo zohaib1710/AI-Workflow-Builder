@@ -26,7 +26,7 @@ function WorkflowPromptComposer({
   const isIteration = mode === "iterate"
   const normalizedLength = value.trim().length
   const isOverLimit = normalizedLength > PROMPT_MAX_LENGTH
-  const isSubmitDisabled = isIteration || isLoading || normalizedLength === 0 || isOverLimit
+  const isSubmitDisabled = isLoading || normalizedLength === 0 || isOverLimit
   const heading = isIteration ? "Refine this workflow" : "Describe your workflow"
   const placeholder = isIteration
     ? "Ask AI to modify this workflow..."
@@ -75,7 +75,7 @@ function WorkflowPromptComposer({
         <p id="prompt-guidance" className="sr-only">Enter no more than 5,000 characters.</p>
         {isIteration && (
           <p id="iteration-guidance" className="editor-composer__guidance">
-            Workflow iteration will be available in a later editor step.
+            Describe the change you want AI to make to this workflow.
           </p>
         )}
         <p id="prompt-count" className={`prompt-count${isOverLimit ? " prompt-count--warning" : ""}`}>
@@ -83,7 +83,11 @@ function WorkflowPromptComposer({
         </p>
 
         {error && <p role="alert" className="editor-composer__error">{error}</p>}
-        {isLoading && <p role="status" aria-live="polite" className="prompt-loading-status">Generating workflow...</p>}
+        {isLoading && (
+          <p role="status" aria-live="polite" className="prompt-loading-status">
+            {isIteration ? "Updating workflow..." : "Generating workflow..."}
+          </p>
+        )}
 
         <div className="editor-composer__actions">
           {!isIteration && (
@@ -92,7 +96,7 @@ function WorkflowPromptComposer({
             </button>
           )}
           <button type="submit" disabled={isSubmitDisabled} className="editor-button editor-button--primary">
-            {isLoading ? "Generating workflow&" : isIteration ? "Update workflow" : "Generate workflow"}
+            {isLoading ? (isIteration ? "Updating workflow..." : "Generating workflow...") : isIteration ? "Update workflow" : "Generate workflow"}
           </button>
         </div>
       </form>

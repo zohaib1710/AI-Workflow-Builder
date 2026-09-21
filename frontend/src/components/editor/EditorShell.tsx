@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react"
-import { generateWorkflow, WorkflowApiError } from "../../api/client"
+import { editWorkflow, generateWorkflow, WorkflowApiError } from "../../api/client"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
+import { reconcileWorkflowPresentation } from "../../editor/reconcileWorkflow"
+import type { CanvasNodePresentation, CanvasPosition } from "../../editor/types"
+import { validateWorkflowDraft } from "../../editor/validation"
 import { EXAMPLE_PROMPT, PROMPT_MAX_LENGTH } from "../../lib/constants"
 import EditorHeader from "./EditorHeader"
 import EditorToolbar from "./EditorToolbar"
@@ -8,6 +11,36 @@ import InspectorPanel from "./InspectorPanel"
 import ValidationIndicator from "./ValidationIndicator"
 import WorkflowEditorCanvas from "./WorkflowEditorCanvas"
 import WorkflowPromptComposer from "./WorkflowPromptComposer"
+
+const IDENTITY_INSTABILITY_MESSAGE = "The revised workflow could not preserve the current canvas layout. Try a more specific edit."
+
+function presentationCenter(
+  presentation: Record<string, CanvasNodePresentation>,
+): CanvasPosition {
+  const positions = Object.values(presentation).map((node) => node.position)
+  if (positions.length === 0) return { x: 0, y: 0 }
+
+  const xs = positions.map((position) => position.x)
+  const ys = positions.map((position) => position.y)
+  return {
+    x: (Math.min(...xs) + Math.max(...xs)) / 2,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2,
+  }
+}
+
+function focusValidationIndicator() {
+  globalThis.requestAnimationFrame(() => {
+    const indicator = document.querySelector<HTMLElement>(".validation-indicator")
+    if (!indicator) return
+    if (indicator instanceof HTMLDetailsElement) {
+      indicator.open = true
+      indicator.querySelector<HTMLElement>("summary")?.focus()
+      return
+    }
+    indicator.tabIndex = -1
+    indicator.focus()
+  })
+}
 
 function useEditingViewport() {
   const query = "(min-width: 768px)"
@@ -29,12 +62,14 @@ function EditorShell() {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
   const [prompt, setPrompt] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const requestInFlight = useRef(false)
   const isMounted = useRef(true)
   const editingViewport = useEditingViewport()
   const workflow = editorState?.present.workflow ?? null
+  const isEditing = editorState?.asyncState.status === "loading"
+  const isRequestLoading = isGenerating || isEditing
 
   useEffect(() => {
     isMounted.current = true
@@ -57,7 +92,7 @@ function EditorShell() {
 
     requestInFlight.current = true
     setError(null)
-    setIsLoading(true)
+    setIsGenerating(true)
     try {
       const response = await generateWorkflow({ prompt: normalizedPrompt })
       if (!isMounted.current) return
@@ -73,7 +108,79 @@ function EditorShell() {
       )
     } finally {
       requestInFlight.current = false
-      if (isMounted.current) setIsLoading(false)
+      if (isMounted.current) setIsGenerating(false)
+    }
+  }
+
+  const handleIterate = async () => {
+    if (!workflow || !editorState || requestInFlight.current) return
+    const normalizedInstruction = prompt.trim()
+    if (!normalizedInstruction) {
+      setError("Enter an edit instruction before updating.")
+      return
+    }
+    if (normalizedInstruction.length > PROMPT_MAX_LENGTH) {
+      setError("The edit instruction must be 5,000 characters or fewer.")
+      return
+    }
+    if (workflow.nodes.length === 0 || validateWorkflowDraft(workflow).length > 0) {
+      setError("Resolve the workflow validation issues before asking AI to update it.")
+      focusValidationIndicator()
+      return
+    }
+
+    const previous = editorState.present
+    requestInFlight.current = true
+    setError(null)
+    dispatch({ type: "async/set", asyncState: { status: "loading" } })
+    try {
+      const response = await editWorkflow({
+        instruction: normalizedInstruction,
+        workflow: previous.workflow,
+      })
+      if (!isMounted.current) return
+
+      const reconciliation = reconcileWorkflowPresentation(
+        previous.workflow,
+        previous.nodePresentations,
+        response.workflow,
+        presentationCenter(previous.nodePresentations),
+      )
+      if (reconciliation.status === "identity-instability") {
+        setError(IDENTITY_INSTABILITY_MESSAGE)
+        return
+      }
+
+      dispatch({
+        type: "snapshot/record",
+        snapshot: {
+          workflow: response.workflow,
+          nodePresentations: reconciliation.presentation,
+          annotations: previous.annotations,
+        },
+      })
+      setPrompt("")
+      setError(null)
+    } catch (editError: unknown) {
+      if (!isMounted.current) return
+      setError(
+        editError instanceof WorkflowApiError
+          ? editError.message
+          : "Something went wrong while updating the workflow. Please try again.",
+      )
+    } finally {
+      requestInFlight.current = false
+      if (isMounted.current) {
+        dispatch({ type: "async/set", asyncState: { status: "idle" } })
+      }
+    }
+  }
+
+  const handleSubmit = () => {
+    if (workflow) {
+      void handleIterate()
+    } else {
+      void handleGenerate()
     }
   }
 
@@ -105,17 +212,17 @@ function EditorShell() {
         editingViewport={editingViewport}
         onNewWorkflow={handleReset}
         onFocusPrompt={() => document.getElementById("workflow-prompt")?.focus()}
-        isRequestLoading={isLoading}
+        isRequestLoading={isRequestLoading}
       />
       <ValidationIndicator />
       <InspectorPanel editingViewport={editingViewport} />
       <WorkflowPromptComposer
         mode={workflow ? "iterate" : "generate"}
         value={prompt}
-        isLoading={isLoading}
+        isLoading={isRequestLoading}
         error={error}
         onChange={handlePromptChange}
-        onGenerate={handleGenerate}
+        onGenerate={handleSubmit}
         onClear={handleReset}
         onUseExample={handleUseExample}
       />

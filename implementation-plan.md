@@ -321,7 +321,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 11: Integrate prompt-based AI workflow iteration
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Turn the generated-state composer into a safe natural-language editor using the new API and reconciliation boundary.
 - Dependencies/prerequisites: V2 Checkpoints 9-10 complete; editor shell and reducer complete.
 - Files to create: `frontend/src/test/ai-iteration.test.tsx`.
@@ -330,10 +330,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Exact edit call; bottom composer mode; loading lock with navigation retained; duplicate prevention; successful semantic/insight update; positions and shape overrides preserved; new/deleted nodes reconciled; invalid draft makes zero calls; safe provider failure and identity instability preserve prior editor state; no annotation/presentation leakage.
 - Validation commands: `npm.cmd run test --prefix frontend -- --run src/test/ai-iteration.test.tsx src/test/editor-shell.test.tsx src/test/reconcile-workflow.test.ts src/test/edit-api-client.test.ts`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] Natural-language instructions revise the visible workflow through the backend edit contract.
-  - [ ] Failed edits never destroy or partially replace current editor state.
-  - [ ] Manual layout and shape choices survive successful edits by stable ID.
-  - [ ] AI-edit loading behavior is deterministic, accessible, and mutation-safe.
+  - [x] Natural-language instructions revise the visible workflow through the backend edit contract.
+  - [x] Failed edits never destroy or partially replace current editor state.
+  - [x] Manual layout and shape choices survive successful edits by stable ID.
+  - [x] AI-edit loading behavior is deterministic, accessible, and mutation-safe.
 - Commit message: `feat(frontend): add AI workflow iteration`
 - Stop conditions: Stop if invalid drafts reach the backend, manual state is cleared on failure, duplicate submissions occur, or provider details enter frontend code.
 

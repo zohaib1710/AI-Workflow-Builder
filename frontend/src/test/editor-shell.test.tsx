@@ -124,7 +124,7 @@ describe("EditorShell", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Workflow prompt" }), {
       target: { value: "Future edit" },
     })
-    fireEvent.click(screen.getByRole("button", { name: "New workflow" }))
+    fireEvent.click(screen.getAllByRole("button", { name: "New workflow" })[0])
 
     await waitFor(() => expect(screen.getByLabelText("Empty workflow canvas")).toBeInTheDocument())
     expect(screen.getAllByRole("form")).toHaveLength(1)
@@ -134,13 +134,16 @@ describe("EditorShell", () => {
     expect(generateWorkflowMock).toHaveBeenCalledTimes(1)
   })
 
-  it("keeps the generated canvas navigation-only without future editing controls", async () => {
+  it("shows the current manual toolbar without future history controls", async () => {
     generateWorkflowMock.mockResolvedValue(responseFixture())
     renderShell()
     enterAndGenerate()
 
     expect(await screen.findByLabelText("Read-only workflow diagram")).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /select|connect|add shape|delete node|undo|redo/i })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Select" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Add shape" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /delete node|undo|redo/i })).not.toBeInTheDocument()
     expect(screen.queryByText(/node inspector|edge inspector/i)).not.toBeInTheDocument()
   })
 

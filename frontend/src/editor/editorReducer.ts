@@ -64,8 +64,14 @@ function selectionForSnapshot(selection: EditorSelection, snapshot: EditorSnapsh
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
-    case "snapshot/record":
-      return action.snapshot === state.present ? state : recordSnapshot(state, action.snapshot)
+    case "snapshot/record": {
+      if (action.snapshot === state.present) return state
+      const recorded = recordSnapshot(state, action.snapshot)
+      return {
+        ...recorded,
+        selection: selectionForSnapshot(state.selection, action.snapshot),
+      }
+    }
     case "node/position-commit": {
       const presentation = state.present.nodePresentations[action.nodeId]
       if (!presentation || (presentation.position.x === action.position.x && presentation.position.y === action.position.y)) return state
