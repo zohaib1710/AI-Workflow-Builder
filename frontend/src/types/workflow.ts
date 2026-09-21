@@ -49,6 +49,16 @@ export interface GenerateWorkflowResponse {
   generation: GenerationMetadata
 }
 
+export interface EditWorkflowRequest {
+  instruction: string
+  workflow: Workflow
+}
+
+export interface EditWorkflowResponse {
+  workflow: Workflow
+  generation: GenerationMetadata
+}
+
 export interface ApiErrorDetail {
   code: string
   message: string

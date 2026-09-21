@@ -191,3 +191,12 @@
 - Successful validation: edit-schema tests (7 passed); edit-service tests (13 passed); generation-service regressions (16 passed); required combined suites (36 passed); Ruff; backend compilation; `git diff --check`.
 - Next action: implement V2 Checkpoint 9.
 - Proposed commit title: `feat(backend): add provider-agnostic workflow editing`.
+- V2 Checkpoint 9 is complete.
+- `POST /api/v1/workflows/edit` now exposes the Checkpoint 8 service through the existing dependency-injected workflow route and returns the revised semantic workflow with configured-model and non-negative duration metadata.
+- Pydantic-invalid edit requests are rejected before service access. Invalid current workflows map safely to 422, exhausted revised-output validation maps safely to 502, and existing provider exception handlers are reused without exposing private details.
+- Typed frontend `EditWorkflowRequest`, `EditWorkflowResponse`, and `editWorkflow` contracts now send exactly the instruction plus semantic workflow to the edit endpoint.
+- The edit client shares generation's 30-second timeout, safe error parsing, runtime workflow/metadata validation, abort cleanup, and single-fetch no-retry behavior.
+- Existing generation route/client and health behavior remain unchanged. No editor UI wiring, service/provider transport change, presentation payload, dependency change, or live network access was added.
+- Successful validation: focused edit-route tests (6 passed); error-mapping tests (12 passed); focused edit-client tests (5 passed); required backend route/error regressions (27 passed); required edit/generation client regressions (25 passed); Ruff; frontend production build; `git diff --check`.
+- Next action: implement V2 Checkpoint 10.
+- Proposed commit title: `feat(api): expose workflow editing endpoint`.

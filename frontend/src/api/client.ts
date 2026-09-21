@@ -1,5 +1,7 @@
 import type {
   ApiErrorDetail,
+  EditWorkflowRequest,
+  EditWorkflowResponse,
   GenerateWorkflowRequest,
   GenerateWorkflowResponse,
 } from "../types/workflow"
@@ -16,6 +18,8 @@ const SUPPORTED_NODE_TYPES = new Set([
 
 const SAFE_BACKEND_ERROR_MESSAGES = {
   invalid_request: "Check the workflow prompt and try again.",
+  invalid_edit_workflow: "The current workflow is not valid for editing.",
+  invalid_edit_output: "The workflow could not be revised in a valid format. Please try again.",
   invalid_provider_output: "The workflow could not be generated in a valid format. Please try again.",
   provider_not_configured: "Workflow generation is temporarily unavailable.",
   provider_credentials_unavailable: "Workflow generation is temporarily unavailable.",
@@ -71,7 +75,9 @@ function isWorkflowEdge(value: unknown): boolean {
     typeof value.target === "string" && isNullableString(value.label)
 }
 
-function isGeneratedWorkflowResponse(value: unknown): value is GenerateWorkflowResponse {
+type WorkflowResponse = GenerateWorkflowResponse | EditWorkflowResponse
+
+function isWorkflowResponse(value: unknown): value is WorkflowResponse {
   if (!isRecord(value) || !isRecord(value.workflow) || !isRecord(value.generation)) return false
   const { workflow, generation } = value
   return typeof workflow.title === "string" && typeof workflow.description === "string" &&
@@ -103,10 +109,11 @@ function errorFromResponseBody(body: unknown, status: number): WorkflowApiError 
   return new WorkflowApiError(SAFE_BACKEND_ERROR_MESSAGES[code], code, status, detail.field)
 }
 
-export async function generateWorkflow(
-  request: GenerateWorkflowRequest,
+async function postWorkflowRequest<TResponse extends WorkflowResponse>(
+  path: string,
+  payload: object,
   options?: { signal?: AbortSignal },
-): Promise<GenerateWorkflowResponse> {
+): Promise<TResponse> {
   const controller = new AbortController()
   let didTimeout = false
   const timeoutId = globalThis.setTimeout(() => {
@@ -117,10 +124,10 @@ export async function generateWorkflow(
   options?.signal?.addEventListener("abort", abortFromExternalSignal, { once: true })
 
   try {
-    const response = await fetch(`${API_BASE_URL}/workflows/generate`, {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: request.prompt }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     })
 
@@ -132,12 +139,12 @@ export async function generateWorkflow(
     }
 
     if (!response.ok) throw errorFromResponseBody(body, response.status)
-    if (!isGeneratedWorkflowResponse(body)) {
+    if (!isWorkflowResponse(body)) {
       throw new WorkflowApiError(
         "The backend returned an invalid workflow response.", "invalid_response", response.status, null,
       )
     }
-    return body
+    return body as TResponse
   } catch (error: unknown) {
     if (error instanceof WorkflowApiError) throw error
     if (didTimeout) {
@@ -150,4 +157,26 @@ export async function generateWorkflow(
     globalThis.clearTimeout(timeoutId)
     options?.signal?.removeEventListener("abort", abortFromExternalSignal)
   }
+}
+
+export function generateWorkflow(
+  request: GenerateWorkflowRequest,
+  options?: { signal?: AbortSignal },
+): Promise<GenerateWorkflowResponse> {
+  return postWorkflowRequest(
+    "/workflows/generate",
+    { prompt: request.prompt },
+    options,
+  )
+}
+
+export function editWorkflow(
+  request: EditWorkflowRequest,
+  options?: { signal?: AbortSignal },
+): Promise<EditWorkflowResponse> {
+  return postWorkflowRequest(
+    "/workflows/edit",
+    { instruction: request.instruction, workflow: request.workflow },
+    options,
+  )
 }

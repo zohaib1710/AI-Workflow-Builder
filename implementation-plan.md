@@ -285,7 +285,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 Checkpoint 9: Expose the workflow edit API and typed frontend client
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Publish the edit service through a thin safe route and establish the frontend contract without wiring editor UI.
 - Dependencies/prerequisites: V2 Checkpoint 8 complete; Version 1 route/client tests passing.
 - Files to create: `backend/tests/test_workflow_edit_routes.py`, `frontend/src/test/edit-api-client.test.ts`.
@@ -294,10 +294,10 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Required tests: Request validation before service call; valid response metadata; dependency override; each new error mapping; no leakage; exact frontend body and URL; timeout/network/non-JSON/malformed-success behavior; one fetch only; generation route/client regressions.
 - Validation commands: `uv run --project backend pytest backend/tests/test_workflow_edit_routes.py backend/tests/test_error_mapping.py backend/tests/test_workflow_routes.py`; `npm.cmd run test --prefix frontend -- --run src/test/edit-api-client.test.ts src/test/api-client.test.ts`; `uv run --project backend ruff check backend`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
-  - [ ] The edit endpoint is thin, provider-agnostic, strictly typed, and safely mapped.
-  - [ ] The frontend client posts only instruction plus the semantic workflow and validates the complete response.
-  - [ ] Edit failures never expose provider internals or trigger frontend retry.
-  - [ ] Existing generation and health contracts remain unchanged.
+  - [x] The edit endpoint is thin, provider-agnostic, strictly typed, and safely mapped.
+  - [x] The frontend client posts only instruction plus the semantic workflow and validates the complete response.
+  - [x] Edit failures never expose provider internals or trigger frontend retry.
+  - [x] Existing generation and health contracts remain unchanged.
 - Commit message: `feat(api): expose workflow editing endpoint`
 - Stop conditions: Stop if the route performs prompting/validation/retry itself, presentation leaks into the request, or tests require network credentials.
 

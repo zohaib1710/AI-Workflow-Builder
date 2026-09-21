@@ -10,6 +10,8 @@ from app.api.errors import (
     provider_rate_limit_handler,
     provider_response_handler,
     provider_timeout_handler,
+    workflow_edit_input_handler,
+    workflow_edit_output_handler,
     workflow_validation_handler,
 )
 from app.providers.exceptions import (
@@ -22,6 +24,10 @@ from app.providers.exceptions import (
     AIProviderTimeoutError,
 )
 from app.schemas.workflow import ValidationErrorDetail
+from app.services.workflow_edit import (
+    WorkflowEditInputValidationError,
+    WorkflowEditOutputValidationError,
+)
 from app.services.workflow_generation import WorkflowGenerationValidationError
 from starlette.requests import Request
 
@@ -45,6 +51,22 @@ def response_body(response) -> dict[str, object]:
             ),
             502,
             "invalid_provider_output",
+        ),
+        (
+            workflow_edit_input_handler,
+            WorkflowEditInputValidationError(
+                [ValidationErrorDetail(code="disconnected_graph", message="private graph detail")]
+            ),
+            422,
+            "invalid_edit_workflow",
+        ),
+        (
+            workflow_edit_output_handler,
+            WorkflowEditOutputValidationError(
+                [ValidationErrorDetail(code="invalid_json", message="private candidate detail")]
+            ),
+            502,
+            "invalid_edit_output",
         ),
         (
             provider_configuration_handler,
@@ -100,7 +122,12 @@ async def test_known_exceptions_map_to_stable_safe_responses(
     body = response_body(response)
 
     assert response.status_code == expected_status
-    assert body["detail"] == "Workflow generation failed."
+    expected_detail = (
+        "Request validation failed."
+        if expected_status == 422
+        else "Workflow generation failed."
+    )
+    assert body["detail"] == expected_detail
     assert body["errors"][0]["code"] == expected_code  # type: ignore[index]
     assert str(error) not in response.body.decode()
 

@@ -14,6 +14,10 @@ from app.providers.exceptions import (
     AIProviderTimeoutError,
 )
 from app.schemas.workflow import ErrorResponse, ValidationErrorDetail
+from app.services.workflow_edit import (
+    WorkflowEditInputValidationError,
+    WorkflowEditOutputValidationError,
+)
 from app.services.workflow_generation import WorkflowGenerationValidationError
 
 
@@ -39,6 +43,8 @@ async def request_validation_handler(_: Request, exception: RequestValidationErr
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(RequestValidationError, request_validation_handler)
     app.add_exception_handler(WorkflowGenerationValidationError, workflow_validation_handler)
+    app.add_exception_handler(WorkflowEditInputValidationError, workflow_edit_input_handler)
+    app.add_exception_handler(WorkflowEditOutputValidationError, workflow_edit_output_handler)
     app.add_exception_handler(AIProviderConfigurationError, provider_configuration_handler)
     app.add_exception_handler(AIProviderCredentialError, provider_credentials_handler)
     app.add_exception_handler(AIProviderRateLimitError, provider_rate_limit_handler)
@@ -51,6 +57,20 @@ def register_exception_handlers(app: FastAPI) -> None:
 
 async def workflow_validation_handler(_: Request, __: WorkflowGenerationValidationError) -> JSONResponse:
     return _response(502, "invalid_provider_output", "The AI provider returned an invalid workflow.")
+
+
+async def workflow_edit_input_handler(
+    _: Request,
+    __: WorkflowEditInputValidationError,
+) -> JSONResponse:
+    return _response(422, "invalid_edit_workflow", "The submitted workflow is not valid for editing.")
+
+
+async def workflow_edit_output_handler(
+    _: Request,
+    __: WorkflowEditOutputValidationError,
+) -> JSONResponse:
+    return _response(502, "invalid_edit_output", "The AI provider returned an invalid revised workflow.")
 
 
 async def provider_configuration_handler(_: Request, __: AIProviderConfigurationError) -> JSONResponse:
