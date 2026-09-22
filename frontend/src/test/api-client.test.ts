@@ -52,7 +52,7 @@ describe("generateWorkflow", () => {
     await expect(generateWorkflow({ prompt: "Create a lead workflow" })).resolves.toEqual(payload)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    const expectedBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1").replace(/\/+$/, "")
+    const expectedBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api/v1").replace(/\/+$/, "")
     expect(url).toBe(`${expectedBaseUrl}/workflows/generate`)
     expect(init.method).toBe("POST")
     expect(init.headers).toEqual({ "Content-Type": "application/json" })

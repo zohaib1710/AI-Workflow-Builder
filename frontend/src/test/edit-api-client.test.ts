@@ -70,7 +70,7 @@ describe("editWorkflow", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     const baseUrl = (
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1"
+      import.meta.env.VITE_API_BASE_URL || "/api/v1"
     ).replace(/\/+$/, "")
     expect(url).toBe(`${baseUrl}/workflows/edit`)
     expect(init.method).toBe("POST")

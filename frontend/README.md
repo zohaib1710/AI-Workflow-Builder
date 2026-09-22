@@ -21,10 +21,12 @@ Copy-Item frontend/.env.example frontend/.env
 The only frontend setting is:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000/api/v1
+VITE_API_BASE_URL=/api/v1
 ```
 
 Provider endpoints, API keys, and other AI credentials must remain backend-only.
+During development, Vite forwards `/api/v1` to the backend on `127.0.0.1:8000`. The browser therefore calls the frontend origin, including when opened through a tunnel from another device. Restart Vite after changing its environment file. Do not set the browser API URL to `localhost` for cross-device testing.
+The proxy applies to the Vite development server only; a production host needs its own `/api/v1` reverse proxy. A public testing tunnel also makes these unauthenticated API routes publicly reachable, so stop the tunnel when testing ends. For each new tunnel hostname, allow that exact host through Vite rather than allowing all hosts.
 
 ## Run
 

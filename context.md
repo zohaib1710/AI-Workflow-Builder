@@ -246,3 +246,10 @@
 - Generation prompts and AI edit instructions now accept at most 2,000 characters in both the frontend and backend; the editor counter, guidance, error text, and API documentation match.
 - Boundary-rejection tests now use 2,001 characters. Full frontend suite (182 passed), full backend suite (128 passed), frontend production build, Ruff, and `git diff --check` passed.
 - V2 Checkpoint 14 remains incomplete; its documentation and final verification work has not been started by this correction.
+
+## Cross-device tunnel API correction
+
+- The frontend now defaults to the same-origin `/api/v1` path; Vite proxies that path to the local backend on `127.0.0.1:8000` during development. The example environment and frontend setup guide match this behavior.
+- Validation passed: complete frontend suite (182 tests), frontend production build, `git diff --check`, and a read-only local proxy smoke test returning HTTP 200 with the backend health response.
+- The public testing tunnel now also exposes unauthenticated API routes. Vite still requires each changing tunnel hostname to be explicitly allowed; no broad allowed-host wildcard was added.
+- V2 Checkpoint 14 remains incomplete. Next action: restart Vite and verify generation from another device through the current tunnel hostname.
