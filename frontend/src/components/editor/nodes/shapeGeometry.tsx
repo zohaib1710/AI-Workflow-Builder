@@ -1,10 +1,11 @@
 import type { FlowchartShape } from "../../../editor/types"
+import { memo } from "react"
 
 export interface ShapeGeometryProps {
   shape: FlowchartShape
 }
 
-function ShapeGeometry({ shape }: ShapeGeometryProps) {
+const ShapeGeometry = memo(function ShapeGeometry({ shape }: ShapeGeometryProps) {
   const geometry = (() => {
     switch (shape) {
       case "terminator":
@@ -33,6 +34,6 @@ function ShapeGeometry({ shape }: ShapeGeometryProps) {
       {geometry}
     </svg>
   )
-}
+})
 
 export default ShapeGeometry

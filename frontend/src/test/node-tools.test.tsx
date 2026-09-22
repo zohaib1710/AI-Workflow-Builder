@@ -14,12 +14,13 @@ import type { Workflow } from "../types/workflow"
 
 const flowCapture = vi.hoisted(() => ({ props: null as unknown }))
 const screenToFlowPosition = vi.hoisted(() => vi.fn((point: { x: number; y: number }) => ({ x: point.x - 100, y: point.y - 50 })))
+const setFlowNodes = vi.hoisted(() => vi.fn())
 
 interface CapturedFlowProps {
-  nodes: FlowchartFlowNode[]
+  defaultNodes: FlowchartFlowNode[]
   panOnDrag: boolean
   zoomOnScroll: boolean
-  onInit: (instance: { screenToFlowPosition: typeof screenToFlowPosition }) => void
+  onInit: (instance: { screenToFlowPosition: typeof screenToFlowPosition; setNodes: typeof setFlowNodes }) => void
   onNodeClick: (event: unknown, node: FlowchartFlowNode) => void
   onPaneClick: (event: { clientX: number; clientY: number }) => void
   children?: ReactNode
@@ -27,7 +28,7 @@ interface CapturedFlowProps {
 
 vi.mock("@xyflow/react", async () => {
   const React = await import("react")
-  const flowInstance = { screenToFlowPosition }
+  const flowInstance = { screenToFlowPosition, setNodes: setFlowNodes }
   return {
     Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
     Position: { Left: "left", Right: "right" },
@@ -36,7 +37,7 @@ vi.mock("@xyflow/react", async () => {
       React.useEffect(() => props.onInit(flowInstance), [props.onInit])
       return (
         <div data-testid="react-flow">
-          {props.nodes.map((node) => <button type="button" key={node.id} aria-label={`Select ${node.id}`} onClick={() => props.onNodeClick({}, node)}>{node.data.title}</button>)}
+          {props.defaultNodes.map((node) => <button type="button" key={node.id} aria-label={`Select ${node.id}`} onClick={() => props.onNodeClick({}, node)}>{node.data.title}</button>)}
           {props.children}
         </div>
       )
@@ -53,6 +54,7 @@ afterEach(() => {
   cleanup()
   flowCapture.props = null
   screenToFlowPosition.mockClear()
+  setFlowNodes.mockClear()
   vi.restoreAllMocks()
 })
 

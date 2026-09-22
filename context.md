@@ -253,3 +253,12 @@
 - Validation passed: complete frontend suite (182 tests), frontend production build, `git diff --check`, and a read-only local proxy smoke test returning HTTP 200 with the backend health response.
 - The public testing tunnel now also exposes unauthenticated API routes. Vite still requires each changing tunnel hostname to be explicitly allowed; no broad allowed-host wildcard was added.
 - V2 Checkpoint 14 remains incomplete. Next action: restart Vite and verify generation from another device through the current tunnel hostname.
+
+## Node-drag performance correction
+
+- Live workflow-node and annotation movement now stays inside React Flow instead of rebuilding the application node array on every pointer event. Editor presentation and history still receive exactly one position commit when dragging stops.
+- Custom flowchart nodes, annotations, and static shape geometry are memoized. React Flow option objects are stable, and only the actively dragged node temporarily drops its shadow while receiving a scoped compositor hint.
+- External editor changes continue to synchronize through the React Flow instance, including inspector edits, creation, undo/redo, Auto Arrange, and AI reconciliation. Semantic workflows remain coordinate-free and no dependency, backend, API, persistence, or history-contract change was introduced.
+- Successful validation: focused editor/canvas/history regression set (73 passed), complete frontend suite (182 passed), frontend production build, and `git diff --check`.
+- Manual real-browser confirmation of subjective drag smoothness remains pending, so the performance-correction checkpoint is not formally complete and V2 Checkpoint 14 remains untouched.
+- Proposed commit title: `perf(frontend): optimize workflow node dragging`.

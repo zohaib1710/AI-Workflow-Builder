@@ -12,9 +12,9 @@ import { supportedNodeTypes, workflowNodeTypes, workflowVisualConfig } from "../
 vi.mock("@xyflow/react", () => ({
   Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
   Position: { Left: "left", Right: "right" },
-  ReactFlow: (props: { children?: ReactNode; fitView?: boolean; nodesDraggable?: boolean; nodesConnectable?: boolean; elementsSelectable?: boolean; nodesFocusable?: boolean; edgesFocusable?: boolean; deleteKeyCode?: null; nodes?: { id: string; type?: string; position: { x: number; y: number }; data: { shape?: string } }[]; edges?: { id: string; label?: ReactNode }[] }) => (
+  ReactFlow: (props: { children?: ReactNode; fitView?: boolean; nodesDraggable?: boolean; nodesConnectable?: boolean; elementsSelectable?: boolean; nodesFocusable?: boolean; edgesFocusable?: boolean; deleteKeyCode?: null; nodes?: { id: string; type?: string; position: { x: number; y: number }; data: { shape?: string } }[]; defaultNodes?: { id: string; type?: string; position: { x: number; y: number }; data: { shape?: string } }[]; edges?: { id: string; label?: ReactNode }[] }) => (
     <div data-testid="react-flow" data-fit-view={String(props.fitView)} data-nodes-draggable={String(props.nodesDraggable)} data-nodes-connectable={String(props.nodesConnectable)} data-elements-selectable={String(props.elementsSelectable)} data-nodes-focusable={String(props.nodesFocusable)} data-edges-focusable={String(props.edgesFocusable)} data-delete-key-code={String(props.deleteKeyCode)}>
-      {props.nodes?.map((node) => <span key={node.id} data-testid={`canvas-node-${node.id}`} data-node-type={node.type} data-shape={node.data.shape} data-x={node.position.x} data-y={node.position.y} />)}
+      {(props.nodes ?? props.defaultNodes)?.map((node) => <span key={node.id} data-testid={`canvas-node-${node.id}`} data-node-type={node.type} data-shape={node.data.shape} data-x={node.position.x} data-y={node.position.y} />)}
       {props.edges?.map((edge) => <span key={edge.id}>{edge.label}</span>)}
       {props.children}
     </div>

@@ -373,6 +373,23 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `feat(frontend): polish workflow editor experience`
 - Stop conditions: Stop if polish expands into theming/design-system work, insights become editable, or tests depend on live services or third-party DOM internals.
 
+### V2 Performance Correction: Optimize node dragging
+
+- Status: INCOMPLETE (implementation and automated validation complete; manual browser verification pending)
+- Purpose: Remove application-level work from high-frequency node and annotation drag previews while preserving editor history and synchronization.
+- Files modified: `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, custom editor node renderers, editor drag styles, and the existing canvas/editing regression suites.
+- Implementation: React Flow now owns live movement through `defaultNodes`; editor presentation synchronizes back through the React Flow instance only when editor state changes, and drag stop remains the sole undoable position commit. Custom nodes and static shape geometry are memoized, reusable React Flow options are stable, and active drag temporarily suppresses node shadows with a scoped compositor hint.
+- Required validation: focused node/annotation/canvas/history/editor suites; complete frontend suite; frontend production build; `git diff --check`; manual browser drag verification.
+- Acceptance criteria:
+  - [x] Pointer-move events do not update React component or editor history state.
+  - [x] Drag stop records exactly one position transaction and no-op repeats remain history-neutral.
+  - [x] External editor changes continue to synchronize workflow nodes and annotations into React Flow.
+  - [x] Existing creation, selection, connection, Auto Arrange, undo/redo, async locks, and responsive locks remain covered.
+  - [x] Focused regressions (73 tests), complete frontend suite (182 tests), production build, and `git diff --check` pass.
+  - [ ] Subjective smoothness is confirmed in a real browser with a representative multi-node workflow.
+- Commit message: `perf(frontend): optimize workflow node dragging`
+- Stop conditions: Stop if smoothing requires semantic model changes, a new state dependency, many history writes per drag, or removal of resting node visuals.
+
 ### V2 Checkpoint 14: Document and perform final Version 2 verification
 
 - Status: INCOMPLETE

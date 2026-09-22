@@ -1,4 +1,5 @@
 import type { Node, NodeProps, NodeTypes } from "@xyflow/react"
+import { memo } from "react"
 
 export interface AnnotationNodeData extends Record<string, unknown> {
   text: string
@@ -6,7 +7,7 @@ export interface AnnotationNodeData extends Record<string, unknown> {
 
 export type AnnotationFlowNode = Node<AnnotationNodeData, "annotation">
 
-function AnnotationNode({ data, selected }: NodeProps<AnnotationFlowNode>) {
+const AnnotationNode = memo(function AnnotationNode({ data, selected }: NodeProps<AnnotationFlowNode>) {
   return (
     <div
       className={`annotation-node${selected ? " annotation-node--selected" : ""}`}
@@ -16,7 +17,7 @@ function AnnotationNode({ data, selected }: NodeProps<AnnotationFlowNode>) {
       {data.text}
     </div>
   )
-}
+})
 
 export const annotationNodeTypes = { annotation: AnnotationNode } satisfies NodeTypes
 

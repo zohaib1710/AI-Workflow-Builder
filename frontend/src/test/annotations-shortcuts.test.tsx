@@ -11,6 +11,7 @@ import type { Workflow } from "../types/workflow"
 
 const flowCapture = vi.hoisted(() => ({ props: null as unknown }))
 const screenToFlowPosition = vi.hoisted(() => vi.fn((point: { x: number; y: number }) => ({ x: point.x - 100, y: point.y - 50 })))
+const setFlowNodes = vi.hoisted(() => vi.fn())
 
 interface EditorViewNode {
   id: string
@@ -21,14 +22,13 @@ interface EditorViewNode {
 }
 
 interface CapturedFlowProps {
-  nodes: EditorViewNode[]
+  defaultNodes: EditorViewNode[]
   panOnDrag: boolean
   zoomOnScroll: boolean
-  onInit: (instance: { screenToFlowPosition: typeof screenToFlowPosition }) => void
+  onInit: (instance: { screenToFlowPosition: typeof screenToFlowPosition; setNodes: typeof setFlowNodes }) => void
   onNodeClick: (event: unknown, node: EditorViewNode) => void
   onEdgeClick: (event: unknown, edge: { id: string }) => void
   onPaneClick: (event: { clientX: number; clientY: number }) => void
-  onNodeDrag: (event: unknown, node: EditorViewNode) => void
   onNodeDragStop: (event: unknown, node: EditorViewNode) => void
   edges: Array<{ id: string; label: string | null }>
   children?: ReactNode
@@ -36,7 +36,7 @@ interface CapturedFlowProps {
 
 vi.mock("@xyflow/react", async () => {
   const React = await import("react")
-  const instance = { screenToFlowPosition }
+  const instance = { screenToFlowPosition, setNodes: setFlowNodes }
   return {
     Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
     Position: { Left: "left", Right: "right" },
@@ -45,7 +45,7 @@ vi.mock("@xyflow/react", async () => {
       React.useEffect(() => props.onInit(instance), [props.onInit])
       return (
         <div data-testid="react-flow">
-          {props.nodes.map((node) => (
+          {props.defaultNodes.map((node) => (
             <button
               type="button"
               key={node.id}
@@ -76,6 +76,7 @@ afterEach(() => {
   cleanup()
   flowCapture.props = null
   screenToFlowPosition.mockClear()
+  setFlowNodes.mockClear()
   vi.restoreAllMocks()
 })
 
@@ -165,7 +166,7 @@ describe("annotations and editor shortcuts", () => {
     expect(state.history).toBe(1)
     expect(state.workflow).toEqual(originalWorkflow)
     expect(state.workflow).not.toHaveProperty("annotations")
-    expect(flowProps().nodes.find((node) => node.id === state.annotations[0].id)).toMatchObject({
+    expect(flowProps().defaultNodes.find((node) => node.id === state.annotations[0].id)).toMatchObject({
       type: "annotation",
       connectable: false,
     })
@@ -198,9 +199,9 @@ describe("annotations and editor shortcuts", () => {
     expect(stateValue().annotations[0].text).toBe("<script>alert('x')</script>")
     expect(stateValue().history).toBe(2)
 
-    const annotationNode = flowProps().nodes.find((node) => node.id === annotationId)!
+    const annotationNode = flowProps().defaultNodes.find((node) => node.id === annotationId)!
     const moved = { ...annotationNode, position: { x: 500, y: 420 } }
-    act(() => flowProps().onNodeDrag({}, moved))
+    expect(flowProps()).not.toHaveProperty("nodes")
     expect(stateValue().history).toBe(2)
     act(() => flowProps().onNodeDragStop({}, moved))
     expect(stateValue().annotations[0].position).toEqual({ x: 500, y: 420 })

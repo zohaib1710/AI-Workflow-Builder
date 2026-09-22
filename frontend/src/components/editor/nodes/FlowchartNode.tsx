@@ -1,5 +1,5 @@
 import { Handle, Position, type Node, type NodeProps, type NodeTypes } from "@xyflow/react"
-import type { CSSProperties } from "react"
+import { memo, type CSSProperties } from "react"
 import type { SupportedNodeType } from "../../../types/workflow"
 import { workflowVisualConfig } from "../../nodes/nodeTypes"
 import ShapeGeometry from "./shapeGeometry"
@@ -20,7 +20,7 @@ type ShapeStyle = CSSProperties & {
   "--flowchart-shape-height": string
 }
 
-function FlowchartNode({ data, selected }: NodeProps<FlowchartFlowNode>) {
+const FlowchartNode = memo(function FlowchartNode({ data, selected }: NodeProps<FlowchartFlowNode>) {
   const requestedShape = data.shape
   const supportedShape = isFlowchartShape(requestedShape)
   const shape = supportedShape ? requestedShape : "process"
@@ -54,7 +54,7 @@ function FlowchartNode({ data, selected }: NodeProps<FlowchartFlowNode>) {
       {data.nodeType !== "end" && <Handle type="source" position={Position.Right} />}
     </div>
   )
-}
+})
 
 export const flowchartNodeTypes = { flowchart: FlowchartNode } satisfies NodeTypes
 

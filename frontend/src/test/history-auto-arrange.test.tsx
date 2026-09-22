@@ -11,6 +11,7 @@ import type { Workflow } from "../types/workflow"
 
 const flowFitView = vi.hoisted(() => vi.fn())
 const contextFitView = vi.hoisted(() => vi.fn())
+const setFlowNodes = vi.hoisted(() => vi.fn())
 
 vi.mock("@xyflow/react", async () => {
   const React = await import("react")
@@ -28,6 +29,7 @@ vi.mock("@xyflow/react", async () => {
         onInit({
           fitView: flowFitView,
           screenToFlowPosition: (position: { x: number; y: number }) => position,
+          setNodes: setFlowNodes,
         })
       }, [onInit])
       return <div data-testid="react-flow">{children}</div>
@@ -44,6 +46,7 @@ afterEach(() => {
   cleanup()
   flowFitView.mockReset()
   contextFitView.mockReset()
+  setFlowNodes.mockReset()
 })
 
 function workflowFixture(): Workflow {

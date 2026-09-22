@@ -28,6 +28,9 @@ export const AUTO_ARRANGE_FIT_EVENT = "workflow-editor:auto-arrange-fit"
 
 type EditorFlowNode = FlowchartFlowNode | AnnotationFlowNode
 const editorNodeTypes = { ...flowchartNodeTypes, ...annotationNodeTypes }
+const initialFitViewOptions = { padding: 0.2, minZoom: 0.35, maxZoom: 1.2 }
+const arrangedFitViewOptions = { padding: 0.2, minZoom: 0.2, maxZoom: 1.25, duration: 200 }
+const reactFlowOptions = { hideAttribution: true }
 
 function FitViewAfterLayout({ layoutKey }: { layoutKey: string }) {
   const nodesInitialized = useNodesInitialized()
@@ -35,7 +38,7 @@ function FitViewAfterLayout({ layoutKey }: { layoutKey: string }) {
 
   useEffect(() => {
     if (!nodesInitialized) return
-    void fitView({ padding: 0.2, minZoom: 0.2, maxZoom: 1.25, duration: 200 })
+    void fitView(arrangedFitViewOptions)
   }, [fitView, layoutKey, nodesInitialized])
 
   return null
@@ -117,7 +120,6 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     }))
     return [...workflowNodes, ...annotationNodes]
   }, [canConnect, canEdit, editorState, workflow])
-  const [nodes, setNodes] = useState<EditorFlowNode[]>(derivedNodes)
   const selectedEdgeId = editorState?.selection.kind === "edge" ? editorState.selection.edgeId : null
   const edges = useMemo(
     () => buildEdges(workflow?.edges ?? [], selectedEdgeId, canEdit),
@@ -125,16 +127,13 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   )
   const layoutKey = workflow ? `${workflow.nodes.map((node) => node.id).join(",")}|${workflow.edges.map((edge) => edge.id).join(",")}` : "empty"
 
-  useEffect(() => setNodes(derivedNodes), [derivedNodes])
+  useEffect(() => {
+    flowInstance?.setNodes(derivedNodes)
+  }, [derivedNodes, flowInstance])
   useEffect(() => {
     const fitArrangedWorkflow = () => {
       globalThis.requestAnimationFrame(() => {
-        void flowInstance?.fitView({
-          padding: 0.2,
-          minZoom: 0.2,
-          maxZoom: 1.25,
-          duration: 200,
-        })
+        void flowInstance?.fitView(arrangedFitViewOptions)
       })
     }
     window.addEventListener(AUTO_ARRANGE_FIT_EVENT, fitArrangedWorkflow)
@@ -149,6 +148,15 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     return true
   }, [pendingConnection])
   useEditorShortcuts({ editingViewport, cancelPendingInteraction })
+
+  const handleNodeDragStop = useCallback((_: unknown, draggedNode: EditorFlowNode) => {
+    if (!canEdit) return
+    if (draggedNode.type === "annotation") {
+      dispatch({ type: "annotation/position-commit", annotationId: draggedNode.id, position: { ...draggedNode.position } })
+    } else {
+      dispatch({ type: "node/position-commit", nodeId: draggedNode.id, position: { ...draggedNode.position } })
+    }
+  }, [canEdit, dispatch])
 
   if (!workflow || !editorState) {
     return (
@@ -188,12 +196,12 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     <section className={`editor-canvas${canPlaceNode || canPlaceAnnotation ? " editor-canvas--placing" : ""}`} aria-label="Workflow canvas surface">
       <div className="workflow-canvas" aria-label="Read-only workflow diagram">
         <ReactFlow<EditorFlowNode>
-          nodes={nodes}
+          defaultNodes={derivedNodes}
           edges={edges}
           nodeTypes={editorNodeTypes}
           onInit={setFlowInstance}
           fitView
-          fitViewOptions={{ padding: 0.2, minZoom: 0.35, maxZoom: 1.2 }}
+          fitViewOptions={initialFitViewOptions}
           nodesDraggable={canEdit}
           nodesConnectable={canConnect}
           elementsSelectable={canEdit}
@@ -205,7 +213,7 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           panOnDrag
           zoomOnScroll
           zoomOnPinch
-          proOptions={{ hideAttribution: true }}
+          proOptions={reactFlowOptions}
           onNodeClick={(_, node) => {
             if (!canEdit) return
             dispatch({
@@ -240,18 +248,7 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
             }
             dispatch({ type: "selection/set", selection: { kind: "none" } })
           }}
-          onNodeDrag={(_, draggedNode) => {
-            if (!canEdit) return
-            setNodes((current) => current.map((node) => node.id === draggedNode.id ? { ...node, position: { ...draggedNode.position } } : node))
-          }}
-          onNodeDragStop={(_, draggedNode) => {
-            if (!canEdit) return
-            if (draggedNode.type === "annotation") {
-              dispatch({ type: "annotation/position-commit", annotationId: draggedNode.id, position: { ...draggedNode.position } })
-            } else {
-              dispatch({ type: "node/position-commit", nodeId: draggedNode.id, position: { ...draggedNode.position } })
-            }
-          }}
+          onNodeDragStop={handleNodeDragStop}
         >
           <FitViewAfterLayout layoutKey={layoutKey} />
           <Background color="#303030" gap={24} size={1} />

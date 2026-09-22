@@ -1158,6 +1158,18 @@ textarea {
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--flowchart-accent) 75%, transparent));
 }
 
+.editor-canvas .react-flow__node.dragging {
+  will-change: transform;
+}
+
+.editor-canvas .react-flow__node.dragging .flowchart-node__shape {
+  filter: none;
+}
+
+.editor-canvas .react-flow__node.dragging .annotation-node {
+  box-shadow: none;
+}
+
 .annotation-node {
   min-width: 7.5rem;
   max-width: 16rem;

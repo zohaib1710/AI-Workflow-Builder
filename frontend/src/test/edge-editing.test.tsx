@@ -11,6 +11,7 @@ import { EditorProvider, useEditorDispatch, useEditorState } from "../editor/Edi
 import type { Workflow } from "../types/workflow"
 
 const flowCapture = vi.hoisted(() => ({ props: null as unknown }))
+const setFlowNodes = vi.hoisted(() => vi.fn())
 
 interface ConnectionRequest {
   source: string | null
@@ -20,12 +21,12 @@ interface ConnectionRequest {
 }
 
 interface CapturedFlowProps {
-  nodes: FlowchartFlowNode[]
+  defaultNodes: FlowchartFlowNode[]
   edges: Array<{ id: string; source: string; target: string; label: string | null }>
   nodesConnectable: boolean
   panOnDrag: boolean
   zoomOnScroll: boolean
-  onInit: (instance: { screenToFlowPosition: (point: { x: number; y: number }) => { x: number; y: number } }) => void
+  onInit: (instance: { screenToFlowPosition: (point: { x: number; y: number }) => { x: number; y: number }; setNodes: typeof setFlowNodes }) => void
   onConnect: (connection: ConnectionRequest) => void
   onNodeClick: (event: unknown, node: FlowchartFlowNode) => void
   onEdgeClick: (event: unknown, edge: CapturedFlowProps["edges"][number]) => void
@@ -34,7 +35,7 @@ interface CapturedFlowProps {
 
 vi.mock("@xyflow/react", async () => {
   const React = await import("react")
-  const instance = { screenToFlowPosition: (point: { x: number; y: number }) => point }
+  const instance = { screenToFlowPosition: (point: { x: number; y: number }) => point, setNodes: setFlowNodes }
   return {
     Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
     Position: { Left: "left", Right: "right" },
@@ -43,7 +44,7 @@ vi.mock("@xyflow/react", async () => {
       React.useEffect(() => props.onInit(instance), [props.onInit])
       return (
         <div data-testid="react-flow">
-          {props.nodes.map((node) => (
+          {props.defaultNodes.map((node) => (
             <button type="button" key={node.id} aria-label={`Select node ${node.id}`} onClick={() => props.onNodeClick({}, node)}>
               {node.data.title}
             </button>
@@ -68,6 +69,7 @@ vi.mock("@xyflow/react", async () => {
 afterEach(() => {
   cleanup()
   flowCapture.props = null
+  setFlowNodes.mockClear()
   vi.restoreAllMocks()
 })
 

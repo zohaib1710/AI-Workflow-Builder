@@ -9,30 +9,34 @@ import { EditorProvider, useEditorDispatch, useEditorState } from "../editor/Edi
 import type { Workflow } from "../types/workflow"
 
 const flowCapture = vi.hoisted(() => ({ props: null as unknown }))
+const setFlowNodes = vi.hoisted(() => vi.fn())
 
 interface CapturedFlowProps {
-  nodes: FlowchartFlowNode[]
+  defaultNodes: FlowchartFlowNode[]
   nodesDraggable: boolean
   elementsSelectable: boolean
   panOnDrag: boolean
   zoomOnScroll: boolean
   deleteKeyCode: null
   multiSelectionKeyCode: null
+  onInit: (instance: { setNodes: typeof setFlowNodes }) => void
   onNodeClick: (event: unknown, node: FlowchartFlowNode) => void
   onPaneClick: () => void
-  onNodeDrag: (event: unknown, node: FlowchartFlowNode) => void
   onNodeDragStop: (event: unknown, node: FlowchartFlowNode) => void
   children?: ReactNode
 }
 
-vi.mock("@xyflow/react", () => ({
+vi.mock("@xyflow/react", async () => {
+  const React = await import("react")
+  return {
   Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
   Position: { Left: "left", Right: "right" },
   ReactFlow: (props: CapturedFlowProps) => {
     flowCapture.props = props
+    React.useEffect(() => props.onInit({ setNodes: setFlowNodes }), [props.onInit])
     return (
       <div data-testid="react-flow">
-        {props.nodes.map((node) => <button type="button" key={node.id} aria-label={`Select ${node.id}`} onClick={() => props.onNodeClick({}, node)}>{node.data.title}</button>)}
+        {props.defaultNodes.map((node) => <button type="button" key={node.id} aria-label={`Select ${node.id}`} onClick={() => props.onNodeClick({}, node)}>{node.data.title}</button>)}
         <button type="button" aria-label="Canvas pane" onClick={props.onPaneClick}>Canvas</button>
         {props.children}
       </div>
@@ -43,11 +47,13 @@ vi.mock("@xyflow/react", () => ({
   MiniMap: () => <span data-testid="minimap" />,
   useNodesInitialized: () => true,
   useReactFlow: () => ({ fitView: vi.fn() }),
-}))
+  }
+})
 
 afterEach(() => {
   cleanup()
   flowCapture.props = null
+  setFlowNodes.mockClear()
 })
 
 function workflowFixture(): Workflow {
@@ -125,12 +131,13 @@ describe("node editing", () => {
 
   it("keeps drag preview local and commits one presentation-only transaction", () => {
     renderEditor()
+    setFlowNodes.mockClear()
     const before = currentNodeState()
-    const dragged = { ...flowProps().nodes.find((node) => node.id === "review")!, position: { x: 420, y: 215 } }
+    const dragged = { ...flowProps().defaultNodes.find((node) => node.id === "review")!, position: { x: 420, y: 215 } }
 
-    act(() => flowProps().onNodeDrag({}, dragged))
-    expect(flowProps().nodes.find((node) => node.id === "review")?.position).toEqual({ x: 420, y: 215 })
+    expect(flowProps()).not.toHaveProperty("nodes")
     expect(currentNodeState()).toEqual(before)
+    expect(setFlowNodes).not.toHaveBeenCalled()
     expect(screen.getByTestId("history-count")).toHaveTextContent("0")
 
     act(() => flowProps().onNodeDragStop({}, dragged))
@@ -138,6 +145,8 @@ describe("node editing", () => {
     expect(currentNodeState().node).toEqual(before.node)
     expect(currentNodeState().node).not.toHaveProperty("position")
     expect(screen.getByTestId("history-count")).toHaveTextContent("1")
+    expect(setFlowNodes).toHaveBeenCalledTimes(1)
+    expect(setFlowNodes.mock.calls[0][0].find((node: FlowchartFlowNode) => node.id === "review")?.position).toEqual({ x: 420, y: 215 })
 
     act(() => flowProps().onNodeDragStop({}, dragged))
     expect(screen.getByTestId("history-count")).toHaveTextContent("1")
@@ -145,7 +154,7 @@ describe("node editing", () => {
 
   it("preserves a manual position while committing trimmed semantic fields separately", () => {
     renderEditor()
-    const dragged = { ...flowProps().nodes.find((node) => node.id === "review")!, position: { x: 350, y: 90 } }
+    const dragged = { ...flowProps().defaultNodes.find((node) => node.id === "review")!, position: { x: 350, y: 90 } }
     act(() => flowProps().onNodeDragStop({}, dragged))
     selectReview()
 
@@ -221,7 +230,7 @@ describe("node editing", () => {
     expect(flowProps().panOnDrag).toBe(true)
     expect(flowProps().zoomOnScroll).toBe(true)
 
-    const blockedDrag = { ...flowProps().nodes.find((node) => node.id === "review")!, position: { x: 999, y: 999 } }
+    const blockedDrag = { ...flowProps().defaultNodes.find((node) => node.id === "review")!, position: { x: 999, y: 999 } }
     act(() => flowProps().onNodeDragStop({}, blockedDrag))
     expect(currentNodeState()).toEqual(before)
     expect(screen.getByTestId("history-count")).toHaveTextContent("0")
