@@ -8,15 +8,15 @@ export interface FlowchartShapeDefinition {
 }
 
 export const FLOWCHART_SHAPES = {
-  terminator: { label: "Terminator", width: 228, height: 112, contentClassName: "flowchart-node__content--terminator" },
-  process: { label: "Process", width: 244, height: 128, contentClassName: "flowchart-node__content--process" },
-  decision: { label: "Decision", width: 210, height: 160, contentClassName: "flowchart-node__content--decision" },
-  "input-output": { label: "Input / output", width: 244, height: 128, contentClassName: "flowchart-node__content--input-output" },
-  database: { label: "Database", width: 224, height: 146, contentClassName: "flowchart-node__content--database" },
-  document: { label: "Document", width: 244, height: 140, contentClassName: "flowchart-node__content--document" },
-  delay: { label: "Delay", width: 232, height: 128, contentClassName: "flowchart-node__content--delay" },
-  "predefined-process": { label: "Predefined process", width: 244, height: 128, contentClassName: "flowchart-node__content--predefined-process" },
-  "manual-operation": { label: "Manual operation", width: 244, height: 128, contentClassName: "flowchart-node__content--manual-operation" },
+  terminator: { label: "Terminator", width: 280, height: 150, contentClassName: "flowchart-node__content--terminator" },
+  process: { label: "Process", width: 270, height: 150, contentClassName: "flowchart-node__content--process" },
+  decision: { label: "Decision", width: 240, height: 180, contentClassName: "flowchart-node__content--decision" },
+  "input-output": { label: "Input / output", width: 270, height: 150, contentClassName: "flowchart-node__content--input-output" },
+  database: { label: "Database", width: 260, height: 170, contentClassName: "flowchart-node__content--database" },
+  document: { label: "Document", width: 270, height: 165, contentClassName: "flowchart-node__content--document" },
+  delay: { label: "Delay", width: 270, height: 150, contentClassName: "flowchart-node__content--delay" },
+  "predefined-process": { label: "Predefined process", width: 270, height: 150, contentClassName: "flowchart-node__content--predefined-process" },
+  "manual-operation": { label: "Manual operation", width: 270, height: 150, contentClassName: "flowchart-node__content--manual-operation" },
 } as const satisfies Record<FlowchartShape, FlowchartShapeDefinition>
 
 export const flowchartShapeNames = Object.keys(FLOWCHART_SHAPES) as FlowchartShape[]

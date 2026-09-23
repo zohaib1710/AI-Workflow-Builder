@@ -13,7 +13,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { createUniqueEditorId } from "../../editor/ids"
-import { DEFAULT_SHAPE_BY_NODE_TYPE } from "../../editor/types"
+import { findNearestClearNodePosition } from "../../editor/nodePlacement"
+import { DEFAULT_SHAPE_BY_NODE_TYPE, NODE_CREATION_PRESETS_BY_ID } from "../../editor/types"
 import useEditorShortcuts from "../../hooks/useEditorShortcuts"
 import { isSupportedNodeType, workflowVisualConfig } from "../nodes/nodeTypes"
 import ConnectionLabelDialog from "./ConnectionLabelDialog"
@@ -28,8 +29,9 @@ export const AUTO_ARRANGE_FIT_EVENT = "workflow-editor:auto-arrange-fit"
 
 type EditorFlowNode = FlowchartFlowNode | AnnotationFlowNode
 const editorNodeTypes = { ...flowchartNodeTypes, ...annotationNodeTypes }
-const initialFitViewOptions = { padding: 0.2, minZoom: 0.35, maxZoom: 1.2 }
-const arrangedFitViewOptions = { padding: 0.2, minZoom: 0.2, maxZoom: 1.25, duration: 200 }
+const editorFitPadding = { top: "88px", right: "224px", bottom: "208px", left: "80px" } as const
+const initialFitViewOptions = { padding: editorFitPadding, minZoom: 0.2, maxZoom: 1.2 }
+const arrangedFitViewOptions = { padding: editorFitPadding, minZoom: 0.2, maxZoom: 1.25, duration: 200 }
 const reactFlowOptions = { hideAttribution: true }
 
 function FitViewAfterLayout({ layoutKey }: { layoutKey: string }) {
@@ -154,9 +156,17 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     if (draggedNode.type === "annotation") {
       dispatch({ type: "annotation/position-commit", annotationId: draggedNode.id, position: { ...draggedNode.position } })
     } else {
-      dispatch({ type: "node/position-commit", nodeId: draggedNode.id, position: { ...draggedNode.position } })
+      const presentation = editorState?.present.nodePresentations[draggedNode.id]
+      if (!presentation) return
+      const position = findNearestClearNodePosition(
+        draggedNode.position,
+        presentation.shape,
+        editorState.present.nodePresentations,
+        draggedNode.id,
+      )
+      dispatch({ type: "node/position-commit", nodeId: draggedNode.id, position })
     }
-  }, [canEdit, dispatch])
+  }, [canEdit, dispatch, editorState])
 
   if (!workflow || !editorState) {
     return (
@@ -229,8 +239,14 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           onConnect={requestConnection}
           onPaneClick={(event) => {
             if (canPlaceNode && editorState.pendingNodePreset && flowInstance) {
-              const position = flowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+              const requestedPosition = flowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
               const nodeId = createUniqueEditorId("node", new Set(workflow.nodes.map((node) => node.id)))
+              const preset = NODE_CREATION_PRESETS_BY_ID[editorState.pendingNodePreset]
+              const position = findNearestClearNodePosition(
+                requestedPosition,
+                preset.shape,
+                editorState.present.nodePresentations,
+              )
               dispatch({ type: "node/create", nodeId, presetId: editorState.pendingNodePreset, position })
               return
             }
@@ -253,7 +269,7 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           <FitViewAfterLayout layoutKey={layoutKey} />
           <Background color="#303030" gap={24} size={1} />
           <Controls showInteractive={false} />
-          <MiniMap nodeColor={minimapNodeColor} pannable zoomable />
+          <MiniMap position="bottom-right" nodeColor={minimapNodeColor} pannable zoomable />
         </ReactFlow>
         {pendingConnection && (
           <ConnectionLabelDialog

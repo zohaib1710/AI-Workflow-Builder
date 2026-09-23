@@ -272,3 +272,13 @@
 - Successful validation: focused backend contract/provider suites (95 passed), complete backend suite (128 passed), complete frontend suite (18 files, 179 tests passed), frontend production build, Ruff, Python compilation, and `git diff --check`.
 - The pending node-drag manual browser verification and V2 Checkpoint 14 remain incomplete.
 - Proposed commit title: `fix(workflow): fit generation within Groq token budget`.
+
+## Workflow-diagram readability correction
+
+- Automatic Dagre placement now uses each registered flowchart shape's rendered dimensions, wider rank/branch/parallel-edge spacing, edge-label dimensions, and a deterministic final collision-separation pass.
+- Auto Arrange respects current shape overrides. AI reconciliation, new-node placement, and manual drag completion resolve occupied node rectangles while annotations remain freely placeable.
+- Flowchart shapes were enlarged to contain their clamped semantic label, title, description, and application text; full field values remain available through accessible native titles.
+- Fit-all behavior remains in place with asymmetric padding for floating editor controls. The desktop MiniMap is explicitly positioned and styled at the bottom-right instead of being raised above the iteration composer.
+- Successful validation: focused layout/canvas suites (2 files, 15 tests), frontend production build, and `git diff --check`.
+- Real-browser inspection of a representative generated workflow remains pending, so this visual-correction checkpoint is not formally complete. V2 Checkpoint 14 remains untouched.
+- Proposed commit title: `fix(frontend): improve workflow diagram readability`.

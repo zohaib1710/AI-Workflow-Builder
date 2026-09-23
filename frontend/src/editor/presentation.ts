@@ -27,7 +27,15 @@ export function autoArrangePresentation(
     ),
   }
   const positions = new Map(
-    layoutWorkflow(layoutWorkflowInput).nodes.map((node) => [node.id, node.position] as const),
+    layoutWorkflow(
+      layoutWorkflowInput,
+      Object.fromEntries(
+        workflow.nodes.map((node) => [
+          node.id,
+          currentPresentation[node.id]?.shape ?? DEFAULT_SHAPE_BY_NODE_TYPE[node.type],
+        ]),
+      ),
+    ).nodes.map((node) => [node.id, node.position] as const),
   )
   const arranged = { ...currentPresentation }
   let changed = false

@@ -12,8 +12,8 @@ import { supportedNodeTypes, workflowNodeTypes, workflowVisualConfig } from "../
 vi.mock("@xyflow/react", () => ({
   Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
   Position: { Left: "left", Right: "right" },
-  ReactFlow: (props: { children?: ReactNode; fitView?: boolean; nodesDraggable?: boolean; nodesConnectable?: boolean; elementsSelectable?: boolean; nodesFocusable?: boolean; edgesFocusable?: boolean; deleteKeyCode?: null; nodes?: { id: string; type?: string; position: { x: number; y: number }; data: { shape?: string } }[]; defaultNodes?: { id: string; type?: string; position: { x: number; y: number }; data: { shape?: string } }[]; edges?: { id: string; label?: ReactNode }[] }) => (
-    <div data-testid="react-flow" data-fit-view={String(props.fitView)} data-nodes-draggable={String(props.nodesDraggable)} data-nodes-connectable={String(props.nodesConnectable)} data-elements-selectable={String(props.elementsSelectable)} data-nodes-focusable={String(props.nodesFocusable)} data-edges-focusable={String(props.edgesFocusable)} data-delete-key-code={String(props.deleteKeyCode)}>
+  ReactFlow: (props: { children?: ReactNode; fitView?: boolean; fitViewOptions?: unknown; nodesDraggable?: boolean; nodesConnectable?: boolean; elementsSelectable?: boolean; nodesFocusable?: boolean; edgesFocusable?: boolean; deleteKeyCode?: null; nodes?: { id: string; type?: string; position: { x: number; y: number }; data: { shape?: string } }[]; defaultNodes?: { id: string; type?: string; position: { x: number; y: number }; data: { shape?: string } }[]; edges?: { id: string; label?: ReactNode }[] }) => (
+    <div data-testid="react-flow" data-fit-view={String(props.fitView)} data-fit-options={JSON.stringify(props.fitViewOptions)} data-nodes-draggable={String(props.nodesDraggable)} data-nodes-connectable={String(props.nodesConnectable)} data-elements-selectable={String(props.elementsSelectable)} data-nodes-focusable={String(props.nodesFocusable)} data-edges-focusable={String(props.edgesFocusable)} data-delete-key-code={String(props.deleteKeyCode)}>
       {(props.nodes ?? props.defaultNodes)?.map((node) => <span key={node.id} data-testid={`canvas-node-${node.id}`} data-node-type={node.type} data-shape={node.data.shape} data-x={node.position.x} data-y={node.position.y} />)}
       {props.edges?.map((edge) => <span key={edge.id}>{edge.label}</span>)}
       {props.children}
@@ -21,7 +21,7 @@ vi.mock("@xyflow/react", () => ({
   ),
   Background: () => <span data-testid="background" />,
   Controls: () => <span data-testid="controls" />,
-  MiniMap: () => <span data-testid="minimap" />,
+  MiniMap: ({ position }: { position?: string }) => <span data-testid="minimap" data-position={position} />,
   useNodesInitialized: () => true,
   useReactFlow: () => ({ fitView: vi.fn() }),
 }))
@@ -95,7 +95,9 @@ describe("workflow canvas conversion", () => {
     expect(screen.getByTestId("background")).toBeInTheDocument()
     expect(screen.getByTestId("controls")).toBeInTheDocument()
     expect(screen.getByTestId("minimap")).toBeInTheDocument()
+    expect(screen.getByTestId("minimap")).toHaveAttribute("data-position", "bottom-right")
     expect(screen.getByTestId("react-flow")).toHaveAttribute("data-fit-view", "true")
+    expect(screen.getByTestId("react-flow").getAttribute("data-fit-options")).toContain('"right":"224px"')
     expect(screen.getByTestId("react-flow")).toHaveAttribute("data-nodes-draggable", "false")
     expect(screen.getByTestId("react-flow")).toHaveAttribute("data-nodes-connectable", "false")
     expect(screen.getByTestId("react-flow")).toHaveAttribute("data-elements-selectable", "false")

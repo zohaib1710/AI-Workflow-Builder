@@ -4,9 +4,9 @@ import {
   type CanvasNodePresentation,
   type CanvasPosition,
 } from "./types"
+import { findNearestClearNodePosition, separateNodePresentations } from "./nodePlacement"
 
 const HORIZONTAL_SPACING = 360
-const VERTICAL_SPACING = 220
 
 export type WorkflowReconciliationResult =
   | {
@@ -16,10 +16,6 @@ export type WorkflowReconciliationResult =
   | {
       status: "identity-instability"
     }
-
-function positionKey(position: CanvasPosition): string {
-  return `${position.x}:${position.y}`
-}
 
 function firstRetainedNeighbor(
   candidateIds: Set<string>,
@@ -96,7 +92,6 @@ export function reconcileWorkflowPresentation(
     [...sharedNodeIds].filter((nodeId) => previousPresentation[nodeId] !== undefined),
   )
   const presentation: Record<string, CanvasNodePresentation> = {}
-  const occupied = new Set<string>()
 
   for (const node of revisedWorkflow.nodes) {
     if (!retainedPresentationIds.has(node.id)) continue
@@ -107,30 +102,33 @@ export function reconcileWorkflowPresentation(
       position: { ...retained.position },
     }
     presentation[node.id] = copy
-    occupied.add(positionKey(copy.position))
   }
 
   for (const node of revisedWorkflow.nodes) {
     if (presentation[node.id] !== undefined) continue
 
-    const position = preferredPosition(
+    const preferred = preferredPosition(
       node.id,
       revisedWorkflow,
       retainedPresentationIds,
       presentation,
       canvasCenter,
     )
-    while (occupied.has(positionKey(position))) {
-      position.y += VERTICAL_SPACING
-    }
+    const shape = DEFAULT_SHAPE_BY_NODE_TYPE[node.type]
+    const position = findNearestClearNodePosition(preferred, shape, presentation)
 
     presentation[node.id] = {
       nodeId: node.id,
-      shape: DEFAULT_SHAPE_BY_NODE_TYPE[node.type],
+      shape,
       position,
     }
-    occupied.add(positionKey(position))
   }
 
-  return { status: "ok", presentation }
+  return {
+    status: "ok",
+    presentation: separateNodePresentations(
+      presentation,
+      revisedWorkflow.nodes.map((node) => node.id),
+    ),
+  }
 }

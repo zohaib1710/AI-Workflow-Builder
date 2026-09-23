@@ -684,7 +684,10 @@ textarea {
   border-radius: 0.5rem;
   background: #1c1c1c;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.3);
-  bottom: 11.75rem !important;
+  right: 1rem !important;
+  bottom: 1rem !important;
+  left: auto !important;
+  margin: 0;
 }
 
 @media (max-width: 767px) {

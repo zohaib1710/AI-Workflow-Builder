@@ -45,9 +45,9 @@ const FlowchartNode = memo(function FlowchartNode({ data, selected }: NodeProps<
         <ShapeGeometry shape={shape} />
         <div className={`flowchart-node__content ${definition.contentClassName}`}>
           <span className="flowchart-node__semantic">{semantic.label}</span>
-          <h3 className="flowchart-node__title">{data.title}</h3>
-          <p className="flowchart-node__description">{data.description}</p>
-          {data.application && <p className="flowchart-node__application">{data.application}</p>}
+          <h3 className="flowchart-node__title" title={data.title}>{data.title}</h3>
+          <p className="flowchart-node__description" title={data.description}>{data.description}</p>
+          {data.application && <p className="flowchart-node__application" title={data.application}>{data.application}</p>}
           {!supportedShape && <span className="flowchart-node__warning">Unsupported shape</span>}
         </div>
       </div>

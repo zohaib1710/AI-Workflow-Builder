@@ -90,7 +90,7 @@ function WorkflowCanvasInner({ workflow, nodePresentations }: WorkflowCanvasProp
         edges={layoutedWorkflow.edges}
         nodeTypes={canvasNodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2, minZoom: 0.35, maxZoom: 1.2 }}
+        fitViewOptions={{ padding: { top: "72px", right: "224px", bottom: "32px", left: "72px" }, minZoom: 0.2, maxZoom: 1.2 }}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
@@ -106,7 +106,7 @@ function WorkflowCanvasInner({ workflow, nodePresentations }: WorkflowCanvasProp
         <FitViewAfterLayout layoutKey={layoutKey} />
         <Background color="#303030" gap={24} size={1} />
         <Controls showInteractive={false} />
-        <MiniMap nodeColor={minimapNodeColor} pannable zoomable />
+        <MiniMap position="bottom-right" nodeColor={minimapNodeColor} pannable zoomable />
       </ReactFlow>
     </div>
   )
