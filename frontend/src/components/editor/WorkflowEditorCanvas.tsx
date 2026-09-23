@@ -10,7 +10,7 @@ import {
   type Node,
   type ReactFlowInstance,
 } from "@xyflow/react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { createUniqueEditorId } from "../../editor/ids"
 import { findNearestClearNodePosition } from "../../editor/nodePlacement"
@@ -41,14 +41,16 @@ function isFullscreenViewport(): boolean {
     && Math.abs(window.innerHeight - window.screen.height) <= 1
 }
 
-function FitViewAfterLayout({ layoutKey }: { layoutKey: string }) {
+function FitViewAfterLayout() {
   const nodesInitialized = useNodesInitialized()
   const { fitView } = useReactFlow()
+  const hasFittedInitialWorkflow = useRef(false)
 
   useEffect(() => {
-    if (!nodesInitialized) return
+    if (!nodesInitialized || hasFittedInitialWorkflow.current) return
+    hasFittedInitialWorkflow.current = true
     void fitView(arrangedFitViewOptions)
-  }, [fitView, layoutKey, nodesInitialized])
+  }, [fitView, nodesInitialized])
 
   return null
 }
@@ -134,8 +136,6 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     () => buildEdges(workflow?.edges ?? [], selectedEdgeId, canEdit),
     [canEdit, selectedEdgeId, workflow?.edges],
   )
-  const layoutKey = workflow ? `${workflow.nodes.map((node) => node.id).join(",")}|${workflow.edges.map((edge) => edge.id).join(",")}` : "empty"
-
   useEffect(() => {
     flowInstance?.setNodes(derivedNodes)
   }, [derivedNodes, flowInstance])
@@ -308,7 +308,7 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           }}
           onNodeDragStop={handleNodeDragStop}
         >
-          <FitViewAfterLayout layoutKey={layoutKey} />
+          <FitViewAfterLayout />
           <Background color="#303030" gap={24} size={1} />
           <Controls showInteractive={false} />
           <MiniMap position="bottom-right" nodeColor={minimapNodeColor} pannable zoomable />

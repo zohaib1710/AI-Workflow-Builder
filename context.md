@@ -291,3 +291,12 @@
 - Successful validation: focused node-editing/canvas suite (9 passed), frontend production build, and `git diff --check`.
 - No backend, API, dependency, lock-file, or overlay changes were added.
 - Proposed commit title: `fix(frontend): fit workflow on fullscreen entry`.
+
+## Node-drag viewport stability correction
+
+- The initial-generation fit helper now records that its one allowed fit has completed, so React Flow node remeasurement after a node or annotation position commit cannot retrigger it.
+- Drag preview remains local, drag stop still records one presentation/history transaction, and no drag path calls `fitView`, `setCenter`, or `setViewport`.
+- Fullscreen-entry fitting, explicit Auto Arrange fitting, the normal Fit View control, and the initial generated-workflow fit remain separate and intact.
+- Successful validation: focused node-editing/canvas suite (9 passed), frontend production build, and `git diff --check`.
+- No backend, API, dependency, layout, semantic workflow, or history-contract changes were added.
+- Proposed commit title: `fix(frontend): preserve viewport after node drag`.

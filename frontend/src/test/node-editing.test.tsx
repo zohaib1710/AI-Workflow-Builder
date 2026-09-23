@@ -12,6 +12,10 @@ const flowCapture = vi.hoisted(() => ({ props: null as unknown }))
 const setFlowNodes = vi.hoisted(() => vi.fn())
 const fitFlowView = vi.hoisted(() => vi.fn())
 const getFlowNodes = vi.hoisted(() => vi.fn())
+const initialFitView = vi.hoisted(() => vi.fn())
+const setFlowCenter = vi.hoisted(() => vi.fn())
+const setFlowViewport = vi.hoisted(() => vi.fn())
+const nodesInitialized = vi.hoisted(() => ({ current: true }))
 
 interface CapturedFlowProps {
   defaultNodes: FlowchartFlowNode[]
@@ -22,7 +26,7 @@ interface CapturedFlowProps {
   minZoom: number
   deleteKeyCode: null
   multiSelectionKeyCode: null
-  onInit: (instance: { setNodes: typeof setFlowNodes; fitView: typeof fitFlowView; getNodes: typeof getFlowNodes }) => void
+  onInit: (instance: { setNodes: typeof setFlowNodes; fitView: typeof fitFlowView; getNodes: typeof getFlowNodes; setCenter: typeof setFlowCenter; setViewport: typeof setFlowViewport }) => void
   onNodeClick: (event: unknown, node: FlowchartFlowNode) => void
   onPaneClick: () => void
   onNodeDragStop: (event: unknown, node: FlowchartFlowNode) => void
@@ -36,7 +40,13 @@ vi.mock("@xyflow/react", async () => {
   Position: { Left: "left", Right: "right" },
   ReactFlow: (props: CapturedFlowProps) => {
     flowCapture.props = props
-    React.useEffect(() => props.onInit({ setNodes: setFlowNodes, fitView: fitFlowView, getNodes: getFlowNodes }), [props.onInit])
+    React.useEffect(() => props.onInit({
+      setNodes: setFlowNodes,
+      fitView: fitFlowView,
+      getNodes: getFlowNodes,
+      setCenter: setFlowCenter,
+      setViewport: setFlowViewport,
+    }), [props.onInit])
     return (
       <div data-testid="react-flow">
         {props.defaultNodes.map((node) => <button type="button" key={node.id} aria-label={`Select ${node.id}`} onClick={() => props.onNodeClick({}, node)}>{node.data.title}</button>)}
@@ -48,8 +58,8 @@ vi.mock("@xyflow/react", async () => {
   Background: () => <span data-testid="background" />,
   Controls: () => <span data-testid="controls" />,
   MiniMap: () => <span data-testid="minimap" />,
-  useNodesInitialized: () => true,
-  useReactFlow: () => ({ fitView: vi.fn() }),
+  useNodesInitialized: () => nodesInitialized.current,
+  useReactFlow: () => ({ fitView: initialFitView }),
   }
 })
 
@@ -59,6 +69,10 @@ afterEach(() => {
   setFlowNodes.mockClear()
   fitFlowView.mockReset()
   getFlowNodes.mockReset()
+  initialFitView.mockReset()
+  setFlowCenter.mockReset()
+  setFlowViewport.mockReset()
+  nodesInitialized.current = true
   Object.defineProperty(document, "fullscreenElement", { configurable: true, value: null })
 })
 
@@ -171,6 +185,8 @@ describe("node editing", () => {
   it("keeps drag preview local and commits one presentation-only transaction", () => {
     renderEditor()
     setFlowNodes.mockClear()
+    initialFitView.mockClear()
+    fitFlowView.mockClear()
     const before = currentNodeState()
     const dragged = { ...flowProps().defaultNodes.find((node) => node.id === "review")!, position: { x: 420, y: 215 } }
 
@@ -179,6 +195,7 @@ describe("node editing", () => {
     expect(setFlowNodes).not.toHaveBeenCalled()
     expect(screen.getByTestId("history-count")).toHaveTextContent("0")
 
+    nodesInitialized.current = false
     act(() => flowProps().onNodeDragStop({}, dragged))
     expect(currentNodeState().presentation.position).toEqual({ x: 420, y: 215 })
     expect(currentNodeState().node).toEqual(before.node)
@@ -186,6 +203,13 @@ describe("node editing", () => {
     expect(screen.getByTestId("history-count")).toHaveTextContent("1")
     expect(setFlowNodes).toHaveBeenCalledTimes(1)
     expect(setFlowNodes.mock.calls[0][0].find((node: FlowchartFlowNode) => node.id === "review")?.position).toEqual({ x: 420, y: 215 })
+
+    nodesInitialized.current = true
+    selectReview()
+    expect(initialFitView).not.toHaveBeenCalled()
+    expect(fitFlowView).not.toHaveBeenCalled()
+    expect(setFlowCenter).not.toHaveBeenCalled()
+    expect(setFlowViewport).not.toHaveBeenCalled()
 
     act(() => flowProps().onNodeDragStop({}, dragged))
     expect(screen.getByTestId("history-count")).toHaveTextContent("1")
