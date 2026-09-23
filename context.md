@@ -282,3 +282,12 @@
 - Successful validation: focused layout/canvas suites (2 files, 15 tests), frontend production build, and `git diff --check`.
 - Real-browser inspection of a representative generated workflow remains pending, so this visual-correction checkpoint is not formally complete. V2 Checkpoint 14 remains untouched.
 - Proposed commit title: `fix(frontend): improve workflow diagram readability`.
+
+## Fullscreen viewport-fit correction
+
+- Entering Fullscreen API mode or browser fullscreen now triggers one viewport-only fit after two animation frames, allowing the canvas to resize before React Flow measures all visible semantic workflow nodes.
+- Fullscreen fitting and the normal React Flow Fit View control can zoom out to `0.05`; exit, selection, rerenders, zoom, and pan do not trigger another automatic fullscreen fit.
+- Node positions, Dagre layout, semantic workflow, annotations, editor selection, and undo history remain unchanged.
+- Successful validation: focused node-editing/canvas suite (9 passed), frontend production build, and `git diff --check`.
+- No backend, API, dependency, lock-file, or overlay changes were added.
+- Proposed commit title: `fix(frontend): fit workflow on fullscreen entry`.

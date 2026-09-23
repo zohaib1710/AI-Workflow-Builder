@@ -10,6 +10,8 @@ import type { Workflow } from "../types/workflow"
 
 const flowCapture = vi.hoisted(() => ({ props: null as unknown }))
 const setFlowNodes = vi.hoisted(() => vi.fn())
+const fitFlowView = vi.hoisted(() => vi.fn())
+const getFlowNodes = vi.hoisted(() => vi.fn())
 
 interface CapturedFlowProps {
   defaultNodes: FlowchartFlowNode[]
@@ -17,9 +19,10 @@ interface CapturedFlowProps {
   elementsSelectable: boolean
   panOnDrag: boolean
   zoomOnScroll: boolean
+  minZoom: number
   deleteKeyCode: null
   multiSelectionKeyCode: null
-  onInit: (instance: { setNodes: typeof setFlowNodes }) => void
+  onInit: (instance: { setNodes: typeof setFlowNodes; fitView: typeof fitFlowView; getNodes: typeof getFlowNodes }) => void
   onNodeClick: (event: unknown, node: FlowchartFlowNode) => void
   onPaneClick: () => void
   onNodeDragStop: (event: unknown, node: FlowchartFlowNode) => void
@@ -33,7 +36,7 @@ vi.mock("@xyflow/react", async () => {
   Position: { Left: "left", Right: "right" },
   ReactFlow: (props: CapturedFlowProps) => {
     flowCapture.props = props
-    React.useEffect(() => props.onInit({ setNodes: setFlowNodes }), [props.onInit])
+    React.useEffect(() => props.onInit({ setNodes: setFlowNodes, fitView: fitFlowView, getNodes: getFlowNodes }), [props.onInit])
     return (
       <div data-testid="react-flow">
         {props.defaultNodes.map((node) => <button type="button" key={node.id} aria-label={`Select ${node.id}`} onClick={() => props.onNodeClick({}, node)}>{node.data.title}</button>)}
@@ -54,6 +57,9 @@ afterEach(() => {
   cleanup()
   flowCapture.props = null
   setFlowNodes.mockClear()
+  fitFlowView.mockReset()
+  getFlowNodes.mockReset()
+  Object.defineProperty(document, "fullscreenElement", { configurable: true, value: null })
 })
 
 function workflowFixture(): Workflow {
@@ -115,6 +121,40 @@ function currentNodeState() {
 }
 
 describe("node editing", () => {
+  it("fits all workflow nodes after entering fullscreen and allows deep zoom", () => {
+    const requestFrame = vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation((callback) => {
+      callback(0)
+      return 1
+    })
+    renderEditor()
+    getFlowNodes.mockReturnValue([
+      ...flowProps().defaultNodes,
+      { id: "note", type: "annotation", hidden: false },
+    ])
+
+    Object.defineProperty(document, "fullscreenElement", {
+      configurable: true,
+      value: document.documentElement,
+    })
+    act(() => document.dispatchEvent(new Event("fullscreenchange")))
+
+    expect(flowProps().minZoom).toBe(0.05)
+    expect(requestFrame).toHaveBeenCalledTimes(2)
+    expect(fitFlowView).toHaveBeenCalledTimes(1)
+    expect(fitFlowView).toHaveBeenCalledWith(expect.objectContaining({
+      padding: 0.08,
+      minZoom: 0.05,
+      maxZoom: 1,
+      nodes: expect.arrayContaining(flowProps().defaultNodes),
+    }))
+    expect(fitFlowView.mock.calls[0][0].nodes).toHaveLength(flowProps().defaultNodes.length)
+
+    Object.defineProperty(document, "fullscreenElement", { configurable: true, value: null })
+    act(() => document.dispatchEvent(new Event("fullscreenchange")))
+    expect(fitFlowView).toHaveBeenCalledTimes(1)
+    requestFrame.mockRestore()
+  })
+
   it("selects one node and clears transient selection from the canvas", () => {
     renderEditor()
     selectReview()
@@ -153,7 +193,7 @@ describe("node editing", () => {
 
   it("preserves a manual position while committing trimmed semantic fields separately", () => {
     renderEditor()
-    const dragged = { ...flowProps().defaultNodes.find((node) => node.id === "review")!, position: { x: 350, y: 90 } }
+    const dragged = { ...flowProps().defaultNodes.find((node) => node.id === "review")!, position: { x: 420, y: 90 } }
     act(() => flowProps().onNodeDragStop({}, dragged))
     selectReview()
 
@@ -169,7 +209,7 @@ describe("node editing", () => {
 
     const current = currentNodeState()
     expect(current.node).toMatchObject({ title: "Updated review", description: "Updated description.", application: null })
-    expect(current.presentation.position).toEqual({ x: 350, y: 90 })
+    expect(current.presentation.position).toEqual({ x: 420, y: 90 })
     expect(screen.getByTestId("history-count")).toHaveTextContent("4")
   })
 

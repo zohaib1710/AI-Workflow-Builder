@@ -32,7 +32,14 @@ const editorNodeTypes = { ...flowchartNodeTypes, ...annotationNodeTypes }
 const editorFitPadding = { top: "88px", right: "224px", bottom: "208px", left: "80px" } as const
 const initialFitViewOptions = { padding: editorFitPadding, minZoom: 0.2, maxZoom: 1.2 }
 const arrangedFitViewOptions = { padding: editorFitPadding, minZoom: 0.2, maxZoom: 1.25, duration: 200 }
+const fullscreenFitViewOptions = { padding: 0.08, minZoom: 0.05, maxZoom: 1, duration: 200 }
 const reactFlowOptions = { hideAttribution: true }
+
+function isFullscreenViewport(): boolean {
+  if (document.fullscreenElement) return true
+  return Math.abs(window.innerWidth - window.screen.width) <= 1
+    && Math.abs(window.innerHeight - window.screen.height) <= 1
+}
 
 function FitViewAfterLayout({ layoutKey }: { layoutKey: string }) {
   const nodesInitialized = useNodesInitialized()
@@ -142,6 +149,40 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     return () => window.removeEventListener(AUTO_ARRANGE_FIT_EVENT, fitArrangedWorkflow)
   }, [flowInstance])
   useEffect(() => {
+    if (!flowInstance) return
+    let wasFullscreen = isFullscreenViewport()
+    let firstFrame: number | null = null
+    let secondFrame: number | null = null
+
+    const fitAfterFullscreenResize = () => {
+      const isFullscreen = isFullscreenViewport()
+      if (!isFullscreen || wasFullscreen) {
+        wasFullscreen = isFullscreen
+        return
+      }
+      wasFullscreen = true
+      firstFrame = globalThis.requestAnimationFrame(() => {
+        secondFrame = globalThis.requestAnimationFrame(() => {
+          const workflowNodes = flowInstance.getNodes().filter(
+            (node) => node.type === "flowchart" && !node.hidden,
+          )
+          if (workflowNodes.length > 0) {
+            void flowInstance.fitView({ ...fullscreenFitViewOptions, nodes: workflowNodes })
+          }
+        })
+      })
+    }
+
+    document.addEventListener("fullscreenchange", fitAfterFullscreenResize)
+    window.addEventListener("resize", fitAfterFullscreenResize)
+    return () => {
+      document.removeEventListener("fullscreenchange", fitAfterFullscreenResize)
+      window.removeEventListener("resize", fitAfterFullscreenResize)
+      if (firstFrame !== null) globalThis.cancelAnimationFrame(firstFrame)
+      if (secondFrame !== null) globalThis.cancelAnimationFrame(secondFrame)
+    }
+  }, [flowInstance])
+  useEffect(() => {
     if (!canConnect) setPendingConnection(null)
   }, [canConnect])
   const cancelPendingInteraction = useCallback(() => {
@@ -212,6 +253,7 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           onInit={setFlowInstance}
           fitView
           fitViewOptions={initialFitViewOptions}
+          minZoom={0.05}
           nodesDraggable={canEdit}
           nodesConnectable={canConnect}
           elementsSelectable={canEdit}
