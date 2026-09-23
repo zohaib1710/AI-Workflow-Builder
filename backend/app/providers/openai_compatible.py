@@ -25,6 +25,7 @@ class OpenAICompatibleProvider:
         temperature: float,
         max_tokens: int,
         timeout_seconds: float,
+        reasoning_effort: str = "low",
         client_factory: Callable[[], httpx.AsyncClient] | None = None,
     ) -> None:
         self.api_key = api_key.strip()
@@ -33,6 +34,7 @@ class OpenAICompatibleProvider:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.timeout_seconds = timeout_seconds
+        self.reasoning_effort = reasoning_effort
         self._client_factory = client_factory or self._default_client_factory
 
     @property
@@ -59,7 +61,9 @@ class OpenAICompatibleProvider:
                 {"role": "user", "content": user_prompt},
             ],
             "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
+            "max_completion_tokens": self.max_tokens,
+            "reasoning_effort": self.reasoning_effort,
+            "include_reasoning": False,
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {"name": "workflow", "strict": True, "schema": schema},

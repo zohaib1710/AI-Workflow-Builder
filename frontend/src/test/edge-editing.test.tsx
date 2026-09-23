@@ -91,9 +91,6 @@ function workflowFixture(extraEdgeId?: string): Workflow {
       { id: "no", source: "decision", target: "rejected", label: "No" },
       ...(extraEdgeId ? [{ id: extraEdgeId, source: "start", target: "review", label: null }] : []),
     ],
-    assumptions: [],
-    missingRequirements: [],
-    suggestions: [],
   }
 }
 

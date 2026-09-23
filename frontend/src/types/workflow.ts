@@ -30,9 +30,6 @@ export interface Workflow {
   description: string
   nodes: WorkflowNode[]
   edges: WorkflowEdge[]
-  assumptions: string[]
-  missingRequirements: string[]
-  suggestions: string[]
 }
 
 export interface GenerationMetadata {

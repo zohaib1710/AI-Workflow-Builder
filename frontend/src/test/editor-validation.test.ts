@@ -17,7 +17,6 @@ function validWorkflow(): Workflow {
       { id: "yes", source: "decision", target: "approved", label: "Yes" },
       { id: "no", source: "decision", target: "rejected", label: "No" },
     ],
-    assumptions: [], missingRequirements: [], suggestions: [],
   }
 }
 

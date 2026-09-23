@@ -484,73 +484,6 @@ textarea {
   backdrop-filter: blur(14px);
 }
 
-.insights-drawer {
-  position: absolute;
-  z-index: var(--editor-layer-overlay);
-  top: 4.75rem;
-  right: 1rem;
-  width: min(22rem, calc(100vw - 2rem));
-  max-height: calc(100dvh - 16.5rem);
-  overflow-y: auto;
-  border: 1px solid #3f3f46;
-  border-radius: 0.75rem;
-  background: rgb(28 28 28 / 0.97);
-  padding: 0.875rem;
-  box-shadow: 0 18px 42px rgb(0 0 0 / 0.38);
-  backdrop-filter: blur(14px);
-}
-
-.insights-drawer__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.insights-drawer__header h2 {
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-.insights-drawer__header button {
-  border: 1px solid #52525b;
-  border-radius: 0.45rem;
-  background: #292929;
-  padding: 0.35rem 0.55rem;
-  color: #f4f4f5;
-  font-size: 0.6875rem;
-  cursor: pointer;
-}
-
-.insights-drawer__header h2:focus-visible,
-.insights-drawer__header button:focus-visible {
-  outline: 2px solid #a1a1aa;
-  outline-offset: 2px;
-}
-
-.insights-drawer__content {
-  display: grid;
-  gap: 0.625rem;
-}
-
-.insights-drawer .insight-panel {
-  border-color: #3f3f46;
-  background: #202020;
-  padding: 0.75rem;
-}
-
-.insights-drawer .insight-panel__heading {
-  color: #f4f4f5;
-  font-size: 0.75rem;
-}
-
-.insights-drawer .insight-panel__list,
-.insights-drawer .insight-panel__empty {
-  color: #d4d4d8;
-  font-size: 0.75rem;
-}
-
 .inspector-panel__header {
   display: flex;
   align-items: start;
@@ -785,13 +718,6 @@ textarea {
     display: none;
   }
 
-  .insights-drawer {
-    top: 8rem;
-    right: 0.75rem;
-    width: min(22rem, calc(100vw - 1.5rem));
-    max-height: calc(100dvh - 19rem);
-  }
-
   .editor-canvas .react-flow__minimap {
     display: none;
   }
@@ -891,62 +817,8 @@ textarea {
   line-height: 1.65;
 }
 
-.workflow-result__grid {
-  display: grid;
-  min-width: 0;
-}
-
 .workflow-result__canvas {
   min-width: 0;
-}
-
-.workflow-insights {
-  display: grid;
-  gap: 1rem;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-  padding: 1.25rem;
-}
-
-.insight-panel {
-  min-width: 0;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.75rem;
-  background: #ffffff;
-  padding: 1rem;
-}
-
-.insight-panel__heading {
-  margin: 0;
-  color: #0f172a;
-  font-size: 0.9375rem;
-  font-weight: 700;
-}
-
-.insight-panel__list {
-  display: grid;
-  gap: 0.625rem;
-  margin: 0.75rem 0 0;
-  padding-left: 1.125rem;
-  color: #334155;
-  font-size: 0.875rem;
-  line-height: 1.55;
-}
-
-.insight-panel__list li,
-.insight-panel__empty {
-  overflow-wrap: anywhere;
-}
-
-.insight-panel__list li::marker {
-  color: #0284c7;
-}
-
-.insight-panel__empty {
-  margin: 0.75rem 0 0;
-  color: #64748b;
-  font-size: 0.875rem;
-  line-height: 1.55;
 }
 
 .workflow-canvas {
@@ -1202,15 +1074,3 @@ textarea {
 .workflow-handle { width: 8px; height: 8px; border: 2px solid #ffffff; background: #64748b; }
 .react-flow__edge-text { font-size: 0.75rem; font-weight: 700; fill: #334155; }
 .react-flow__controls-button:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }
-
-@media (min-width: 900px) {
-  .workflow-result__grid {
-    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
-  }
-
-  .workflow-insights {
-    align-content: start;
-    border-top: 0;
-    border-left: 1px solid #e2e8f0;
-  }
-}

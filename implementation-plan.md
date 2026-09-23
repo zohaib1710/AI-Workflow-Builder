@@ -373,6 +373,20 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `feat(frontend): polish workflow editor experience`
 - Stop conditions: Stop if polish expands into theming/design-system work, insights become editable, or tests depend on live services or third-party DOM internals.
 
+### V2 Generation Correction: Fit core workflows within the Groq token budget
+
+- Status: COMPLETE
+- Purpose: Eliminate the observed structured-output truncation path while retaining `openai/gpt-oss-20b` under the account's 8,000 TPM limit.
+- Implementation: Remove assumptions, missing requirements, suggestions, and all Insights UI from the backend workflow schema, generation/edit prompts, frontend contract, editor, and tests. Send `max_completion_tokens=6000`, `reasoning_effort=low`, and `include_reasoning=false`; retain strict JSON Schema output and the existing model.
+- Required validation: backend schema/generation/edit/provider/route regressions; complete backend and frontend suites; frontend build; Ruff; Python compilation; `git diff --check`.
+- Acceptance criteria:
+  - [x] Workflow responses contain only title, description, nodes, and edges.
+  - [x] No active prompt, schema, type, validator, control, drawer, renderer, or style references the removed insights feature.
+  - [x] Groq requests use the current completion-token parameter and low reasoning within the free-plan TPM ceiling.
+  - [x] Focused backend tests (95), complete backend tests (128), complete frontend tests (179), build, lint, compilation, and diff checks pass.
+- Commit message: `fix(workflow): fit generation within Groq token budget`
+- Stop conditions: Stop if the fix requires a model change, exceeds the 8,000 TPM limit, weakens strict workflow validation, or introduces immediate automatic retry within the same rate-limit window.
+
 ### V2 Performance Correction: Optimize node dragging
 
 - Status: INCOMPLETE (implementation and automated validation complete; manual browser verification pending)
@@ -397,7 +411,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Dependencies/prerequisites: V2 Checkpoints 1-13 complete and individually validated.
 - Files to create: `docs/architecture/version-2.md`, `docs/specifications/version-2-editor.md`.
 - Files to modify: `README.md`, `frontend/README.md`, `backend/README.md`, `docs/architecture/version-1.md` and `docs/specifications/version-1-workflow.md` only for clearly labelled supersession links, `context.md`, `implementation-plan.md`, `.codex/commit-message.txt`.
-- Implementation instructions: Document setup, full-screen modes, semantic-versus-presentation architecture, draft validation, manual tools, shape mappings, AI edit API/full-workflow strategy, identity/layout preservation, Auto Arrange, history, annotations, insights, responsive limitations, safe errors/security, in-memory behavior, and explicit exclusions. Do not imply persistence, collaboration, execution, or production deployment. Audit dependencies and commands against manifests, run locked installs and all tests/build/lint/compile checks once, verify ignored secrets/environments and tracked locks, and perform no real provider request. Mark Version 2 complete only after validation.
+- Implementation instructions: Document setup, full-screen modes, semantic-versus-presentation architecture, draft validation, manual tools, shape mappings, AI edit API/full-workflow strategy, identity/layout preservation, Auto Arrange, history, the core-only workflow contract, annotations, responsive limitations, safe errors/security, in-memory behavior, and explicit exclusions. Document the 6,000-token/low-reasoning Groq configuration and the removal of insights. Do not imply persistence, collaboration, execution, or production deployment. Audit dependencies and commands against manifests, run locked installs and all tests/build/lint/compile checks once, verify ignored secrets/environments and tracked locks, and perform no real provider request. Mark Version 2 complete only after validation.
 - Required tests: No new tests unless final verification exposes a real uncovered defect; rely on the completed focused suites and mocked boundaries.
 - Validation commands: `npm.cmd ci --prefix frontend`; `npm.cmd run test --prefix frontend -- --run`; `npm.cmd run build --prefix frontend`; `uv sync --project backend --locked`; `uv run --project backend pytest`; `uv run --project backend ruff check backend`; `uv run --project backend python -m compileall -q backend/app`; `git -c safe.directory=D:/AI-Workflow-Builder diff --check`; `git -c safe.directory=D:/AI-Workflow-Builder check-ignore backend/.env frontend/.env .codex/commit-message.txt frontend/node_modules backend/.venv`; `git -c safe.directory=D:/AI-Workflow-Builder status --short`.
 - Acceptance criteria:
@@ -415,7 +429,7 @@ After all checkpoint commits, verify from a clean worktree:
 
 1. Install exactly from `frontend/package-lock.json` and `backend/uv.lock`.
 2. Run the complete frontend and backend suites, frontend production build, Ruff, and Python compilation.
-3. Confirm initial generation, centered-to-bottom composer transition, manual node/edge/annotation editing, draft issues, AI iteration, layout reconciliation, Auto Arrange, undo/redo, insights, and responsive limitations through automated mocked coverage.
+3. Confirm initial generation, centered-to-bottom composer transition, manual node/edge/annotation editing, draft issues, AI iteration, layout reconciliation, Auto Arrange, undo/redo, the absence of insights, and responsive limitations through automated mocked coverage.
 4. Confirm the semantic API payload contains no coordinates, shapes, annotations, selection, viewport, history, or provider details.
 5. Confirm an AI edit failure or identity-instability response preserves the current editor snapshot.
 6. Confirm no authentication, persistence, collaboration, execution, export, Docker, deployment, or CI artifacts were introduced.

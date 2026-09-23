@@ -16,9 +16,6 @@ def valid_workflow() -> dict[str, object]:
             {"id": "end", "type": "end", "title": "End", "description": "Finish.", "application": None},
         ],
         "edges": [{"id": "edge-1", "source": "start", "target": "end", "label": None}],
-        "assumptions": [],
-        "missingRequirements": [],
-        "suggestions": [],
     }
 
 

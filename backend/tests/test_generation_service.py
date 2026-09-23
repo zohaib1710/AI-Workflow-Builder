@@ -26,9 +26,6 @@ def valid_candidate() -> str:
                 {"id": "end", "type": "end", "title": "End", "description": "Finish.", "application": None},
             ],
             "edges": [{"id": "edge-1", "source": "start", "target": "end", "label": None}],
-            "assumptions": ["Access is available."],
-            "missingRequirements": ["Define ownership."],
-            "suggestions": ["Add monitoring."],
         }
     )
 
@@ -49,16 +46,16 @@ class FakeProvider:
 
 
 @pytest.mark.asyncio
-async def test_valid_candidate_returns_validated_workflow_and_insights() -> None:
+async def test_valid_candidate_returns_validated_workflow() -> None:
     provider = FakeProvider()
     result = await WorkflowGenerationService(provider).generate_workflow("  Build a workflow.  ")
 
     assert result.title == "Example workflow"
-    assert result.assumptions == ["Access is available."]
-    assert result.missing_requirements == ["Define ownership."]
-    assert result.suggestions == ["Add monitoring."]
     assert len(provider.calls) == 1
     assert provider.calls[0]["schema"]["additionalProperties"] is False  # type: ignore[index]
+    assert set(provider.calls[0]["schema"]["properties"]) == {  # type: ignore[index]
+        "title", "description", "nodes", "edges"
+    }
 
 
 @pytest.mark.asyncio

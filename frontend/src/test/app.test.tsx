@@ -35,9 +35,6 @@ function responseFixture(): GenerateWorkflowResponse {
         { id: "decision-no", source: "decision", target: "end", label: "No" },
         { id: "action-end", source: "action", target: "end", label: null },
       ],
-      assumptions: ["The CRM is available."],
-      missingRequirements: ["Define the qualification threshold."],
-      suggestions: ["Review routing outcomes monthly."],
     },
     generation: { model: "test-model", durationMs: 25 },
   }

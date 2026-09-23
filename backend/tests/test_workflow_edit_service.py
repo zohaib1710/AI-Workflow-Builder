@@ -48,9 +48,6 @@ def workflow_payload(*, title: str = "Current workflow") -> dict[str, object]:
                 "label": None,
             }
         ],
-        "assumptions": ["Access exists."],
-        "missingRequirements": ["Confirm owner."],
-        "suggestions": ["Add monitoring."],
     }
 
 
@@ -108,8 +105,8 @@ async def test_valid_edit_returns_complete_revised_workflow_with_stable_id_promp
     assert "complete revised workflow" in prompts.lower()
     assert "same logical step" in prompts
     assert "unique ID" in prompts
-    assert '"missingRequirements"' in prompts
-    assert '"missing_requirements"' not in prompts
+    assert '"edges"' in prompts
+    assert "missingRequirements" not in prompts
 
 
 @pytest.mark.asyncio

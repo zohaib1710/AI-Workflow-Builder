@@ -1,6 +1,6 @@
 # AI Workflow Builder
 
-AI Workflow Builder turns a natural-language business-process description into a validated, read-only workflow diagram. Version 1 generates the workflow through a provider-agnostic backend, arranges it from left to right with Dagre, and renders it with React Flow alongside assumptions, missing requirements, and suggestions.
+AI Workflow Builder turns a natural-language business-process description into a validated visual workflow diagram. The provider-agnostic backend generates core workflow metadata, nodes, and edges, and the frontend renders them with React Flow.
 
 It designs and visualizes workflows; it does not execute or save them.
 
@@ -65,7 +65,7 @@ Invoke-RestMethod http://localhost:8000/api/v1/health
 
 The expected response is `{ "status": "ok" }`.
 
-The frontend submits `{ "prompt": "..." }` to `POST /api/v1/workflows/generate`. An optional manual smoke test is to add a valid backend-only provider key, start both applications, submit one prompt, and confirm that the validated workflow and insights render.
+The frontend submits `{ "prompt": "..." }` to `POST /api/v1/workflows/generate`. An optional manual smoke test is to add a valid backend-only provider key, start both applications, submit one prompt, and confirm that the validated workflow renders.
 
 ## Testing
 

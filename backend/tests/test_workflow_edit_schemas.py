@@ -32,9 +32,6 @@ def workflow_payload() -> dict[str, object]:
                 "label": None,
             }
         ],
-        "assumptions": [],
-        "missingRequirements": ["Confirm owner."],
-        "suggestions": [],
     }
 
 
@@ -72,7 +69,7 @@ def test_response_reuses_canonical_workflow_and_generation_shapes() -> None:
     payload = response.model_dump(by_alias=True)
 
     assert set(payload) == {"workflow", "generation"}
-    assert payload["workflow"]["missingRequirements"] == ["Confirm owner."]
+    assert set(payload["workflow"]) == {"title", "description", "nodes", "edges"}
     assert payload["generation"]["durationMs"] == 2
 
 

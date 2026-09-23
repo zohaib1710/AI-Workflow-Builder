@@ -32,9 +32,6 @@ function initialWorkflow(): Workflow {
       { id: "to-review", source: "start", target: "remove", label: null },
       { id: "to-end", source: "remove", target: "end", label: null },
     ],
-    assumptions: ["Requests contain contact details."],
-    missingRequirements: ["Escalation owner."],
-    suggestions: ["Track completion time."],
   }
 }
 
@@ -52,9 +49,6 @@ function revisedResponse(): EditWorkflowResponse {
         { id: "to-notify", source: "start", target: "notify", label: null },
         { id: "notify-to-end", source: "notify", target: "end", label: null },
       ],
-      assumptions: ["Email delivery is available."],
-      missingRequirements: [],
-      suggestions: ["Measure acknowledgement time."],
     },
     generation: { model: "test-model", durationMs: 22 },
   }
@@ -137,9 +131,6 @@ describe("AI workflow iteration", () => {
 
     await waitFor(() => expect(readState().present.workflow.title).toBe("Automated request workflow"))
     const after = readState()
-    expect(after.present.workflow.assumptions).toEqual(["Email delivery is available."])
-    expect(after.present.workflow.missingRequirements).toEqual([])
-    expect(after.present.workflow.suggestions).toEqual(["Measure acknowledgement time."])
     expect(after.present.nodePresentations.start).toEqual({
       nodeId: "start",
       shape: "document",

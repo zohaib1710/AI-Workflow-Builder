@@ -15,7 +15,6 @@ function linearWorkflow(): Workflow {
       { id: "edge-yes", source: "start", target: "check", label: "Yes" },
       { id: "edge-no", source: "check", target: "end", label: "No" },
     ],
-    assumptions: [], missingRequirements: [], suggestions: [],
   }
 }
 

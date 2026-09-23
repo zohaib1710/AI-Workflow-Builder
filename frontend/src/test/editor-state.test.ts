@@ -12,7 +12,6 @@ function workflowWithTypes(types: SupportedNodeType[] = ["start", "action", "end
   return {
     title: "Workflow", description: "A workflow.", nodes,
     edges: nodes.slice(1).map((node, index) => ({ id: `edge-${index}`, source: nodes[index].id, target: node.id, label: null })),
-    assumptions: [], missingRequirements: [], suggestions: [],
   }
 }
 

@@ -1,6 +1,6 @@
 # AI Workflow Builder frontend
 
-The frontend collects a workflow prompt and displays the validated response as a read-only visual diagram with metadata and insights. It uses React, TypeScript, Vite, Tailwind CSS, React Flow, Dagre, Vitest, and Testing Library.
+The frontend collects a workflow prompt and displays the validated response as a visual workflow diagram. It uses React, TypeScript, Vite, Tailwind CSS, React Flow, Dagre, Vitest, and Testing Library.
 
 Run these commands from the repository root.
 
@@ -49,11 +49,11 @@ The tests run in jsdom and mock the frontend API boundary or `fetch`; they do no
 
 - `src/App.tsx` owns prompt, loading, error, and in-memory result state.
 - `src/api/client.ts` calls the backend and normalizes unsafe failures into controlled messages.
-- `src/components/` renders the prompt form, result, insights, and read-only React Flow canvas.
+- `src/components/` renders the prompt form, result, editor controls, and React Flow canvas.
 - `src/components/nodes/` defines the ten supported custom node visuals.
 - `src/lib/layout.ts` computes deterministic left-to-right Dagre positions.
 - `src/test/` covers the application flow, API boundary, rendering, layout, and canvas controls.
 
 ## State and interaction model
 
-Generated workflows are held only in browser memory; refreshing the page clears them. **Clear** removes the prompt, result, and current error. Nodes cannot be dragged for editing, connections cannot be created, and nodes, edges, metadata, and insights cannot be changed or deleted. Pan, zoom, fit view, and the MiniMap remain available for navigation.
+Generated workflows are held only in browser memory; refreshing the page clears them. **New workflow** clears the current in-memory editor state. Pan, zoom, fit view, and the MiniMap remain available for navigation.

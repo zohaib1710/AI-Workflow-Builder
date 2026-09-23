@@ -11,9 +11,6 @@ function validResponse(): GenerateWorkflowResponse {
       description: "Qualifies incoming leads.",
       nodes: [{ id: "start", type: "start", title: "Receive lead", description: "A lead arrives.", application: null }],
       edges: [],
-      assumptions: ["The CRM is available."],
-      missingRequirements: [],
-      suggestions: ["Review routing monthly."],
     },
     generation: { model: "test-model", durationMs: 25 },
   }
@@ -128,10 +125,6 @@ describe("generateWorkflow", () => {
     ["unsupported node", () => jsonResponse({
       ...validResponse(),
       workflow: { ...validResponse().workflow, nodes: [{ ...validResponse().workflow.nodes[0], type: "unknown" }] },
-    })],
-    ["non-string insight", () => jsonResponse({
-      ...validResponse(),
-      workflow: { ...validResponse().workflow, assumptions: [123] },
     })],
     ["invalid edge", () => jsonResponse({
       ...validResponse(),

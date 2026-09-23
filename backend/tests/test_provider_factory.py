@@ -14,6 +14,8 @@ def test_factory_creates_openai_compatible_provider_without_network() -> None:
 
     assert isinstance(provider, OpenAICompatibleProvider)
     assert provider.base_url == "https://provider.invalid/v1"
+    assert provider.max_tokens == 6000
+    assert provider.reasoning_effort == "low"
 
 
 def test_factory_rejects_unknown_provider() -> None:

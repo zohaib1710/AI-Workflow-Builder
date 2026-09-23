@@ -72,7 +72,6 @@ function workflowFixture(nodes: Workflow["nodes"] = [
       { id: "edge-1", source: "start", target: "review", label: null },
       { id: "edge-2", source: "review", target: "end", label: null },
     ].filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)),
-    assumptions: [], missingRequirements: [], suggestions: [],
   }
 }
 

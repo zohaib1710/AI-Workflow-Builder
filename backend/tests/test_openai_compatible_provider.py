@@ -49,7 +49,10 @@ async def test_provider_sends_compatible_structured_request() -> None:
     assert captured["headers"]["content-type"] == "application/json"
     assert captured["body"]["model"] == "model-name"
     assert captured["body"]["temperature"] == 0.4
-    assert captured["body"]["max_tokens"] == 123
+    assert captured["body"]["max_completion_tokens"] == 123
+    assert captured["body"]["reasoning_effort"] == "low"
+    assert captured["body"]["include_reasoning"] is False
+    assert "max_tokens" not in captured["body"]
     assert captured["body"]["messages"] == [
         {"role": "system", "content": "system"},
         {"role": "user", "content": "user"},

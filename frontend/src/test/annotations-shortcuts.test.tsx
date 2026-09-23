@@ -93,9 +93,6 @@ function workflowFixture(): Workflow {
       { id: "edge-1", source: "start", target: "review", label: null },
       { id: "edge-2", source: "review", target: "end", label: null },
     ],
-    assumptions: [],
-    missingRequirements: [],
-    suggestions: [],
   }
 }
 

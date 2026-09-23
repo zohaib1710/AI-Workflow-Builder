@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { editWorkflow, generateWorkflow, WorkflowApiError } from "../../api/client"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { reconcileWorkflowPresentation } from "../../editor/reconcileWorkflow"
@@ -7,7 +7,6 @@ import { validateWorkflowDraft } from "../../editor/validation"
 import { EXAMPLE_PROMPT, PROMPT_MAX_LENGTH } from "../../lib/constants"
 import EditorHeader from "./EditorHeader"
 import EditorToolbar from "./EditorToolbar"
-import InsightsDrawer from "./InsightsDrawer"
 import InspectorPanel from "./InspectorPanel"
 import ValidationIndicator from "./ValidationIndicator"
 import WorkflowEditorCanvas from "./WorkflowEditorCanvas"
@@ -65,7 +64,6 @@ function EditorShell() {
   const [prompt, setPrompt] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [insightsOpen, setInsightsOpen] = useState(false)
   const requestInFlight = useRef(false)
   const isMounted = useRef(true)
   const editingViewport = useEditingViewport()
@@ -192,13 +190,7 @@ function EditorShell() {
     dispatch({ type: "workflow/reset" })
     setPrompt("")
     setError(null)
-    setInsightsOpen(false)
   }
-
-  const closeInsights = useCallback(() => {
-    setInsightsOpen(false)
-    globalThis.requestAnimationFrame(() => document.getElementById("insights-trigger")?.focus())
-  }, [])
 
   const handlePromptChange = (value: string) => {
     if (requestInFlight.current) return
@@ -218,8 +210,6 @@ function EditorShell() {
       <EditorHeader
         workflowTitle={workflow?.title ?? null}
         onNewWorkflow={handleReset}
-        insightsOpen={insightsOpen}
-        onToggleInsights={() => setInsightsOpen((open) => !open)}
       />
       <EditorToolbar
         editingViewport={editingViewport}
@@ -228,8 +218,7 @@ function EditorShell() {
         isRequestLoading={isRequestLoading}
       />
       <ValidationIndicator />
-      {insightsOpen && workflow && <InsightsDrawer workflow={workflow} onClose={closeInsights} />}
-      {!insightsOpen && <InspectorPanel editingViewport={editingViewport} />}
+      <InspectorPanel editingViewport={editingViewport} />
       <WorkflowPromptComposer
         mode={workflow ? "iterate" : "generate"}
         value={prompt}

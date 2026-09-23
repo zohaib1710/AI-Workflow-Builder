@@ -34,13 +34,6 @@ def _strip_optional(value: object) -> object:
     return stripped
 
 
-def _strip_list(values: list[str]) -> list[str]:
-    stripped_values = [value.strip() for value in values]
-    if any(not value for value in stripped_values):
-        raise ValueError("list values must not be blank")
-    return stripped_values
-
-
 class StrictModel(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -98,14 +91,7 @@ class Workflow(StrictModel):
     description: NonEmptyString
     nodes: list[WorkflowNode] = Field(min_length=1)
     edges: list[WorkflowEdge]
-    assumptions: list[StrictStr]
-    missing_requirements: list[StrictStr] = Field(alias="missingRequirements")
-    suggestions: list[StrictStr]
-
     _normalize_strings = field_validator("title", "description", mode="before")(_strip_required)
-    _normalize_insights = field_validator(
-        "assumptions", "missing_requirements", "suggestions", mode="before"
-    )(_strip_list)
 
     @model_validator(mode="after")
     def require_edges_for_multiple_nodes(self) -> "Workflow":

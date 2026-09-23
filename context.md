@@ -262,3 +262,13 @@
 - Successful validation: focused editor/canvas/history regression set (73 passed), complete frontend suite (182 passed), frontend production build, and `git diff --check`.
 - Manual real-browser confirmation of subjective drag smoothness remains pending, so the performance-correction checkpoint is not formally complete and V2 Checkpoint 14 remains untouched.
 - Proposed commit title: `perf(frontend): optimize workflow node dragging`.
+
+## Core-workflow generation correction
+
+- Groq request logs identified the intermittent 502 source as `json_validate_failed`: the 4,000-token completion budget was exhausted before strict workflow JSON could include all required fields.
+- The configured model remains `openai/gpt-oss-20b`. Requests now use `max_completion_tokens`, low reasoning effort, and excluded reasoning output. The default and local ignored completion budget are 6,000 tokens, leaving headroom beneath the account's 8,000 combined TPM limit for prompt and schema input.
+- Insights were removed end to end. `Workflow` now contains only title, description, nodes, and edges; generation/edit prompts and schemas no longer request assumptions, missing requirements, or suggestions; frontend types and response validation match; the Insights button, drawer, renderer, and styles were removed.
+- No automatic retry was added for token exhaustion because an immediate second request would compete with the same 8,000 TPM window and is likely to produce a 429. Existing safe provider error handling remains unchanged.
+- Successful validation: focused backend contract/provider suites (95 passed), complete backend suite (128 passed), complete frontend suite (18 files, 179 tests passed), frontend production build, Ruff, Python compilation, and `git diff --check`.
+- The pending node-drag manual browser verification and V2 Checkpoint 14 remain incomplete.
+- Proposed commit title: `fix(workflow): fit generation within Groq token budget`.

@@ -53,10 +53,6 @@ function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === "string"
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string")
-}
-
 function isApiErrorDetail(value: unknown): value is ApiErrorDetail {
   if (!isRecord(value)) return false
   return typeof value.code === "string" && typeof value.message === "string" && isNullableString(value.field)
@@ -83,8 +79,7 @@ function isWorkflowResponse(value: unknown): value is WorkflowResponse {
   return typeof workflow.title === "string" && typeof workflow.description === "string" &&
     Array.isArray(workflow.nodes) && workflow.nodes.every(isWorkflowNode) &&
     Array.isArray(workflow.edges) && workflow.edges.every(isWorkflowEdge) &&
-    isStringArray(workflow.assumptions) && isStringArray(workflow.missingRequirements) &&
-    isStringArray(workflow.suggestions) && typeof generation.model === "string" &&
+    typeof generation.model === "string" &&
     typeof generation.durationMs === "number" && Number.isFinite(generation.durationMs) &&
     generation.durationMs >= 0
 }

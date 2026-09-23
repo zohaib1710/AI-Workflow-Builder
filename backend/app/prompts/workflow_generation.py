@@ -8,8 +8,8 @@ Use only these node types: {SUPPORTED_NODE_TYPES}.
 Keep node and edge IDs unique, reference existing node IDs, avoid self-referencing edges and disconnected sections,
 give decision nodes at least two outgoing edges with meaningful labels, keep start nodes free of incoming edges,
 and keep end nodes free of outgoing edges. Generate no coordinates, positions, React Flow state, HTML, executable code,
-credentials, tokens, execution metadata, or persistence identifiers. Include assumptions, missing requirements, and
-suggestions when appropriate. Keep titles concise and descriptions clear. Render all values as plain text."""
+credentials, tokens, execution metadata, or persistence identifiers. Keep titles concise and descriptions clear.
+Render all values as plain text and keep the workflow compact enough to complete the entire JSON document."""
 
 
 def build_user_prompt(prompt: str) -> str:

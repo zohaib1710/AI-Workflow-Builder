@@ -1,11 +1,9 @@
 interface EditorHeaderProps {
   workflowTitle: string | null
   onNewWorkflow: () => void
-  insightsOpen: boolean
-  onToggleInsights: () => void
 }
 
-function EditorHeader({ workflowTitle, onNewWorkflow, insightsOpen, onToggleInsights }: EditorHeaderProps) {
+function EditorHeader({ workflowTitle, onNewWorkflow }: EditorHeaderProps) {
   return (
     <header className="editor-floating-controls" aria-label="Editor controls">
       <div className="editor-floating-controls__identity">
@@ -17,16 +15,6 @@ function EditorHeader({ workflowTitle, onNewWorkflow, insightsOpen, onToggleInsi
       </div>
       {workflowTitle && (
         <div className="editor-floating-controls__actions">
-          <button
-            id="insights-trigger"
-            type="button"
-            className="editor-floating-controls__new"
-            aria-controls="insights-drawer-heading"
-            aria-expanded={insightsOpen}
-            onClick={onToggleInsights}
-          >
-            Insights
-          </button>
           <button type="button" className="editor-floating-controls__new" onClick={onNewWorkflow}>
             <span aria-hidden="true">+</span>
             New workflow

@@ -36,9 +36,6 @@ function workflow(nodes: WorkflowNode[], edges: WorkflowEdge[] = []): Workflow {
     description: "A workflow.",
     nodes,
     edges,
-    assumptions: [],
-    missingRequirements: [],
-    suggestions: [],
   }
 }
 

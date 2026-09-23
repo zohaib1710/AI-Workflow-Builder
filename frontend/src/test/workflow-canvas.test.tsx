@@ -38,7 +38,6 @@ function sampleWorkflow(): Workflow {
     title: "Lead workflow", description: "Qualifies leads.",
     nodes: nodeTypes.map((type) => ({ id: type, type, title: `${workflowVisualConfig[type].label} step`, description: `Description for ${type}.`, application: type === "start" ? null : "Example system" })),
     edges: [{ id: "edge-yes", source: "decision", target: "action", label: "Yes" }, { id: "edge-no", source: "decision", target: "end", label: "No" }],
-    assumptions: [], missingRequirements: [], suggestions: [],
   }
 }
 

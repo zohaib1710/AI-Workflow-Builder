@@ -18,9 +18,6 @@ function workflowFixture(): Workflow {
       },
     ],
     edges: [],
-    assumptions: ["The CRM is available."],
-    missingRequirements: [],
-    suggestions: ["Review routing monthly."],
   }
 }
 

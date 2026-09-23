@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,7 +21,8 @@ class Settings(BaseSettings):
     ai_base_url: str = "https://api.groq.com/openai/v1"
     ai_model: str = "openai/gpt-oss-20b"
     ai_temperature: float = 0.2
-    ai_max_tokens: int = 4000
+    ai_max_tokens: int = 6000
+    ai_reasoning_effort: Literal["low", "medium", "high"] = "low"
     ai_timeout_seconds: float = 30
     frontend_url: str = "http://localhost:5173"
 

@@ -30,9 +30,6 @@ def workflow_payload() -> dict[str, object]:
         "description": "A valid workflow.",
         "nodes": [node(), node("end", SupportedNodeType.END)],
         "edges": [edge()],
-        "assumptions": ["The user has access."],
-        "missingRequirements": [],
-        "suggestions": ["Add monitoring."],
     }
 
 
@@ -92,10 +89,10 @@ def test_generation_metadata_duration_is_non_negative() -> None:
         GenerationMetadata(model="model", durationMs=-1)
 
 
-def test_aliases_serialize_as_api_names() -> None:
+def test_metadata_alias_serializes_as_api_name() -> None:
     workflow = Workflow.model_validate(workflow_payload())
     metadata = GenerationMetadata(model="model", duration_ms=1)
-    assert "missingRequirements" in workflow.model_dump(by_alias=True)
+    assert set(workflow.model_dump(by_alias=True)) == {"title", "description", "nodes", "edges"}
     assert "durationMs" in metadata.model_dump(by_alias=True)
 
 

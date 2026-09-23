@@ -15,4 +15,5 @@ def create_ai_provider(settings: Settings) -> AIProvider:
         temperature=settings.ai_temperature,
         max_tokens=settings.ai_max_tokens,
         timeout_seconds=settings.ai_timeout_seconds,
+        reasoning_effort=settings.ai_reasoning_effort,
     )

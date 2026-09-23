@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import EditorShell from "../components/editor/EditorShell"
 import { EditorProvider, useEditorState } from "../editor/EditorContext"
@@ -27,9 +27,6 @@ function responseFixture(): GenerateWorkflowResponse {
         { id: "end", type: "end", title: "Complete review", description: "The review finishes.", application: null },
       ],
       edges: [{ id: "complete", source: "start", target: "end", label: null }],
-      assumptions: [],
-      missingRequirements: [],
-      suggestions: [],
     },
     generation: { model: "test-model", durationMs: 12 },
   }
@@ -155,39 +152,6 @@ describe("EditorShell", () => {
     expect(notice).toHaveClass("editor-responsive-notice")
   })
 
-  it("opens read-only insights without replacing the canvas and returns focus on close", async () => {
-    const response = responseFixture()
-    response.workflow.assumptions = ["The requester is known."]
-    response.workflow.missingRequirements = ["Define the reviewer."]
-    response.workflow.suggestions = ["Track response time."]
-    render(
-      <EditorProvider workflow={response.workflow}>
-        <EditorShell />
-      </EditorProvider>,
-    )
-
-    const trigger = screen.getByRole("button", { name: "Insights" })
-    expect(trigger).toHaveAttribute("aria-expanded", "false")
-    expect(screen.queryByRole("complementary", { name: "Workflow insights" })).not.toBeInTheDocument()
-    fireEvent.click(trigger)
-
-    const drawer = screen.getByRole("complementary", { name: "Workflow insights" })
-    expect(trigger).toHaveAttribute("aria-expanded", "true")
-    expect(screen.getByLabelText("Read-only workflow diagram")).toBeInTheDocument()
-    expect(within(drawer).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
-      "Assumptions", "Missing requirements", "Suggestions",
-    ])
-    expect(within(drawer).getByText("The requester is known.")).toBeInTheDocument()
-    expect(within(drawer).getByText("Define the reviewer.")).toBeInTheDocument()
-    expect(within(drawer).getByText("Track response time.")).toBeInTheDocument()
-    expect(within(drawer).queryByRole("textbox")).not.toBeInTheDocument()
-    expect(within(drawer).getByRole("heading", { name: "Workflow insights" })).toHaveFocus()
-
-    fireEvent.click(within(drawer).getByRole("button", { name: "Close insights" }))
-    await waitFor(() => expect(trigger).toHaveFocus())
-    expect(screen.queryByRole("complementary", { name: "Workflow insights" })).not.toBeInTheDocument()
-  })
-
   it("keeps valid AI editing and navigation available on narrow screens while manual tools stay disabled", () => {
     const originalMatchMedia = window.matchMedia
     vi.stubGlobal("matchMedia", vi.fn(() => ({
@@ -209,7 +173,7 @@ describe("EditorShell", () => {
     })
     expect(screen.getByRole("button", { name: "Update workflow" })).toBeEnabled()
     expect(screen.getByRole("button", { name: "Zoom In" })).toBeEnabled()
-    expect(screen.getByRole("button", { name: "Insights" })).toBeEnabled()
+    expect(screen.queryByRole("button", { name: "Insights" })).not.toBeInTheDocument()
     expect(screen.getByText(/AI editing and canvas navigation remain available here/)).toBeInTheDocument()
     vi.stubGlobal("matchMedia", originalMatchMedia)
   })

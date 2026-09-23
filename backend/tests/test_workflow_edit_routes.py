@@ -41,9 +41,6 @@ def workflow_payload(*, title: str = "Current workflow") -> dict[str, object]:
                 "label": None,
             }
         ],
-        "assumptions": [],
-        "missingRequirements": ["Confirm owner."],
-        "suggestions": [],
     }
 
 
