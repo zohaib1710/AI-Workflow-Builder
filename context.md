@@ -300,3 +300,15 @@
 - Successful validation: focused node-editing/canvas suite (9 passed), frontend production build, and `git diff --check`.
 - No backend, API, dependency, layout, semantic workflow, or history-contract changes were added.
 - Proposed commit title: `fix(frontend): preserve viewport after node drag`.
+
+## Light editor and control simplification correction
+
+- The editor now uses a coherent white/light palette across its full-screen shell, canvas grid, floating controls, composer, inspectors, dialogs, validation status, React Flow controls, MiniMap, annotations, and flowchart nodes.
+- Every visual shape has a deterministic professional accent. Optional per-node hex overrides live only in presentation state, render as a restrained tinted fill/accent, remain independent of semantic workflow data, and are one undoable/redoable transaction.
+- Stable-ID AI reconciliation and Auto Arrange preserve custom node colors; new nodes derive their default from their selected shape without adding color to API data.
+- The generated-workflow composer can collapse into a compact reopen control. Collapse state is local UI state and does not fit, center, zoom, move, or modify the workflow.
+- The left toolbar now contains Select, Add Shape, Add Text, Auto Arrange, Undo, and Redo. Its duplicate New Workflow, Connect, and Focus AI Prompt controls were removed; the dedicated header New Workflow action remains.
+- Connections now start directly from eligible handles in Select mode while retaining reducer validation, decision-label prompting, history, responsive/async locks, and Start outgoing-only / End incoming-only restrictions.
+- Validation passed: focused regression run (98 tests with one corrected stale placement expectation, then the corrected file 17 tests), final changed node/shell tests (17), frontend production build, and `git diff --check`.
+- No backend, API, semantic workflow, dependency, or lock-file change was introduced. V2 Checkpoint 14 remains incomplete.
+- Proposed commit title: `feat(frontend): refine workflow editor interface`.

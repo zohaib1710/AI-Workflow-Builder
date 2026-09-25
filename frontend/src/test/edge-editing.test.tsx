@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest"
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import EditorToolbar from "../components/editor/EditorToolbar"
@@ -117,7 +117,7 @@ function renderTools(workflow = workflowFixture(), editingViewport = true) {
   return render(
     <EditorProvider workflow={workflow}>
       <WorkflowEditorCanvas editingViewport={editingViewport} />
-      <EditorToolbar editingViewport={editingViewport} onNewWorkflow={() => undefined} />
+      <EditorToolbar editingViewport={editingViewport} />
       <ValidationIndicator />
       <InspectorPanel editingViewport={editingViewport} />
       <StateProbe />
@@ -144,40 +144,29 @@ function connection(source: string | null, target: string | null): ConnectionReq
   return { source, target, sourceHandle: null, targetHandle: null }
 }
 
-async function enableConnect() {
-  fireEvent.click(screen.getByRole("button", { name: "Connect" }))
-  await waitFor(() => expect(flowProps().nodesConnectable).toBe(true))
-}
-
 describe("edge editing", () => {
-  it("gates connection commits behind Connect mode", async () => {
+  it("allows direct handle connections in Select mode", () => {
     renderTools()
-    act(() => flowProps().onConnect(connection("review", "approved")))
-    expect(stateValue().edges).toHaveLength(4)
-    expect(stateValue().history).toBe(0)
-
-    await enableConnect()
-    expect(screen.getByRole("button", { name: "Connect" })).toHaveAttribute("aria-pressed", "true")
+    expect(flowProps().nodesConnectable).toBe(true)
+    expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()
     act(() => flowProps().onConnect(connection("review", "approved")))
     expect(stateValue().edges).toHaveLength(5)
     expect(stateValue().history).toBe(1)
   })
 
-  it("retries a colliding generated edge ID", async () => {
+  it("retries a colliding generated edge ID", () => {
     const uuid = vi.spyOn(globalThis.crypto, "randomUUID")
     uuid.mockReturnValueOnce("collision" as ReturnType<Crypto["randomUUID"]>)
     uuid.mockReturnValueOnce("unique" as ReturnType<Crypto["randomUUID"]>)
     renderTools(workflowFixture("edge-collision"))
-    await enableConnect()
     act(() => flowProps().onConnect(connection("review", "approved")))
 
     expect(stateValue().edges.at(-1)?.id).toBe("edge-unique")
     expect(uuid).toHaveBeenCalledTimes(2)
   })
 
-  it("rejects self-connections and missing endpoints without history", async () => {
+  it("rejects self-connections and missing endpoints without history", () => {
     renderTools()
-    await enableConnect()
     act(() => flowProps().onConnect(connection("review", "review")))
     act(() => flowProps().onConnect(connection(null, "approved")))
     act(() => flowProps().onConnect(connection("missing", "approved")))
@@ -187,9 +176,8 @@ describe("edge editing", () => {
     expect(stateValue().history).toBe(0)
   })
 
-  it("requires and safely cancels a decision branch label before committing", async () => {
+  it("requires and safely cancels a decision branch label before committing", () => {
     renderTools()
-    await enableConnect()
     act(() => flowProps().onConnect(connection("decision", "review")))
     expect(screen.getByRole("dialog", { name: "Label decision branch" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Add connection" })).toBeDisabled()
@@ -205,9 +193,8 @@ describe("edge editing", () => {
     expect(stateValue().history).toBe(1)
   })
 
-  it("commits non-decision connections immediately with a null label", async () => {
+  it("commits non-decision connections immediately with a null label", () => {
     renderTools()
-    await enableConnect()
     act(() => flowProps().onConnect(connection("review", "approved")))
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
@@ -260,9 +247,8 @@ describe("edge editing", () => {
     expect(stateValue().issues).toContain("disconnected_graph")
   })
 
-  it("locks connection and inspector mutation on narrow or loading states", async () => {
+  it("locks connection and inspector mutation on narrow or loading states", () => {
     const { unmount } = renderTools(workflowFixture(), false)
-    expect(screen.getByRole("button", { name: "Connect" })).toBeDisabled()
     expect(flowProps().nodesConnectable).toBe(false)
     expect(flowProps().panOnDrag).toBe(true)
     expect(flowProps().zoomOnScroll).toBe(true)
@@ -271,7 +257,6 @@ describe("edge editing", () => {
     renderTools()
     fireEvent.click(screen.getByRole("button", { name: "Select connection edge-1" }))
     fireEvent.click(screen.getByRole("button", { name: "Set loading" }))
-    await waitFor(() => expect(screen.getByRole("button", { name: "Connect" })).toBeDisabled())
     expect(screen.getByRole("textbox", { name: "Label" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Delete connection" })).toBeDisabled()
     expect(flowProps().nodesConnectable).toBe(false)

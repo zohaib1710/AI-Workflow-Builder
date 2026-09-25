@@ -99,6 +99,7 @@ export function reconcileWorkflowPresentation(
     const copy = {
       nodeId: retained.nodeId,
       shape: retained.shape,
+      ...(retained.color ? { color: retained.color } : {}),
       position: { ...retained.position },
     }
     presentation[node.id] = copy

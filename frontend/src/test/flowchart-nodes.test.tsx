@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import type { NodeProps } from "@xyflow/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import FlowchartNode, { type FlowchartFlowNode } from "../components/editor/nodes/FlowchartNode"
-import { flowchartShapeNames } from "../components/editor/nodes/shapeRegistry"
+import { FLOWCHART_SHAPES, flowchartShapeNames } from "../components/editor/nodes/shapeRegistry"
 import { DEFAULT_SHAPE_BY_NODE_TYPE, type FlowchartShape } from "../editor/types"
 import type { SupportedNodeType } from "../types/workflow"
 
@@ -24,6 +24,7 @@ function nodeProps(nodeType: SupportedNodeType, shape: string): NodeProps<Flowch
       title: "Review request",
       description: "Check the submitted details.",
       application: "Operations",
+      color: "#2563eb",
     },
     dragging: false,
     draggable: false,
@@ -38,6 +39,12 @@ function nodeProps(nodeType: SupportedNodeType, shape: string): NodeProps<Flowch
 }
 
 describe("flowchart shape renderer", () => {
+  it("defines a stable default color for every shape", () => {
+    for (const shape of flowchartShapeNames) {
+      expect(FLOWCHART_SHAPES[shape].defaultColor).toMatch(/^#[0-9a-f]{6}$/)
+    }
+  })
+
   it.each(flowchartShapeNames)("renders authored %s geometry", (shape) => {
     const { container } = render(<FlowchartNode {...nodeProps("action", shape)} />)
     expect(container.querySelector(`[data-shape-geometry="${shape}"]`)).toBeInTheDocument()

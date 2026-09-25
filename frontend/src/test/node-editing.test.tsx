@@ -104,7 +104,9 @@ function StateProbe() {
       <output data-testid="history-count">{state.past.length}</output>
       <output data-testid="node-state">{JSON.stringify({ node, presentation })}</output>
       <button type="button" onClick={() => dispatch({ type: "async/set", asyncState: { status: "loading" } })}>Set loading</button>
-      <button type="button" onClick={() => dispatch({ type: "tool/set", tool: "connector" })}>Use connector</button>
+      <button type="button" onClick={() => dispatch({ type: "tool/set", tool: "shape" })}>Use shape</button>
+      <button type="button" onClick={() => dispatch({ type: "history/undo" })}>Undo test change</button>
+      <button type="button" onClick={() => dispatch({ type: "history/redo" })}>Redo test change</button>
     </div>
   )
 }
@@ -130,7 +132,7 @@ function selectReview() {
 function currentNodeState() {
   return JSON.parse(screen.getByTestId("node-state").textContent ?? "{}") as {
     node: { type: string; title: string; description: string; application: string | null; position?: unknown }
-    presentation: { shape: string; position: { x: number; y: number } }
+    presentation: { shape: string; color?: string; position: { x: number; y: number } }
   }
 }
 
@@ -252,6 +254,22 @@ describe("node editing", () => {
     expect(screen.getByTestId("history-count")).toHaveTextContent("1")
   })
 
+  it("changes presentation color without changing semantic data and records one transaction", () => {
+    renderEditor()
+    selectReview()
+    const before = currentNodeState()
+    fireEvent.change(screen.getByLabelText("Color"), { target: { value: "#db2777" } })
+    const current = currentNodeState()
+    expect(current.presentation.color).toBe("#db2777")
+    expect(current.presentation.position).toEqual(before.presentation.position)
+    expect(current.node).toEqual(before.node)
+    expect(screen.getByTestId("history-count")).toHaveTextContent("1")
+    fireEvent.click(screen.getByRole("button", { name: "Undo test change" }))
+    expect(currentNodeState().presentation.color).toBeUndefined()
+    fireEvent.click(screen.getByRole("button", { name: "Redo test change" }))
+    expect(currentNodeState().presentation.color).toBe("#db2777")
+  })
+
   it.each([
     ["Title", "Title is required."],
     ["Description", "Description is required."],
@@ -274,7 +292,7 @@ describe("node editing", () => {
 
     renderEditor(true)
     selectReview()
-    fireEvent.click(screen.getByRole("button", { name: "Use connector" }))
+    fireEvent.click(screen.getByRole("button", { name: "Use shape" }))
     expect(flowProps().nodesDraggable).toBe(false)
     expect(flowProps().elementsSelectable).toBe(false)
     expect(flowProps().panOnDrag).toBe(true)

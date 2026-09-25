@@ -11,6 +11,7 @@ export interface FlowchartNodeData extends Record<string, unknown> {
   description: string
   application: string | null
   shape: string
+  color: string
 }
 
 export type FlowchartFlowNode = Node<FlowchartNodeData, "flowchart">
@@ -18,6 +19,7 @@ export type FlowchartFlowNode = Node<FlowchartNodeData, "flowchart">
 type ShapeStyle = CSSProperties & {
   "--flowchart-shape-width": string
   "--flowchart-shape-height": string
+  "--flowchart-accent": string
 }
 
 const FlowchartNode = memo(function FlowchartNode({ data, selected }: NodeProps<FlowchartFlowNode>) {
@@ -29,6 +31,7 @@ const FlowchartNode = memo(function FlowchartNode({ data, selected }: NodeProps<
   const style: ShapeStyle = {
     "--flowchart-shape-width": `${definition.width}px`,
     "--flowchart-shape-height": `${definition.height}px`,
+    "--flowchart-accent": data.color,
   }
 
   return (

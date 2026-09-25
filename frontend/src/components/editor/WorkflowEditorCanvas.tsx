@@ -20,6 +20,7 @@ import { isSupportedNodeType, workflowVisualConfig } from "../nodes/nodeTypes"
 import ConnectionLabelDialog from "./ConnectionLabelDialog"
 import { annotationNodeTypes, type AnnotationFlowNode, type AnnotationNodeData } from "./nodes/AnnotationNode"
 import { flowchartNodeTypes, type FlowchartFlowNode, type FlowchartNodeData } from "./nodes/FlowchartNode"
+import { FLOWCHART_SHAPES } from "./nodes/shapeRegistry"
 
 export interface WorkflowEditorCanvasProps {
   editingViewport: boolean
@@ -78,6 +79,7 @@ function buildEdges(
 }
 
 function minimapNodeColor(node: Node<FlowchartNodeData | AnnotationNodeData>): string {
+  if (node.type === "flowchart" && typeof node.data.color === "string") return node.data.color
   const nodeType = node.data.nodeType
   if (typeof nodeType !== "string" || !isSupportedNodeType(nodeType)) return "#a1a1aa"
   return workflowVisualConfig[nodeType].minimapColor
@@ -93,11 +95,12 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   const canEdit = Boolean(mutationsEnabled && editorState?.activeTool === "select")
   const canPlaceNode = Boolean(mutationsEnabled && editorState?.activeTool === "shape" && editorState.pendingNodePreset)
   const canPlaceAnnotation = Boolean(mutationsEnabled && editorState?.activeTool === "text")
-  const canConnect = Boolean(mutationsEnabled && editorState?.activeTool === "connector")
+  const canConnect = canEdit
   const derivedNodes = useMemo<EditorFlowNode[]>(() => {
     if (!editorState || !workflow) return []
     const workflowNodes: FlowchartFlowNode[] = workflow.nodes.map((node, index) => {
       const presentation = editorState.present.nodePresentations[node.id]
+      const shape = presentation?.shape ?? DEFAULT_SHAPE_BY_NODE_TYPE[node.type]
       return {
         id: node.id,
         type: "flowchart",
@@ -107,7 +110,8 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           title: node.title,
           description: node.description,
           application: node.application,
-          shape: presentation?.shape ?? DEFAULT_SHAPE_BY_NODE_TYPE[node.type],
+          shape,
+          color: presentation?.color ?? FLOWCHART_SHAPES[shape].defaultColor,
         },
         draggable: canEdit,
         connectable: canConnect,
@@ -309,7 +313,7 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           onNodeDragStop={handleNodeDragStop}
         >
           <FitViewAfterLayout />
-          <Background color="#303030" gap={24} size={1} />
+          <Background color="#d1d5db" gap={24} size={1} />
           <Controls showInteractive={false} />
           <MiniMap position="bottom-right" nodeColor={minimapNodeColor} pannable zoomable />
         </ReactFlow>

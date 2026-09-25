@@ -13,6 +13,7 @@ import { DEFAULT_SHAPE_BY_NODE_TYPE, type CanvasNodePresentation } from "../edit
 import type { Workflow } from "../types/workflow"
 import { layoutWorkflow } from "../lib/layout"
 import { flowchartNodeTypes, type FlowchartFlowNode, type FlowchartNodeData } from "./editor/nodes/FlowchartNode"
+import { FLOWCHART_SHAPES } from "./editor/nodes/shapeRegistry"
 import {
   isSupportedNodeType,
   workflowNodeTypes,
@@ -46,6 +47,7 @@ function FitViewAfterLayout({ layoutKey }: { layoutKey: string }) {
 }
 
 function minimapNodeColor(node: Node<WorkflowNodeData | FlowchartNodeData>): string {
+  if (node.type === "flowchart" && "color" in node.data && typeof node.data.color === "string") return node.data.color
   return workflowVisualConfig[node.data.nodeType]?.minimapColor ?? "#94a3b8"
 }
 
@@ -56,7 +58,7 @@ function layoutIdentity(workflow: Workflow, nodePresentations?: Record<string, C
     nodePresentations
       ? workflow.nodes.map((node) => {
           const presentation = nodePresentations[node.id]
-          return presentation ? `${node.id}:${presentation.shape}:${presentation.position.x}:${presentation.position.y}` : `${node.id}:default`
+          return presentation ? `${node.id}:${presentation.shape}:${presentation.color ?? "default"}:${presentation.position.x}:${presentation.position.y}` : `${node.id}:default`
         }).join(",")
       : "legacy",
   ].join("|")
@@ -69,13 +71,15 @@ function WorkflowCanvasInner({ workflow, nodePresentations }: WorkflowCanvasProp
 
     return layoutedWorkflow.nodes.map((node) => {
       const presentation = nodePresentations[node.id]
+      const shape = presentation?.shape ?? DEFAULT_SHAPE_BY_NODE_TYPE[node.data.nodeType]
       return {
         ...node,
         type: "flowchart" as const,
         position: presentation?.position ?? node.position,
         data: {
           ...node.data,
-          shape: presentation?.shape ?? DEFAULT_SHAPE_BY_NODE_TYPE[node.data.nodeType],
+          shape,
+          color: presentation?.color ?? FLOWCHART_SHAPES[shape].defaultColor,
         },
       }
     })
@@ -104,7 +108,7 @@ function WorkflowCanvasInner({ workflow, nodePresentations }: WorkflowCanvasProp
         proOptions={{ hideAttribution: true }}
       >
         <FitViewAfterLayout layoutKey={layoutKey} />
-        <Background color="#303030" gap={24} size={1} />
+        <Background color="#d1d5db" gap={24} size={1} />
         <Controls showInteractive={false} />
         <MiniMap position="bottom-right" nodeColor={minimapNodeColor} pannable zoomable />
       </ReactFlow>

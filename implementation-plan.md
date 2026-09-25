@@ -421,6 +421,23 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `perf(frontend): optimize workflow node dragging`
 - Stop conditions: Stop if smoothing requires semantic model changes, a new state dependency, many history writes per drag, or removal of resting node visuals.
 
+### V2 UX Correction: Light editor, node colors, and simplified controls
+
+- Status: COMPLETE
+- Purpose: Improve canvas clarity and reclaim working space without changing workflow semantics, APIs, or viewport behavior.
+- Implementation: Apply a consistent light editor palette; add deterministic per-shape colors with safe presentation-only node overrides; preserve color through reconciliation and Auto Arrange; make the existing-workflow composer transiently collapsible; remove duplicate New Workflow, Focus AI Prompt, and Connect controls from the left toolbar; and enable validated handle connections directly in Select mode.
+- Required validation: focused flowchart, node editing, node tools, edge editing, editor shell, annotation/shortcut, history, and editor-state tests; frontend production build; `git diff --check`.
+- Acceptance criteria:
+  - [x] The app shell, canvas/grid, panels, controls, MiniMap, dialogs, validation UI, and nodes use a coherent light palette.
+  - [x] All nine visual shapes have deterministic defaults, while safe per-node overrides remain presentation-only and undoable.
+  - [x] AI reconciliation and Auto Arrange preserve color overrides; new nodes derive their color from their shape.
+  - [x] The bottom AI composer collapses and expands without changing workflow or viewport state; initial generation remains centered.
+  - [x] The toolbar retains Select, Add Shape, Text, Auto Arrange, Undo, and Redo, with one header New Workflow control.
+  - [x] Direct Select-mode connections preserve decision labels, validation, history, locks, and Start/End handle direction.
+  - [x] Focused tests, production build, and `git diff --check` pass with no dependency or backend changes.
+- Commit message: `feat(frontend): refine workflow editor interface`
+- Stop conditions: Stop if the update requires semantic workflow color, backend/API work, a theme or color-picker dependency, viewport resets, or bypassing reducer edge validation.
+
 ### V2 Checkpoint 14: Document and perform final Version 2 verification
 
 - Status: INCOMPLETE

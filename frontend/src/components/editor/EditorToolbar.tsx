@@ -8,12 +8,10 @@ import { AUTO_ARRANGE_FIT_EVENT } from "./WorkflowEditorCanvas"
 
 export interface EditorToolbarProps {
   editingViewport: boolean
-  onNewWorkflow: () => void
-  onFocusPrompt?: () => void
   isRequestLoading?: boolean
 }
 
-function EditorToolbar({ editingViewport, onNewWorkflow, onFocusPrompt, isRequestLoading = false }: EditorToolbarProps) {
+function EditorToolbar({ editingViewport, isRequestLoading = false }: EditorToolbarProps) {
   const state = useEditorState()
   const dispatch = useEditorDispatch()
   const [isShapeMenuOpen, setIsShapeMenuOpen] = useState(false)
@@ -43,17 +41,6 @@ function EditorToolbar({ editingViewport, onNewWorkflow, onFocusPrompt, isReques
 
   return (
     <nav className="editor-toolbar" aria-label="Workflow tools">
-      <EditorToolButton
-        label="New workflow"
-        icon="+"
-        disabled={isLoading}
-        onClick={onNewWorkflow}
-      />
-      <EditorToolButton
-        label="Focus AI prompt"
-        icon="*"
-        onClick={onFocusPrompt}
-      />
       {state && (
         <>
           <EditorToolButton
@@ -75,16 +62,6 @@ function EditorToolbar({ editingViewport, onNewWorkflow, onFocusPrompt, isReques
             onClick={() => setIsShapeMenuOpen((open) => !open)}
           />
           {isShapeMenuOpen && <ShapeMenu disabled={manualToolsDisabled} onSelect={selectPreset} />}
-          <EditorToolButton
-            label="Connect"
-            icon="C"
-            pressed={state.activeTool === "connector"}
-            disabled={manualToolsDisabled}
-            onClick={() => {
-              dispatch({ type: "tool/set", tool: "connector" })
-              setIsShapeMenuOpen(false)
-            }}
-          />
           <EditorToolButton
             label="Add text"
             icon="T"

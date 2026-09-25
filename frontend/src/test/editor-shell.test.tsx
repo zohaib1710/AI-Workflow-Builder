@@ -95,6 +95,12 @@ describe("EditorShell", () => {
     expect(screen.getByRole("banner", { name: "Editor controls" })).toHaveClass("editor-floating-controls")
     expect(screen.getByPlaceholderText("Ask AI to modify this workflow...")).toHaveValue("")
     expect(screen.getByRole("button", { name: "Update workflow" })).toBeDisabled()
+    fireEvent.click(screen.getByRole("button", { name: "Collapse" }))
+    expect(screen.queryByRole("form")).not.toBeInTheDocument()
+    expect(document.querySelector('[data-composer-mode="iterate"]')).toHaveClass("editor-composer--collapsed")
+    expect(screen.getByLabelText("Read-only workflow diagram")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Expand AI prompt" }))
+    expect(screen.getByRole("form")).toHaveAccessibleName("Refine this workflow")
   })
 
   it("keeps the centered empty state and safe prompt after generation fails", async () => {
@@ -139,7 +145,9 @@ describe("EditorShell", () => {
     expect(await screen.findByLabelText("Read-only workflow diagram")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Select" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Add shape" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "New workflow" })).toHaveLength(1)
+    expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Focus AI prompt" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Auto Arrange" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Redo" })).toBeDisabled()

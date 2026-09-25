@@ -64,7 +64,7 @@ describe("editor presentation and state", () => {
   it("does not record transient actions", () => {
     const initial = createInitialEditorState(workflowWithTypes())
     const selected = editorReducer(initial, { type: "selection/set", selection: { kind: "node", nodeId: "node-1" } })
-    const tooled = editorReducer(selected, { type: "tool/set", tool: "connector" })
+    const tooled = editorReducer(selected, { type: "tool/set", tool: "text" })
     const loading = editorReducer(tooled, { type: "async/set", asyncState: { status: "loading" } })
     const issued = editorReducer(loading, { type: "issues/set", issues: [] })
     expect(issued.past).toEqual([])

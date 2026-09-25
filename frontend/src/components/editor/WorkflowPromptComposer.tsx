@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { PROMPT_MAX_LENGTH } from "../../lib/constants"
 
 export type ComposerMode = "generate" | "iterate"
@@ -24,6 +25,7 @@ function WorkflowPromptComposer({
   onUseExample,
 }: WorkflowPromptComposerProps) {
   const isIteration = mode === "iterate"
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const normalizedLength = value.trim().length
   const isOverLimit = normalizedLength > PROMPT_MAX_LENGTH
   const isSubmitDisabled = isLoading || normalizedLength === 0 || isOverLimit
@@ -31,6 +33,21 @@ function WorkflowPromptComposer({
   const placeholder = isIteration
     ? "Ask AI to modify this workflow..."
     : "Describe the workflow you want to create..."
+
+  useEffect(() => {
+    setIsCollapsed(false)
+  }, [mode])
+
+  if (isIteration && isCollapsed) {
+    return (
+      <section className="editor-composer editor-composer--iterate editor-composer--collapsed" data-composer-mode={mode}>
+        <h2 className="editor-composer__heading">Refine this workflow</h2>
+        <button type="button" className="editor-composer__collapse" onClick={() => setIsCollapsed(false)}>
+          Expand AI prompt
+        </button>
+      </section>
+    )
+  }
 
   return (
     <section className={`editor-composer editor-composer--${mode}`} data-composer-mode={mode}>
@@ -43,6 +60,11 @@ function WorkflowPromptComposer({
             </p>
           )}
         </div>
+        {isIteration && (
+          <button type="button" className="editor-composer__collapse" onClick={() => setIsCollapsed(true)} disabled={isLoading}>
+            Collapse
+          </button>
+        )}
         {!isIteration && (
           <button type="button" onClick={onUseExample} disabled={isLoading} className="editor-composer__example">
             Use example prompt

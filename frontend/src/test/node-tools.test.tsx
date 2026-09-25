@@ -101,7 +101,7 @@ function renderTools(workflow = workflowFixture(), editingViewport = true) {
   return render(
     <EditorProvider workflow={workflow}>
       <WorkflowEditorCanvas editingViewport={editingViewport} />
-      <EditorToolbar editingViewport={editingViewport} onNewWorkflow={() => undefined} />
+      <EditorToolbar editingViewport={editingViewport} />
       <ValidationIndicator />
       <InspectorPanel editingViewport={editingViewport} />
       <StateProbe />
@@ -165,7 +165,7 @@ describe("node tools", () => {
     expect(created).toMatchObject({ type: "action", title: "New step", description: "Describe this step.", application: null })
     expect(created).not.toHaveProperty("position")
     expect(created).not.toHaveProperty("shape")
-    expect(state.presentations[created.id]).toEqual({ nodeId: created.id, shape: "process", position: { x: 210, y: 210 } })
+    expect(state.presentations[created.id]).toEqual({ nodeId: created.id, shape: "process", position: { x: 210, y: 242 } })
     expect(state.history).toBe(1)
     expect(state.selection).toEqual({ kind: "node", nodeId: created.id })
     expect(state.activeTool).toBe("select")
@@ -213,6 +213,8 @@ describe("node tools", () => {
     const { unmount } = renderTools()
     expect(screen.getByRole("button", { name: "Select" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.getByRole("button", { name: "Add shape" })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Focus AI prompt" })).not.toBeInTheDocument()
     await choosePreset("Decision")
     expect(screen.getByRole("button", { name: "Add shape" })).toHaveAttribute("aria-pressed", "true")
     unmount()
@@ -225,7 +227,6 @@ describe("node tools", () => {
     renderTools()
     fireEvent.click(screen.getByRole("button", { name: "Add shape" }))
     fireEvent.click(screen.getByRole("button", { name: "Set loading" }))
-    expect(screen.getByRole("button", { name: "New workflow" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Select" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Add shape" })).toBeDisabled()
     expect(screen.getByRole("menuitem", { name: "Process" })).toBeDisabled()

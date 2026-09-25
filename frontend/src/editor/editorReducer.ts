@@ -12,6 +12,7 @@ export type RecordedEditorAction =
   | { type: "node/position-commit"; nodeId: string; position: CanvasPosition }
   | { type: "node/semantic-commit"; nodeId: string; fields: EditableNodeFields }
   | { type: "node/shape-commit"; nodeId: string; shape: FlowchartShape }
+  | { type: "node/color-commit"; nodeId: string; color: string }
   | { type: "node/create"; nodeId: string; presetId: NodeCreationPresetId; position: CanvasPosition }
   | { type: "node/delete"; nodeId: string }
   | { type: "edge/create"; edge: WorkflowEdge }
@@ -104,6 +105,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         nodePresentations: {
           ...state.present.nodePresentations,
           [action.nodeId]: { ...presentation, shape: action.shape },
+        },
+      })
+    }
+    case "node/color-commit": {
+      const presentation = state.present.nodePresentations[action.nodeId]
+      const color = action.color.toLowerCase()
+      if (!presentation || !/^#[0-9a-f]{6}$/.test(color) || presentation.color === color) return state
+      return recordSnapshot(state, {
+        ...state.present,
+        nodePresentations: {
+          ...state.present.nodePresentations,
+          [action.nodeId]: { ...presentation, color },
         },
       })
     }

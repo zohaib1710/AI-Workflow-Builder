@@ -119,7 +119,7 @@ function renderTools(editingViewport = true) {
   return render(
     <EditorProvider workflow={workflowFixture()}>
       <WorkflowEditorCanvas editingViewport={editingViewport} />
-      <EditorToolbar editingViewport={editingViewport} onNewWorkflow={() => undefined} />
+      <EditorToolbar editingViewport={editingViewport} />
       <InspectorPanel editingViewport={editingViewport} />
       <StateProbe />
     </EditorProvider>,
@@ -287,20 +287,20 @@ describe("annotations and editor shortcuts", () => {
     expect(stateValue().annotations).toHaveLength(1)
   })
 
-  it("keeps the bounded toolbar accessible, focuses either composer, and respects locks", async () => {
+  it("keeps the simplified toolbar accessible and respects locks", async () => {
     const withWorkflow = render(
       <EditorProvider workflow={workflowFixture()}>
         <EditorShell />
       </EditorProvider>,
     )
-    for (const label of ["Select", "Add shape", "Connect", "Add text", "Focus AI prompt"]) {
+    for (const label of ["Select", "Add shape", "Add text", "Auto Arrange", "Undo", "Redo"]) {
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument()
     }
+    expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Focus AI prompt" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Select" })).toHaveAttribute("aria-pressed", "true")
     fireEvent.click(screen.getByRole("button", { name: "Add text" }))
     expect(screen.getByRole("button", { name: "Add text" })).toHaveAttribute("aria-pressed", "true")
-    fireEvent.click(screen.getByRole("button", { name: "Focus AI prompt" }))
-    expect(screen.getByRole("textbox", { name: "Workflow prompt" })).toHaveFocus()
     withWorkflow.unmount()
 
     const empty = render(
@@ -308,13 +308,12 @@ describe("annotations and editor shortcuts", () => {
         <EditorShell />
       </EditorProvider>,
     )
-    fireEvent.click(screen.getByRole("button", { name: "Focus AI prompt" }))
-    expect(screen.getByRole("textbox", { name: "Workflow prompt" })).toHaveFocus()
+    expect(screen.getByRole("textbox", { name: "Workflow prompt" })).toBeInTheDocument()
     empty.unmount()
 
     const narrow = renderTools(false)
     expect(screen.getByRole("button", { name: "Add text" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Focus AI prompt" })).toBeEnabled()
+    expect(screen.queryByRole("button", { name: "Focus AI prompt" })).not.toBeInTheDocument()
     narrow.unmount()
 
     renderTools()

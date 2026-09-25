@@ -240,7 +240,7 @@ describe("history and Auto Arrange", () => {
     render(
       <EditorProvider workflow={workflowFixture()}>
         <WorkflowEditorCanvas editingViewport />
-        <EditorToolbar editingViewport onNewWorkflow={() => undefined} />
+        <EditorToolbar editingViewport />
         <ToolbarProbe />
       </EditorProvider>,
     )

@@ -66,6 +66,8 @@ function NodeInspector({ node, presentation, disabled }: NodeInspectorProps) {
     dispatch({ type: "node/shape-commit", nodeId: node.id, shape: value })
   }
 
+  const color = presentation.color ?? FLOWCHART_SHAPES[presentation.shape].defaultColor
+
   return (
     <div className="node-inspector">
       <label className="node-inspector__field">
@@ -92,6 +94,11 @@ function NodeInspector({ node, presentation, disabled }: NodeInspectorProps) {
         <select value={presentation.shape} disabled={disabled} onChange={(event) => commitShape(event.target.value)}>
           {flowchartShapeNames.map((shape: FlowchartShape) => <option key={shape} value={shape}>{FLOWCHART_SHAPES[shape].label}</option>)}
         </select>
+      </label>
+
+      <label className="node-inspector__field node-inspector__color">
+        <span>Color</span>
+        <input type="color" value={color} disabled={disabled} onChange={(event) => dispatch({ type: "node/color-commit", nodeId: node.id, color: event.target.value })} />
       </label>
 
       <label className="node-inspector__field">

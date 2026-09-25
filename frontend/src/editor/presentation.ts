@@ -54,6 +54,7 @@ export function autoArrangePresentation(
     arranged[node.id] = {
       nodeId: node.id,
       shape: current?.shape ?? DEFAULT_SHAPE_BY_NODE_TYPE[node.type],
+      ...(current?.color ? { color: current.color } : {}),
       position: { ...position },
     }
     changed = true

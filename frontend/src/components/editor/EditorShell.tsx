@@ -213,8 +213,6 @@ function EditorShell() {
       />
       <EditorToolbar
         editingViewport={editingViewport}
-        onNewWorkflow={handleReset}
-        onFocusPrompt={() => document.getElementById("workflow-prompt")?.focus()}
         isRequestLoading={isRequestLoading}
       />
       <ValidationIndicator />

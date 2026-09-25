@@ -29,6 +29,7 @@ export interface CanvasPosition { x: number; y: number }
 export interface CanvasNodePresentation {
   nodeId: string
   shape: FlowchartShape
+  color?: string
   position: CanvasPosition
 }
 
@@ -44,7 +45,7 @@ export type EditorSelection =
   | { kind: "edge"; edgeId: string }
   | { kind: "annotation"; annotationId: string }
 
-export type EditorTool = "select" | "shape" | "connector" | "text"
+export type EditorTool = "select" | "shape" | "text"
 
 export const NODE_CREATION_PRESETS = [
   { id: "start", label: "Start", semanticType: "start", shape: "terminator" },

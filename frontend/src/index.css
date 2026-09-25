@@ -1077,3 +1077,40 @@ textarea {
 .workflow-handle { width: 8px; height: 8px; border: 2px solid #ffffff; background: #64748b; }
 .react-flow__edge-text { font-size: 0.75rem; font-weight: 700; fill: #334155; }
 .react-flow__controls-button:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }
+
+/* Light editor theme */
+:root, body, .editor-shell, .editor-canvas .workflow-canvas,
+.editor-canvas .react-flow, .editor-canvas .react-flow__pane { color: #18181b; background: #f8fafc; }
+.editor-canvas__empty { background-color: #f8fafc; background-image: linear-gradient(rgb(15 23 42 / 0.06) 1px, transparent 1px), linear-gradient(90deg, rgb(15 23 42 / 0.06) 1px, transparent 1px); }
+.editor-floating-controls__identity, .editor-floating-controls__new, .editor-toolbar, .shape-menu, .inspector-panel, .connection-label-dialog, .editor-composer, .editor-responsive-notice, .validation-indicator { border-color: #d4d4d8; background: rgb(255 255 255 / 0.96); color: #18181b; box-shadow: 0 12px 32px rgb(15 23 42 / 0.12); }
+.editor-floating-controls__mark { border-color: #cbd5e1; background: #f1f5f9; color: #0f172a; }
+.editor-floating-controls__product, .editor-composer__heading, .inspector-panel__title, .connection-label-dialog h2 { color: #18181b; }
+.editor-floating-controls__workflow-title, .editor-composer__intro, .editor-composer__guidance, .inspector-panel__eyebrow, .inspector-panel__close, .prompt-count { color: #64748b; }
+.editor-floating-controls__new, .editor-composer__example, .editor-composer__label, .node-inspector__field, .connection-label-dialog label span, .editor-responsive-notice { color: #334155; }
+.editor-floating-controls__new:hover, .shape-menu__item:hover:not(:disabled), .editor-tool-button:hover:not(:disabled) { border-color: #cbd5e1; background: #f1f5f9; color: #0f172a; }
+.editor-composer__textarea, .node-inspector__field input, .node-inspector__field textarea, .node-inspector__field select, .connection-label-dialog input { border-color: #cbd5e1; background: #ffffff; color: #18181b; caret-color: #18181b; }
+.editor-composer__textarea::placeholder { color: #94a3b8; }
+.editor-composer__error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+.editor-button--secondary, .connection-label-dialog__actions button { border-color: #cbd5e1; background: #f8fafc; color: #334155; }
+.editor-button--primary { border-color: #0f172a; background: #0f172a; color: #ffffff; }
+.editor-tool-button, .shape-menu__item { color: #334155; }
+.editor-tool-button[aria-pressed="true"] { border-color: #94a3b8; background: #e2e8f0; color: #0f172a; }
+.shape-menu__marker { border-color: #64748b; background: #ffffff; }
+.validation-indicator--valid { border-color: #86efac; background: #f0fdf4; color: #166534; }
+.node-inspector__field input[readonly] { color: #64748b; }
+.node-inspector__color input[type="color"] { height: 2.5rem; padding: 0.25rem; cursor: pointer; }
+.node-inspector__delete { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+.prompt-loading-status { border-color: #bae6fd; background: #f0f9ff; color: #075985; }
+.editor-canvas .react-flow__controls, .editor-canvas .react-flow__minimap { border-color: #d4d4d8; background: #ffffff; box-shadow: 0 8px 24px rgb(15 23 42 / 0.12); }
+.editor-canvas .react-flow__controls-button { border-bottom-color: #e2e8f0; background: #ffffff; color: #334155; }
+.editor-canvas .react-flow__controls-button:hover { background: #f1f5f9; }
+.flowchart-node__geometry { fill: color-mix(in srgb, var(--flowchart-accent) 12%, white); }
+.flowchart-node--selected { border-radius: 0.5rem; outline: 3px solid #2563eb; outline-offset: 4px; }
+.flowchart-node--selected .flowchart-node__shape { filter: drop-shadow(0 5px 8px rgb(15 23 42 / 0.18)); }
+.annotation-node { border-color: #cbd5e1; background: rgb(255 255 255 / 0.9); color: #1e293b; box-shadow: 0 5px 16px rgb(15 23 42 / 0.12); }
+.annotation-node--selected { border-color: #2563eb; box-shadow: 0 0 0 2px rgb(37 99 235 / 0.18), 0 5px 16px rgb(15 23 42 / 0.12); }
+.flowchart-node .react-flow__handle { border-color: #ffffff; }
+.editor-composer__collapse { flex: none; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: #f8fafc; padding: 0.4rem 0.625rem; color: #334155; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+.editor-composer__collapse:hover:not(:disabled) { background: #f1f5f9; }
+.editor-composer__collapse:disabled { cursor: not-allowed; opacity: 0.5; }
+.editor-composer--collapsed { display: flex; width: min(32rem, calc(100vw - 2rem)); align-items: center; justify-content: space-between; gap: 1rem; padding: 0.625rem 0.75rem; }
