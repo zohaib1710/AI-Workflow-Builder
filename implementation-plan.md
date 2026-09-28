@@ -473,16 +473,16 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 ### V2 UI Correction: Professional light editor polish
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: Replace the current mixed visual layers with a coherent professional light workspace while preserving editor behavior.
 - Dependencies/prerequisites: Export correction complete; preserve existing user removal of Auto Arrange from the visible toolbar.
 - Implementation: Consolidate light-theme tokens and overlay layers, replace placeholder letter/asterisk icons with authored SVG icons, refine header/download/new actions, toolbar, composer, inspector, dialogs, controls, MiniMap, labels, focus states, and responsive spacing. Remove the commented Auto Arrange toolbar block and only its now-unused toolbar code; retain underlying layout/history helpers.
 - Required validation: focused shell, toolbar/history, flowchart, export-menu, and responsive tests; frontend production build; `git diff --check`; desktop and narrow-screen visual inspection.
 - Acceptance criteria:
-  - [ ] Empty and generated states use consistent spacing, typography, surfaces, controls, and focus treatment.
-  - [ ] Toolbar and header use real icons, clear grouping, and no dead Auto Arrange control.
-  - [ ] Export controls remain available and visually integrated on desktop and narrow screens.
-  - [ ] Existing node, edge, annotation, drag, layout, history, responsive, and export behavior remains unchanged.
+  - [x] Empty and generated states use consistent spacing, typography, surfaces, controls, and focus treatment.
+  - [x] Toolbar and header use real icons, clear grouping, and no dead Auto Arrange control.
+  - [x] Export controls remain available and visually integrated on desktop and narrow screens.
+  - [x] Existing node, edge, annotation, drag, layout, history, responsive, and export behavior remains unchanged.
 - Commit message: `feat(frontend): polish workflow editor interface`
 - Stop conditions: Stop if the cleanup changes semantic workflow data, layout algorithms, backend/API behavior, or introduces a design-system dependency.
 

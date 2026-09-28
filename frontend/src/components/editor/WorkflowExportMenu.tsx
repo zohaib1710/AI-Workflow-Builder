@@ -16,7 +16,13 @@ function DownloadIcon() {
   )
 }
 
-function WorkflowExportMenu({ disabled = false, hasContent, isRequestLoading = false, onExport }: WorkflowExportMenuProps) {
+function ExportTypeIcon({ format }: { format: WorkflowExportFormat }) {
+  return format === "png" ? (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="2" /><circle cx="9" cy="9" r="1.5" /><path d="m5 17 4-4 3 3 2-2 5 5" /></svg>
+  ) : (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h9l3 3v15H6z" /><path d="M14 3v4h4M9 12h6M9 16h6" /></svg>
+  )
+}function WorkflowExportMenu({ disabled = false, hasContent, isRequestLoading = false, onExport }: WorkflowExportMenuProps) {
   const [open, setOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -72,11 +78,11 @@ function WorkflowExportMenu({ disabled = false, hasContent, isRequestLoading = f
       {open && !isDisabled && (
         <div className="editor-export-menu__popup" role="menu" aria-label="Download workflow">
           <button type="button" role="menuitem" disabled={isExporting} onClick={() => void runExport("png")}>
-            <span className="editor-export-menu__item-icon" aria-hidden="true">PNG</span>
+            <span className="editor-export-menu__item-icon" aria-hidden="true"><ExportTypeIcon format="png" /></span>
             PNG image
           </button>
           <button type="button" role="menuitem" disabled={isExporting} onClick={() => void runExport("pdf")}>
-            <span className="editor-export-menu__item-icon" aria-hidden="true">PDF</span>
+            <span className="editor-export-menu__item-icon" aria-hidden="true"><ExportTypeIcon format="pdf" /></span>
             PDF document
           </button>
           {isExporting && <p className="editor-export-menu__status" role="status">Preparing download…</p>}

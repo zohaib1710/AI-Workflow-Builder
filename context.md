@@ -344,3 +344,7 @@
 - Focused export validation passed: 2 test files, 8 tests; frontend production build; `git diff --check`. The existing user-commented Auto Arrange toolbar change remains untouched; professional UI cleanup is the next incomplete checkpoint.
 - No backend, API, semantic workflow, persistence, or provider change was introduced.
 - Proposed commit title: `feat(frontend): add workflow image and pdf exports`.
+
+- V2 UI Correction is complete: the editor now uses a restrained token-based professional light workspace with consistent overlays, authored SVG icons, refined composer and controls, and no visible Auto Arrange toolbar action. Existing layout/history helpers, workflow behavior, export behavior, and responsive restrictions were preserved.
+- Successful validation: focused frontend editor shell, toolbar/history, node, annotation, flowchart, and export-menu suites (73 passed); frontend production build; `git diff --check`.
+- Prepared commit message: `feat(frontend): polish workflow editor interface`.

@@ -1,4 +1,5 @@
 import type { WorkflowExportFormat } from "../../editor/workflowExport"
+import Icon from "./EditorIcons"
 import WorkflowExportMenu from "./WorkflowExportMenu"
 
 interface EditorHeaderProps {
@@ -13,7 +14,7 @@ function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, o
   return (
     <header className="editor-floating-controls" aria-label="Editor controls">
       <div className="editor-floating-controls__identity">
-        <span className="editor-floating-controls__mark" aria-hidden="true">*</span>
+        <span className="editor-floating-controls__mark" aria-hidden="true"><Icon name="brand" /></span>
         <div className="editor-floating-controls__titles">
           <h1 className="editor-floating-controls__product">AI Workflow Builder</h1>
           {workflowTitle && <h2 className="editor-floating-controls__workflow-title">{workflowTitle}</h2>}
@@ -29,7 +30,7 @@ function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, o
             />
           )}
           <button type="button" className="editor-floating-controls__new" onClick={onNewWorkflow}>
-            <span aria-hidden="true">+</span>
+            <Icon name="plus" aria-hidden="true" />
             New workflow
           </button>
         </div>

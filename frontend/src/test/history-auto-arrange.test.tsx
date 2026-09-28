@@ -237,7 +237,7 @@ describe("history and Auto Arrange", () => {
     if (workflow.nodes.length === 0) expect(first).toBe(presentation)
   })
 
-  it("exposes synchronized history controls and fits once after a meaningful arrange", async () => {
+  it("exposes synchronized history controls", () => {
     render(
       <EditorProvider workflow={workflowFixture()}>
         <WorkflowEditorCanvas editingViewport />
@@ -246,31 +246,18 @@ describe("history and Auto Arrange", () => {
       </EditorProvider>,
     )
 
-    expect(screen.getByRole("button", { name: "Auto Arrange" })).toBeEnabled()
+    expect(screen.queryByRole("button", { name: "Auto Arrange" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Redo" })).toBeDisabled()
 
-    fireEvent.click(screen.getByRole("button", { name: "Auto Arrange" }))
-    expect(historyState().past).toBe(0)
-    expect(flowFitView).not.toHaveBeenCalled()
-
     fireEvent.click(screen.getByRole("button", { name: "Move node" }))
+    expect(historyState().past).toBe(1)
     expect(screen.getByRole("button", { name: "Undo" })).toBeEnabled()
     fireEvent.click(screen.getByRole("button", { name: "Undo" }))
     expect(screen.getByRole("button", { name: "Redo" })).toBeEnabled()
     fireEvent.click(screen.getByRole("button", { name: "Redo" }))
-
-    fireEvent.click(screen.getByRole("button", { name: "Auto Arrange" }))
-    await waitFor(() => expect(flowFitView).toHaveBeenCalledTimes(1))
-    expect(historyState().past).toBe(2)
-    expect(screen.getByRole("button", { name: "Redo" })).toBeDisabled()
-
-    fireEvent.click(screen.getByRole("button", { name: "Set loading" }))
-    expect(screen.getByRole("button", { name: "Auto Arrange" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Redo" })).toBeDisabled()
   })
-
   it.each([
     [
       "manual presentation",

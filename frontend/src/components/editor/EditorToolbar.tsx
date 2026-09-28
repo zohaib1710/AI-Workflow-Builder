@@ -1,10 +1,9 @@
 import { useState } from "react"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
-import { autoArrangePresentation } from "../../editor/presentation"
 import type { NodeCreationPresetId } from "../../editor/types"
 import EditorToolButton from "./EditorToolButton"
+import Icon from "./EditorIcons"
 import ShapeMenu from "./ShapeMenu"
-import { AUTO_ARRANGE_FIT_EVENT } from "./WorkflowEditorCanvas"
 
 export interface EditorToolbarProps {
   editingViewport: boolean
@@ -25,27 +24,13 @@ function EditorToolbar({ editingViewport, isRequestLoading = false }: EditorTool
     setIsShapeMenuOpen(false)
   }
 
-  const autoArrange = () => {
-    if (!state || manualToolsDisabled) return
-    const nodePresentations = autoArrangePresentation(
-      state.present.workflow,
-      state.present.nodePresentations,
-    )
-    if (nodePresentations === state.present.nodePresentations) return
-    dispatch({
-      type: "snapshot/record",
-      snapshot: { ...state.present, nodePresentations },
-    })
-    window.dispatchEvent(new Event(AUTO_ARRANGE_FIT_EVENT))
-  }
-
   return (
     <nav className="editor-toolbar" aria-label="Workflow tools">
       {state && (
         <>
           <EditorToolButton
             label="Select"
-            icon="S"
+            icon={<Icon name="select" />}
             pressed={state.activeTool === "select"}
             disabled={manualToolsDisabled}
             onClick={() => {
@@ -55,7 +40,7 @@ function EditorToolbar({ editingViewport, isRequestLoading = false }: EditorTool
           />
           <EditorToolButton
             label="Add shape"
-            icon="A"
+            icon={<Icon name="shape" />}
             pressed={isShapeMenuOpen}
             disabled={manualToolsDisabled}
             aria-expanded={isShapeMenuOpen}
@@ -64,28 +49,22 @@ function EditorToolbar({ editingViewport, isRequestLoading = false }: EditorTool
           {isShapeMenuOpen && <ShapeMenu disabled={manualToolsDisabled} onSelect={selectPreset} />}
           <EditorToolButton
             label="Add text"
-            icon="T"
+            icon={<Icon name="text" />}
             disabled={manualToolsDisabled}
             onClick={() => {
               dispatch({ type: "tool/set", tool: "text" })
               setIsShapeMenuOpen(false)
             }}
           />
-          {/* <EditorToolButton
-            label="Auto Arrange"
-            icon="F"
-            disabled={manualToolsDisabled}
-            onClick={autoArrange}
-          /> */}
           <EditorToolButton
             label="Undo"
-            icon="U"
+            icon={<Icon name="undo" />}
             disabled={manualToolsDisabled || state.past.length === 0}
             onClick={() => dispatch({ type: "history/undo" })}
           />
           <EditorToolButton
             label="Redo"
-            icon="R"
+            icon={<Icon name="redo" />}
             disabled={manualToolsDisabled || state.future.length === 0}
             onClick={() => dispatch({ type: "history/redo" })}
           />

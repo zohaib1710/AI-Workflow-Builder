@@ -308,7 +308,7 @@ describe("annotations and editor shortcuts", () => {
         <EditorShell />
       </EditorProvider>,
     )
-    for (const label of ["Select", "Add shape", "Add text", "Auto Arrange", "Undo", "Redo"]) {
+    for (const label of ["Select", "Add shape", "Add text", "Undo", "Redo"]) {
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument()
     }
     expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()

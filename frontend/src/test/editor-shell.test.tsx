@@ -148,7 +148,6 @@ describe("EditorShell", () => {
     expect(screen.getAllByRole("button", { name: "New workflow" })).toHaveLength(1)
     expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Focus AI prompt" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Auto Arrange" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Redo" })).toBeDisabled()
     expect(screen.queryByText(/node inspector|edge inspector/i)).not.toBeInTheDocument()
@@ -175,7 +174,6 @@ describe("EditorShell", () => {
     )
 
     expect(screen.getByRole("button", { name: "Add shape" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Auto Arrange" })).toBeDisabled()
     fireEvent.change(screen.getByRole("textbox", { name: "Workflow prompt" }), {
       target: { value: "Add a review step." },
     })
