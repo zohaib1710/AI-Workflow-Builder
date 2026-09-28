@@ -15,6 +15,7 @@ import type { Workflow } from "../types/workflow"
 const flowCapture = vi.hoisted(() => ({ props: null as unknown }))
 const screenToFlowPosition = vi.hoisted(() => vi.fn((point: { x: number; y: number }) => ({ x: point.x - 100, y: point.y - 50 })))
 const setFlowNodes = vi.hoisted(() => vi.fn())
+const initialFitView = vi.hoisted(() => vi.fn())
 
 interface CapturedFlowProps {
   defaultNodes: FlowchartFlowNode[]
@@ -30,6 +31,7 @@ vi.mock("@xyflow/react", async () => {
   const React = await import("react")
   const flowInstance = { screenToFlowPosition, setNodes: setFlowNodes }
   return {
+    ConnectionMode: { Loose: "loose" },
     Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
     Position: { Left: "left", Right: "right" },
     ReactFlow: (props: CapturedFlowProps) => {
@@ -46,7 +48,7 @@ vi.mock("@xyflow/react", async () => {
     Controls: () => <span data-testid="controls" />,
     MiniMap: () => <span data-testid="minimap" />,
     useNodesInitialized: () => true,
-    useReactFlow: () => ({ fitView: vi.fn() }),
+    useReactFlow: () => ({ fitView: initialFitView }),
   }
 })
 
@@ -55,6 +57,7 @@ afterEach(() => {
   flowCapture.props = null
   screenToFlowPosition.mockClear()
   setFlowNodes.mockClear()
+  initialFitView.mockClear()
   vi.restoreAllMocks()
 })
 
@@ -129,8 +132,9 @@ function stateValue() {
 
 async function choosePreset(label: string) {
   fireEvent.click(screen.getByRole("button", { name: "Add shape" }))
+  expect(screen.getByRole("button", { name: "Add shape" })).toHaveAttribute("aria-pressed", "true")
   fireEvent.click(screen.getByRole("menuitem", { name: label }))
-  await waitFor(() => expect(screen.getByRole("button", { name: "Add shape" })).toHaveAttribute("aria-pressed", "true"))
+  await waitFor(() => expect(screen.queryByRole("menuitem", { name: label })).not.toBeInTheDocument())
 }
 
 describe("node tools", () => {
@@ -151,28 +155,31 @@ describe("node tools", () => {
     expect(NODE_CREATION_PRESETS.find((preset) => preset.id === id)).toMatchObject({ semanticType, shape })
   })
 
-  it("creates one disconnected node at converted canvas coordinates", async () => {
-    renderTools()
+  it("creates one disconnected node immediately at the visible canvas center", async () => {
+    renderTools(workflowFixture([]))
+    const canvas = screen.getByLabelText("Workflow canvas surface")
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+      x: 100, y: 50, left: 100, top: 50, right: 900, bottom: 650,
+      width: 800, height: 600, toJSON: () => ({}),
+    })
+    const fitCallsBeforeCreation = initialFitView.mock.calls.length
     await choosePreset("Process")
-
-    act(() => flowProps().onPaneClick({ clientX: 310, clientY: 260 }))
+    await waitFor(() => expect(stateValue().nodes).toHaveLength(1))
 
     const state = stateValue()
     const created = state.nodes.at(-1)!
-    expect(screenToFlowPosition).toHaveBeenCalledWith({ x: 310, y: 260 })
+    expect(screenToFlowPosition).toHaveBeenCalledWith({ x: 500, y: 350 })
     expect(created.id).toMatch(/^node-/)
     expect(created.id).not.toBe("start")
     expect(created).toMatchObject({ type: "action", title: "New step", description: "Describe this step.", application: null })
     expect(created).not.toHaveProperty("position")
     expect(created).not.toHaveProperty("shape")
-    expect(state.presentations[created.id]).toEqual({ nodeId: created.id, shape: "process", position: { x: 210, y: 242 } })
+    expect(state.presentations[created.id]).toEqual({ nodeId: created.id, shape: "process", position: { x: 400, y: 300 } })
     expect(state.history).toBe(1)
     expect(state.selection).toEqual({ kind: "node", nodeId: created.id })
     expect(state.activeTool).toBe("select")
     expect(state.pendingNodePreset).toBeNull()
-    expect(state.issues).toContain("disconnected_graph")
-    expect(screen.getByText("1 workflow issue")).toBeInTheDocument()
-    expect(document.querySelector('[data-ai-iteration-enabled="false"]')).toBeInTheDocument()
+    expect(initialFitView).toHaveBeenCalledTimes(fitCallsBeforeCreation)
     expect(screen.getByRole("button", { name: "Delete node" })).toBeEnabled()
     expect(screen.getByRole("button", { name: "Add shape" })).toBeEnabled()
   })
@@ -216,7 +223,7 @@ describe("node tools", () => {
     expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Focus AI prompt" })).not.toBeInTheDocument()
     await choosePreset("Decision")
-    expect(screen.getByRole("button", { name: "Add shape" })).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => expect(screen.getByRole("button", { name: "Add shape" })).toHaveAttribute("aria-pressed", "false"))
     unmount()
 
     const { unmount: unmountNarrow } = renderTools(workflowFixture(), false)

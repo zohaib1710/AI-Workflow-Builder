@@ -38,6 +38,7 @@ vi.mock("@xyflow/react", async () => {
   const React = await import("react")
   const instance = { screenToFlowPosition, setNodes: setFlowNodes }
   return {
+    ConnectionMode: { Loose: "loose" },
     Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
     Position: { Left: "left", Right: "right" },
     ReactFlow: (props: CapturedFlowProps) => {

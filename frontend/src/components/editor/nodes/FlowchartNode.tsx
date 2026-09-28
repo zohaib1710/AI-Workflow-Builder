@@ -12,6 +12,8 @@ export interface FlowchartNodeData extends Record<string, unknown> {
   application: string | null
   shape: string
   color: string
+  hasIncomingConnection: boolean
+  hasOutgoingConnection: boolean
 }
 
 export type FlowchartFlowNode = Node<FlowchartNodeData, "flowchart">
@@ -22,7 +24,7 @@ type ShapeStyle = CSSProperties & {
   "--flowchart-accent": string
 }
 
-const FlowchartNode = memo(function FlowchartNode({ data, selected }: NodeProps<FlowchartFlowNode>) {
+const FlowchartNode = memo(function FlowchartNode({ data, selected, isConnectable }: NodeProps<FlowchartFlowNode>) {
   const requestedShape = data.shape
   const supportedShape = isFlowchartShape(requestedShape)
   const shape = supportedShape ? requestedShape : "process"
@@ -43,7 +45,18 @@ const FlowchartNode = memo(function FlowchartNode({ data, selected }: NodeProps<
       role="group"
       aria-label={`${semantic.label}: ${data.title}`}
     >
-      {data.nodeType !== "start" && <Handle type="target" position={Position.Left} />}
+      {data.nodeType !== "start" && (
+        <Handle
+          id="incoming"
+          type="target"
+          position={Position.Left}
+          isConnectable={isConnectable}
+          aria-label={data.hasIncomingConnection ? "Incoming connection" : "Connect incoming side"}
+          className={`flowchart-node__handle${data.hasIncomingConnection ? "" : " flowchart-node__handle--missing"}${isConnectable ? "" : " flowchart-node__handle--disabled"}`}
+        >
+          {!data.hasIncomingConnection && <span aria-hidden="true" className="flowchart-node__handle-arrow">→</span>}
+        </Handle>
+      )}
       <div className="flowchart-node__shape">
         <ShapeGeometry shape={shape} />
         <div className={`flowchart-node__content ${definition.contentClassName}`}>
@@ -54,7 +67,18 @@ const FlowchartNode = memo(function FlowchartNode({ data, selected }: NodeProps<
           {!supportedShape && <span className="flowchart-node__warning">Unsupported shape</span>}
         </div>
       </div>
-      {data.nodeType !== "end" && <Handle type="source" position={Position.Right} />}
+      {data.nodeType !== "end" && (
+        <Handle
+          id="outgoing"
+          type="source"
+          position={Position.Right}
+          isConnectable={isConnectable}
+          aria-label={data.hasOutgoingConnection ? "Outgoing connection" : "Connect outgoing side"}
+          className={`flowchart-node__handle${data.hasOutgoingConnection ? "" : " flowchart-node__handle--missing"}${isConnectable ? "" : " flowchart-node__handle--disabled"}`}
+        >
+          {!data.hasOutgoingConnection && <span aria-hidden="true" className="flowchart-node__handle-arrow">→</span>}
+        </Handle>
+      )}
     </div>
   )
 })

@@ -1,5 +1,6 @@
 import {
   Background,
+  ConnectionMode,
   Controls,
   MiniMap,
   ReactFlow,
@@ -35,6 +36,19 @@ const initialFitViewOptions = { padding: editorFitPadding, minZoom: 0.2, maxZoom
 const arrangedFitViewOptions = { padding: editorFitPadding, minZoom: 0.2, maxZoom: 1.25, duration: 200 }
 const fullscreenFitViewOptions = { padding: 0.08, minZoom: 0.05, maxZoom: 1, duration: 200 }
 const reactFlowOptions = { hideAttribution: true }
+const INCOMING_HANDLE_ID = "incoming"
+const OUTGOING_HANDLE_ID = "outgoing"
+
+function normalizeConnection(connection: Connection | Edge): { source: string; target: string } | null {
+  if (!connection.source || !connection.target) return null
+  if (connection.sourceHandle === OUTGOING_HANDLE_ID && connection.targetHandle === INCOMING_HANDLE_ID) {
+    return { source: connection.source, target: connection.target }
+  }
+  if (connection.sourceHandle === INCOMING_HANDLE_ID && connection.targetHandle === OUTGOING_HANDLE_ID) {
+    return { source: connection.target, target: connection.source }
+  }
+  return null
+}
 
 function isFullscreenViewport(): boolean {
   if (document.fullscreenElement) return true
@@ -88,16 +102,18 @@ function minimapNodeColor(node: Node<FlowchartNodeData | AnnotationNodeData>): s
 function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
+  const canvasRef = useRef<HTMLElement | null>(null)
   const [flowInstance, setFlowInstance] = useState<ReactFlowInstance<EditorFlowNode> | null>(null)
   const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null)
   const workflow = editorState?.present.workflow ?? null
   const mutationsEnabled = Boolean(editorState && editingViewport && editorState.asyncState.status === "idle")
   const canEdit = Boolean(mutationsEnabled && editorState?.activeTool === "select")
-  const canPlaceNode = Boolean(mutationsEnabled && editorState?.activeTool === "shape" && editorState.pendingNodePreset)
   const canPlaceAnnotation = Boolean(mutationsEnabled && editorState?.activeTool === "text")
   const canConnect = canEdit
   const derivedNodes = useMemo<EditorFlowNode[]>(() => {
     if (!editorState || !workflow) return []
+    const incomingNodeIds = new Set(workflow.edges.map((edge) => edge.target))
+    const outgoingNodeIds = new Set(workflow.edges.map((edge) => edge.source))
     const workflowNodes: FlowchartFlowNode[] = workflow.nodes.map((node, index) => {
       const presentation = editorState.present.nodePresentations[node.id]
       const shape = presentation?.shape ?? DEFAULT_SHAPE_BY_NODE_TYPE[node.type]
@@ -112,6 +128,8 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           application: node.application,
           shape,
           color: presentation?.color ?? FLOWCHART_SHAPES[shape].defaultColor,
+          hasIncomingConnection: incomingNodeIds.has(node.id),
+          hasOutgoingConnection: outgoingNodeIds.has(node.id),
         },
         draggable: canEdit,
         connectable: canConnect,
@@ -143,6 +161,31 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   useEffect(() => {
     flowInstance?.setNodes(derivedNodes)
   }, [derivedNodes, flowInstance])
+  useEffect(() => {
+    const presetId = editorState?.pendingNodePreset
+    if (
+      !mutationsEnabled
+      || editorState?.activeTool !== "shape"
+      || !presetId
+      || !workflow
+      || !flowInstance
+      || !canvasRef.current
+    ) return
+
+    const bounds = canvasRef.current.getBoundingClientRect()
+    const requestedPosition = flowInstance.screenToFlowPosition({
+      x: bounds.left + bounds.width / 2,
+      y: bounds.top + bounds.height / 2,
+    })
+    const preset = NODE_CREATION_PRESETS_BY_ID[presetId]
+    const position = findNearestClearNodePosition(
+      requestedPosition,
+      preset.shape,
+      editorState.present.nodePresentations,
+    )
+    const nodeId = createUniqueEditorId("node", new Set(workflow.nodes.map((node) => node.id)))
+    dispatch({ type: "node/create", nodeId, presetId, position })
+  }, [dispatch, editorState, flowInstance, mutationsEnabled, workflow])
   useEffect(() => {
     const fitArrangedWorkflow = () => {
       globalThis.requestAnimationFrame(() => {
@@ -236,19 +279,30 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   }
 
   const requestConnection = (connection: Connection) => {
-    if (!canConnect || !connection.source || !connection.target || connection.source === connection.target) return
-    const sourceNode = workflow.nodes.find((node) => node.id === connection.source)
-    const targetExists = workflow.nodes.some((node) => node.id === connection.target)
-    if (!sourceNode || !targetExists) return
+    if (!canConnect) return
+    const normalized = normalizeConnection(connection)
+    if (!normalized || normalized.source === normalized.target) return
+    const sourceNode = workflow.nodes.find((node) => node.id === normalized.source)
+    const targetNode = workflow.nodes.find((node) => node.id === normalized.target)
+    if (!sourceNode || !targetNode || sourceNode.type === "end" || targetNode.type === "start") return
     if (sourceNode.type === "decision") {
-      setPendingConnection({ source: connection.source, target: connection.target })
+      setPendingConnection(normalized)
       return
     }
-    commitConnection(connection.source, connection.target, null)
+    commitConnection(normalized.source, normalized.target, null)
+  }
+
+  const isConnectionValid = (connection: Connection | Edge) => {
+    if (!canConnect) return false
+    const normalized = normalizeConnection(connection)
+    if (!normalized || normalized.source === normalized.target) return false
+    const sourceNode = workflow.nodes.find((node) => node.id === normalized.source)
+    const targetNode = workflow.nodes.find((node) => node.id === normalized.target)
+    return Boolean(sourceNode && targetNode && sourceNode.type !== "end" && targetNode.type !== "start")
   }
 
   return (
-    <section className={`editor-canvas${canPlaceNode || canPlaceAnnotation ? " editor-canvas--placing" : ""}`} aria-label="Workflow canvas surface">
+    <section ref={canvasRef} className={`editor-canvas${canPlaceAnnotation ? " editor-canvas--placing" : ""}`} aria-label="Workflow canvas surface">
       <div className="workflow-canvas" aria-label="Read-only workflow diagram">
         <ReactFlow<EditorFlowNode>
           defaultNodes={derivedNodes}
@@ -260,6 +314,8 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           minZoom={0.05}
           nodesDraggable={canEdit}
           nodesConnectable={canConnect}
+          connectionMode={ConnectionMode.Loose}
+          isValidConnection={isConnectionValid}
           elementsSelectable={canEdit}
           nodesFocusable={canEdit}
           edgesFocusable={canEdit}
@@ -284,18 +340,6 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
           }}
           onConnect={requestConnection}
           onPaneClick={(event) => {
-            if (canPlaceNode && editorState.pendingNodePreset && flowInstance) {
-              const requestedPosition = flowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
-              const nodeId = createUniqueEditorId("node", new Set(workflow.nodes.map((node) => node.id)))
-              const preset = NODE_CREATION_PRESETS_BY_ID[editorState.pendingNodePreset]
-              const position = findNearestClearNodePosition(
-                requestedPosition,
-                preset.shape,
-                editorState.present.nodePresentations,
-              )
-              dispatch({ type: "node/create", nodeId, presetId: editorState.pendingNodePreset, position })
-              return
-            }
             if (canPlaceAnnotation && flowInstance) {
               const position = flowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
               const annotationId = createUniqueEditorId(

@@ -68,6 +68,8 @@ function WorkflowCanvasInner({ workflow, nodePresentations }: WorkflowCanvasProp
   const layoutedWorkflow = useMemo(() => layoutWorkflow(workflow), [workflow])
   const renderedNodes = useMemo<CanvasFlowNode[]>(() => {
     if (!nodePresentations) return layoutedWorkflow.nodes
+    const incomingNodeIds = new Set(workflow.edges.map((edge) => edge.target))
+    const outgoingNodeIds = new Set(workflow.edges.map((edge) => edge.source))
 
     return layoutedWorkflow.nodes.map((node) => {
       const presentation = nodePresentations[node.id]
@@ -80,10 +82,12 @@ function WorkflowCanvasInner({ workflow, nodePresentations }: WorkflowCanvasProp
           ...node.data,
           shape,
           color: presentation?.color ?? FLOWCHART_SHAPES[shape].defaultColor,
+          hasIncomingConnection: incomingNodeIds.has(node.id),
+          hasOutgoingConnection: outgoingNodeIds.has(node.id),
         },
       }
     })
-  }, [layoutedWorkflow.nodes, nodePresentations])
+  }, [layoutedWorkflow.nodes, nodePresentations, workflow.edges])
   const layoutKey = layoutIdentity(workflow, nodePresentations)
 
   return (

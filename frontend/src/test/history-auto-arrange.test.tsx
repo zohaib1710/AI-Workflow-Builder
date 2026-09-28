@@ -16,6 +16,7 @@ const setFlowNodes = vi.hoisted(() => vi.fn())
 vi.mock("@xyflow/react", async () => {
   const React = await import("react")
   return {
+    ConnectionMode: { Loose: "loose" },
     Handle: () => <span />,
     Position: { Left: "left", Right: "right" },
     ReactFlow: ({

@@ -438,6 +438,24 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `feat(frontend): refine workflow editor interface`
 - Stop conditions: Stop if the update requires semantic workflow color, backend/API work, a theme or color-picker dependency, viewport resets, or bypassing reducer edge validation.
 
+### V2 Interaction Correction: Immediate node creation and connection arrows
+
+- Status: INCOMPLETE (implementation and automated validation complete; manual browser appearance check pending)
+- Purpose: Remove the extra canvas-drop step from shape creation and make missing workflow connections obvious and directly usable.
+- Implementation: Shape-menu selection now creates one collision-safe node at the visible canvas center without changing the viewport. Node data derives incoming/outgoing connection status from semantic edges. Missing legal sides render enlarged black arrow handles, while connected sides retain compact handles for additional branches. React Flow loose mode accepts gestures from either side and normalizes them into outgoing-to-incoming semantic edges before existing validation, decision-label, ID, and history handling. A scoped black cursor supports the light editor while preserving specialized interaction cursors.
+- Required validation: focused node-tool, flowchart-node, edge-editing, and canvas tests; frontend production build; `git diff --check`; manual browser inspection of cursor and arrow appearance.
+- Acceptance criteria:
+  - [x] Selecting a shape immediately creates and selects one collision-safe node at the current viewport center.
+  - [x] Shape creation records one history transaction and does not fit, pan, zoom, or recenter the viewport.
+  - [x] Missing incoming/outgoing sides show interactive arrows; connected sides keep compact reusable handles.
+  - [x] Start remains outgoing-only, End incoming-only, and other nodes expose both legal sides.
+  - [x] Connections initiated from either side normalize safely and preserve existing decision-label and reducer behavior.
+  - [x] Responsive and async locks disable creation and connections without disabling navigation.
+  - [x] Focused tests (62), production build, and `git diff --check` pass without backend or dependency changes.
+  - [ ] The black cursor and arrow appearance are confirmed in a real browser.
+- Commit message: `feat(frontend): streamline node creation and connections`
+- Stop conditions: Stop if implementation requires backend/API changes, semantic coordinates, a dependency, reducer bypass, or automatic viewport movement.
+
 ### V2 Checkpoint 14: Document and perform final Version 2 verification
 
 - Status: INCOMPLETE

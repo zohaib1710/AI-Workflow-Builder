@@ -312,3 +312,16 @@
 - Validation passed: focused regression run (98 tests with one corrected stale placement expectation, then the corrected file 17 tests), final changed node/shell tests (17), frontend production build, and `git diff --check`.
 - No backend, API, semantic workflow, dependency, or lock-file change was introduced. V2 Checkpoint 14 remains incomplete.
 - Proposed commit title: `feat(frontend): refine workflow editor interface`.
+
+## Immediate node creation and connection-arrow correction
+
+- Selecting a shape now creates one node immediately at the current canvas viewport center, shifted through the existing collision resolver when occupied. The existing `node/create` transaction selects it, returns to Select mode, and remains undoable.
+- Shape creation no longer waits for a pane click or enables a placement crosshair. Text annotations retain click-to-place behavior, and node insertion does not call viewport fitting or centering APIs.
+- Flowchart presentation data now derives whether each node has incoming and outgoing semantic edges. Missing legal sides render enlarged black arrow handles; connected sides retain compact handles so multiple branches remain possible.
+- Stable incoming/outgoing handle IDs plus React Flow loose mode allow gestures to begin from either side. Gestures normalize into outgoing-to-incoming order before existing endpoint checks, decision-label prompting, safe edge IDs, reducer validation, and history.
+- Start remains outgoing-only, End remains incoming-only, and invalid same-side, self, missing-endpoint, End-source, and Start-target gestures are rejected.
+- The light editor has a scoped black default cursor while buttons, text fields, resize operations, node dragging, canvas panning, and annotation placement retain their specialized cursors.
+- Successful automated validation: focused creation/node/edge/canvas suites (4 files, 62 tests), frontend production build, and `git diff --check`.
+- Manual browser confirmation of cursor and arrow appearance remains pending; V2 Checkpoint 14 remains incomplete.
+- No backend, API, semantic workflow, dependency, lock-file, layout, or mobile-policy change was introduced.
+- Proposed commit title: `feat(frontend): streamline node creation and connections`.

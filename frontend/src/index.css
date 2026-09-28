@@ -1114,3 +1114,42 @@ textarea {
 .editor-composer__collapse:hover:not(:disabled) { background: #f1f5f9; }
 .editor-composer__collapse:disabled { cursor: not-allowed; opacity: 0.5; }
 .editor-composer--collapsed { display: flex; width: min(32rem, calc(100vw - 2rem)); align-items: center; justify-content: space-between; gap: 1rem; padding: 0.625rem 0.75rem; }
+
+.editor-shell,
+.editor-canvas .react-flow__node:not(.selectable):not(.draggable) {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M3 2v17l4.8-4.5 3.4 7 3-1.5-3.4-6.7H18L3 2Z' fill='%23000' stroke='%23fff' stroke-width='1.25' stroke-linejoin='round'/%3E%3C/svg%3E") 3 2, default;
+}
+
+.flowchart-node .flowchart-node__handle--missing {
+  z-index: 5;
+  display: grid;
+  width: 2rem;
+  height: 1.75rem;
+  place-items: center;
+  overflow: visible;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: #000000;
+}
+
+.flowchart-node__handle-arrow {
+  color: #000000;
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 0 #ffffff;
+  pointer-events: none;
+}
+
+.flowchart-node .flowchart-node__handle--missing:hover,
+.flowchart-node .flowchart-node__handle--missing:focus-visible {
+  background: rgb(226 232 240 / 0.9);
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.flowchart-node .flowchart-node__handle--disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}

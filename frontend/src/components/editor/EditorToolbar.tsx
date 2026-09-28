@@ -56,7 +56,7 @@ function EditorToolbar({ editingViewport, isRequestLoading = false }: EditorTool
           <EditorToolButton
             label="Add shape"
             icon="A"
-            pressed={state.activeTool === "shape"}
+            pressed={isShapeMenuOpen}
             disabled={manualToolsDisabled}
             aria-expanded={isShapeMenuOpen}
             onClick={() => setIsShapeMenuOpen((open) => !open)}

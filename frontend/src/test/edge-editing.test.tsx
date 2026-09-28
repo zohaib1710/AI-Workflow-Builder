@@ -24,6 +24,8 @@ interface CapturedFlowProps {
   defaultNodes: FlowchartFlowNode[]
   edges: Array<{ id: string; source: string; target: string; label: string | null }>
   nodesConnectable: boolean
+  connectionMode: string
+  isValidConnection: (connection: ConnectionRequest) => boolean
   panOnDrag: boolean
   zoomOnScroll: boolean
   onInit: (instance: { screenToFlowPosition: (point: { x: number; y: number }) => { x: number; y: number }; setNodes: typeof setFlowNodes }) => void
@@ -37,6 +39,7 @@ vi.mock("@xyflow/react", async () => {
   const React = await import("react")
   const instance = { screenToFlowPosition: (point: { x: number; y: number }) => point, setNodes: setFlowNodes }
   return {
+    ConnectionMode: { Loose: "loose" },
     Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
     Position: { Left: "left", Right: "right" },
     ReactFlow: (props: CapturedFlowProps) => {
@@ -140,17 +143,33 @@ function stateValue() {
   }
 }
 
-function connection(source: string | null, target: string | null): ConnectionRequest {
-  return { source, target, sourceHandle: null, targetHandle: null }
+function connection(
+  source: string | null,
+  target: string | null,
+  sourceHandle = "outgoing",
+  targetHandle = "incoming",
+): ConnectionRequest {
+  return { source, target, sourceHandle, targetHandle }
 }
 
 describe("edge editing", () => {
   it("allows direct handle connections in Select mode", () => {
     renderTools()
     expect(flowProps().nodesConnectable).toBe(true)
+    expect(flowProps().connectionMode).toBe("loose")
     expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()
     act(() => flowProps().onConnect(connection("review", "approved")))
     expect(stateValue().edges).toHaveLength(5)
+    expect(stateValue().history).toBe(1)
+  })
+
+  it("normalizes a connection dragged from an incoming handle", () => {
+    renderTools()
+    const reverseGesture = connection("approved", "review", "incoming", "outgoing")
+    expect(flowProps().isValidConnection(reverseGesture)).toBe(true)
+    act(() => flowProps().onConnect(reverseGesture))
+
+    expect(stateValue().edges.at(-1)).toMatchObject({ source: "review", target: "approved", label: null })
     expect(stateValue().history).toBe(1)
   })
 
@@ -171,14 +190,18 @@ describe("edge editing", () => {
     act(() => flowProps().onConnect(connection(null, "approved")))
     act(() => flowProps().onConnect(connection("missing", "approved")))
     act(() => flowProps().onConnect(connection("review", "missing")))
+    act(() => flowProps().onConnect(connection("review", "approved", "outgoing", "outgoing")))
+    act(() => flowProps().onConnect(connection("approved", "review")))
+    act(() => flowProps().onConnect(connection("review", "start")))
 
     expect(stateValue().edges).toHaveLength(4)
     expect(stateValue().history).toBe(0)
+    expect(flowProps().isValidConnection(connection("review", "approved", "incoming", "incoming"))).toBe(false)
   })
 
   it("requires and safely cancels a decision branch label before committing", () => {
     renderTools()
-    act(() => flowProps().onConnect(connection("decision", "review")))
+    act(() => flowProps().onConnect(connection("review", "decision", "incoming", "outgoing")))
     expect(screen.getByRole("dialog", { name: "Label decision branch" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Add connection" })).toBeDisabled()
 
@@ -186,7 +209,7 @@ describe("edge editing", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(stateValue().history).toBe(0)
 
-    act(() => flowProps().onConnect(connection("decision", "review")))
+    act(() => flowProps().onConnect(connection("review", "decision", "incoming", "outgoing")))
     fireEvent.change(screen.getByRole("textbox", { name: "Branch label" }), { target: { value: "  Maybe  " } })
     fireEvent.click(screen.getByRole("button", { name: "Add connection" }))
     expect(stateValue().edges.at(-1)?.label).toBe("Maybe")

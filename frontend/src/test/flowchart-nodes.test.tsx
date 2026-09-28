@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest"
 import { cleanup, render, screen } from "@testing-library/react"
 import type { NodeProps } from "@xyflow/react"
+import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import FlowchartNode, { type FlowchartFlowNode } from "../components/editor/nodes/FlowchartNode"
 import { FLOWCHART_SHAPES, flowchartShapeNames } from "../components/editor/nodes/shapeRegistry"
@@ -8,7 +9,13 @@ import { DEFAULT_SHAPE_BY_NODE_TYPE, type FlowchartShape } from "../editor/types
 import type { SupportedNodeType } from "../types/workflow"
 
 vi.mock("@xyflow/react", () => ({
-  Handle: ({ type, position }: { type: string; position: string }) => <span data-testid={`${type}-${position}`} />,
+  Handle: ({ type, position, children, isConnectable, ...props }: {
+    type: string
+    position: string
+    children?: ReactNode
+    isConnectable?: boolean
+    [key: string]: unknown
+  }) => <span data-testid={`${type}-${position}`} data-connectable={String(isConnectable)} {...props}>{children}</span>,
   Position: { Left: "left", Right: "right" },
 }))
 
@@ -25,6 +32,8 @@ function nodeProps(nodeType: SupportedNodeType, shape: string): NodeProps<Flowch
       description: "Check the submitted details.",
       application: "Operations",
       color: "#2563eb",
+      hasIncomingConnection: false,
+      hasOutgoingConnection: false,
     },
     dragging: false,
     draggable: false,
@@ -81,18 +90,28 @@ describe("flowchart shape renderer", () => {
     expect(container.querySelector("script, img")).not.toBeInTheDocument()
   })
 
-  it("uses semantic boundary rules for compact handles", () => {
+  it("uses semantic boundary rules and marks only missing legal sides", () => {
     const { rerender } = render(<FlowchartNode {...nodeProps("start", "decision")} />)
     expect(screen.queryByTestId("target-left")).not.toBeInTheDocument()
-    expect(screen.getByTestId("source-right")).toBeInTheDocument()
+    expect(screen.getByLabelText("Connect outgoing side")).toHaveClass("flowchart-node__handle--missing")
 
     rerender(<FlowchartNode {...nodeProps("end", "process")} />)
-    expect(screen.getByTestId("target-left")).toBeInTheDocument()
+    expect(screen.getByLabelText("Connect incoming side")).toHaveClass("flowchart-node__handle--missing")
     expect(screen.queryByTestId("source-right")).not.toBeInTheDocument()
 
     rerender(<FlowchartNode {...nodeProps("action", "terminator")} />)
-    expect(screen.getByTestId("target-left")).toBeInTheDocument()
-    expect(screen.getByTestId("source-right")).toBeInTheDocument()
+    expect(screen.getByLabelText("Connect incoming side")).toBeInTheDocument()
+    expect(screen.getByLabelText("Connect outgoing side")).toBeInTheDocument()
+  })
+
+  it("keeps compact handles after each side is connected", () => {
+    const props = nodeProps("action", "process")
+    props.data = { ...props.data, hasIncomingConnection: true, hasOutgoingConnection: true }
+    render(<FlowchartNode {...props} />)
+
+    expect(screen.getByLabelText("Incoming connection")).not.toHaveClass("flowchart-node__handle--missing")
+    expect(screen.getByLabelText("Outgoing connection")).not.toHaveClass("flowchart-node__handle--missing")
+    expect(screen.queryByText("→")).not.toBeInTheDocument()
   })
 
   it("falls back deterministically for an unsupported runtime shape", () => {
