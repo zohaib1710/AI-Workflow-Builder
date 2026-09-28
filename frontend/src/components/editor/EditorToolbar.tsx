@@ -71,12 +71,12 @@ function EditorToolbar({ editingViewport, isRequestLoading = false }: EditorTool
               setIsShapeMenuOpen(false)
             }}
           />
-          <EditorToolButton
+          {/* <EditorToolButton
             label="Auto Arrange"
             icon="F"
             disabled={manualToolsDisabled}
             onClick={autoArrange}
-          />
+          /> */}
           <EditorToolButton
             label="Undo"
             icon="U"
