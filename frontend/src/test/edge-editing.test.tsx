@@ -184,8 +184,10 @@ describe("edge editing", () => {
     expect(uuid).toHaveBeenCalledTimes(2)
   })
 
-  it("rejects self-connections and missing endpoints without history", () => {
-    renderTools()
+  it("rejects invalid endpoints and semantic boundary directions without history", () => {
+    const workflow = workflowFixture()
+    workflow.nodes.push({ id: "trigger", type: "trigger", title: "Trigger", description: "Trigger.", application: null })
+    renderTools(workflow)
     act(() => flowProps().onConnect(connection("review", "review")))
     act(() => flowProps().onConnect(connection(null, "approved")))
     act(() => flowProps().onConnect(connection("missing", "approved")))
@@ -193,10 +195,13 @@ describe("edge editing", () => {
     act(() => flowProps().onConnect(connection("review", "approved", "outgoing", "outgoing")))
     act(() => flowProps().onConnect(connection("approved", "review")))
     act(() => flowProps().onConnect(connection("review", "start")))
+    act(() => flowProps().onConnect(connection("review", "trigger")))
 
     expect(stateValue().edges).toHaveLength(4)
     expect(stateValue().history).toBe(0)
     expect(flowProps().isValidConnection(connection("review", "approved", "incoming", "incoming"))).toBe(false)
+    expect(flowProps().isValidConnection(connection("approved", "review"))).toBe(false)
+    expect(flowProps().isValidConnection(connection("review", "trigger"))).toBe(false)
   })
 
   it("requires and safely cancels a decision branch label before committing", () => {

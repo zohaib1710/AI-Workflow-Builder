@@ -1,9 +1,29 @@
 import { FLOWCHART_SHAPES } from "../components/editor/nodes/shapeRegistry"
-import type { CanvasNodePresentation, CanvasPosition, FlowchartShape } from "./types"
+import type { CanvasAnnotation, CanvasNodePresentation, CanvasPosition, FlowchartShape } from "./types"
 
 const COLLISION_GAP = 28
 const SEARCH_STEP = 32
 const SEARCH_RINGS = 80
+const ANNOTATION_WIDTH = 160
+const ANNOTATION_HEIGHT = 64
+
+interface OccupiedRectangle {
+  position: CanvasPosition
+  width: number
+  height: number
+}
+
+function rectanglesOverlap(
+  position: CanvasPosition,
+  width: number,
+  height: number,
+  occupied: OccupiedRectangle,
+): boolean {
+  return position.x < occupied.position.x + occupied.width + COLLISION_GAP
+    && position.x + width + COLLISION_GAP > occupied.position.x
+    && position.y < occupied.position.y + occupied.height + COLLISION_GAP
+    && position.y + height + COLLISION_GAP > occupied.position.y
+}
 
 function overlaps(
   position: CanvasPosition,
@@ -12,10 +32,11 @@ function overlaps(
 ): boolean {
   const moving = FLOWCHART_SHAPES[shape]
   const fixed = FLOWCHART_SHAPES[occupied.shape]
-  return position.x < occupied.position.x + fixed.width + COLLISION_GAP
-    && position.x + moving.width + COLLISION_GAP > occupied.position.x
-    && position.y < occupied.position.y + fixed.height + COLLISION_GAP
-    && position.y + moving.height + COLLISION_GAP > occupied.position.y
+  return rectanglesOverlap(position, moving.width, moving.height, {
+    position: occupied.position,
+    width: fixed.width,
+    height: fixed.height,
+  })
 }
 
 function isClear(
@@ -77,4 +98,48 @@ export function separateNodePresentations(
     }
   }
   return separated
+}
+
+export function findNearestClearAnnotationPosition(
+  desired: CanvasPosition,
+  presentations: Readonly<Record<string, CanvasNodePresentation>>,
+  annotations: readonly CanvasAnnotation[],
+): CanvasPosition {
+  const occupied: OccupiedRectangle[] = [
+    ...Object.values(presentations).map((presentation) => {
+      const shape = FLOWCHART_SHAPES[presentation.shape]
+      return { position: presentation.position, width: shape.width, height: shape.height }
+    }),
+    ...annotations.map((annotation) => ({
+      position: annotation.position,
+      width: ANNOTATION_WIDTH,
+      height: ANNOTATION_HEIGHT,
+    })),
+  ]
+  const isClear = (position: CanvasPosition) => occupied.every(
+    (candidate) => !rectanglesOverlap(position, ANNOTATION_WIDTH, ANNOTATION_HEIGHT, candidate),
+  )
+  if (isClear(desired)) return { ...desired }
+
+  for (let ring = 1; ring <= SEARCH_RINGS; ring += 1) {
+    const distance = ring * SEARCH_STEP
+    const candidates = [
+      { x: desired.x + distance, y: desired.y },
+      { x: desired.x, y: desired.y + distance },
+      { x: desired.x - distance, y: desired.y },
+      { x: desired.x, y: desired.y - distance },
+      { x: desired.x + distance, y: desired.y + distance },
+      { x: desired.x - distance, y: desired.y + distance },
+      { x: desired.x + distance, y: desired.y - distance },
+      { x: desired.x - distance, y: desired.y - distance },
+    ]
+    const clear = candidates.find(isClear)
+    if (clear) return clear
+  }
+
+  const lowestEdge = occupied.reduce(
+    (bottom, candidate) => Math.max(bottom, candidate.position.y + candidate.height),
+    desired.y,
+  )
+  return { x: desired.x, y: lowestEdge + COLLISION_GAP }
 }

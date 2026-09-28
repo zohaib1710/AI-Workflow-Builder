@@ -45,7 +45,7 @@ const FlowchartNode = memo(function FlowchartNode({ data, selected, isConnectabl
       role="group"
       aria-label={`${semantic.label}: ${data.title}`}
     >
-      {data.nodeType !== "start" && (
+      {data.nodeType !== "start" && data.nodeType !== "trigger" && (
         <Handle
           id="incoming"
           type="target"

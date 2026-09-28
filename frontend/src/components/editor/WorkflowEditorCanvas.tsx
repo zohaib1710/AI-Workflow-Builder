@@ -14,7 +14,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { createUniqueEditorId } from "../../editor/ids"
-import { findNearestClearNodePosition } from "../../editor/nodePlacement"
+import { findNearestClearAnnotationPosition, findNearestClearNodePosition } from "../../editor/nodePlacement"
 import { DEFAULT_SHAPE_BY_NODE_TYPE, NODE_CREATION_PRESETS_BY_ID } from "../../editor/types"
 import useEditorShortcuts from "../../hooks/useEditorShortcuts"
 import { isSupportedNodeType, workflowVisualConfig } from "../nodes/nodeTypes"
@@ -108,7 +108,6 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
   const workflow = editorState?.present.workflow ?? null
   const mutationsEnabled = Boolean(editorState && editingViewport && editorState.asyncState.status === "idle")
   const canEdit = Boolean(mutationsEnabled && editorState?.activeTool === "select")
-  const canPlaceAnnotation = Boolean(mutationsEnabled && editorState?.activeTool === "text")
   const canConnect = canEdit
   const derivedNodes = useMemo<EditorFlowNode[]>(() => {
     if (!editorState || !workflow) return []
@@ -186,6 +185,30 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     const nodeId = createUniqueEditorId("node", new Set(workflow.nodes.map((node) => node.id)))
     dispatch({ type: "node/create", nodeId, presetId, position })
   }, [dispatch, editorState, flowInstance, mutationsEnabled, workflow])
+  useEffect(() => {
+    if (
+      !mutationsEnabled
+      || editorState?.activeTool !== "text"
+      || !flowInstance
+      || !canvasRef.current
+    ) return
+
+    const bounds = canvasRef.current.getBoundingClientRect()
+    const requestedPosition = flowInstance.screenToFlowPosition({
+      x: bounds.left + bounds.width / 2,
+      y: bounds.top + bounds.height / 2,
+    })
+    const position = findNearestClearAnnotationPosition(
+      requestedPosition,
+      editorState.present.nodePresentations,
+      editorState.present.annotations,
+    )
+    const annotationId = createUniqueEditorId(
+      "annotation",
+      new Set(editorState.present.annotations.map((annotation) => annotation.id)),
+    )
+    dispatch({ type: "annotation/create", annotation: { id: annotationId, text: "Text", position } })
+  }, [dispatch, editorState, flowInstance, mutationsEnabled])
   useEffect(() => {
     const fitArrangedWorkflow = () => {
       globalThis.requestAnimationFrame(() => {
@@ -284,7 +307,13 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     if (!normalized || normalized.source === normalized.target) return
     const sourceNode = workflow.nodes.find((node) => node.id === normalized.source)
     const targetNode = workflow.nodes.find((node) => node.id === normalized.target)
-    if (!sourceNode || !targetNode || sourceNode.type === "end" || targetNode.type === "start") return
+    if (
+      !sourceNode
+      || !targetNode
+      || sourceNode.type === "end"
+      || targetNode.type === "start"
+      || targetNode.type === "trigger"
+    ) return
     if (sourceNode.type === "decision") {
       setPendingConnection(normalized)
       return
@@ -298,11 +327,17 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     if (!normalized || normalized.source === normalized.target) return false
     const sourceNode = workflow.nodes.find((node) => node.id === normalized.source)
     const targetNode = workflow.nodes.find((node) => node.id === normalized.target)
-    return Boolean(sourceNode && targetNode && sourceNode.type !== "end" && targetNode.type !== "start")
+    return Boolean(
+      sourceNode
+      && targetNode
+      && sourceNode.type !== "end"
+      && targetNode.type !== "start"
+      && targetNode.type !== "trigger",
+    )
   }
 
   return (
-    <section ref={canvasRef} className={`editor-canvas${canPlaceAnnotation ? " editor-canvas--placing" : ""}`} aria-label="Workflow canvas surface">
+    <section ref={canvasRef} className="editor-canvas" aria-label="Workflow canvas surface">
       <div className="workflow-canvas" aria-label="Read-only workflow diagram">
         <ReactFlow<EditorFlowNode>
           defaultNodes={derivedNodes}
@@ -339,19 +374,7 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
             if (canEdit) dispatch({ type: "selection/set", selection: { kind: "edge", edgeId: edge.id } })
           }}
           onConnect={requestConnection}
-          onPaneClick={(event) => {
-            if (canPlaceAnnotation && flowInstance) {
-              const position = flowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
-              const annotationId = createUniqueEditorId(
-                "annotation",
-                new Set(editorState.present.annotations.map((annotation) => annotation.id)),
-              )
-              dispatch({
-                type: "annotation/create",
-                annotation: { id: annotationId, text: "Text", position },
-              })
-              return
-            }
+          onPaneClick={() => {
             dispatch({ type: "selection/set", selection: { kind: "none" } })
           }}
           onNodeDragStop={handleNodeDragStop}

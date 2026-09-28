@@ -438,22 +438,21 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `feat(frontend): refine workflow editor interface`
 - Stop conditions: Stop if the update requires semantic workflow color, backend/API work, a theme or color-picker dependency, viewport resets, or bypassing reducer edge validation.
 
-### V2 Interaction Correction: Immediate node creation and connection arrows
+### V2 Interaction Correction: Direct creation, boundary handles, and drag cursors
 
-- Status: INCOMPLETE (implementation and automated validation complete; manual browser appearance check pending)
-- Purpose: Remove the extra canvas-drop step from shape creation and make missing workflow connections obvious and directly usable.
-- Implementation: Shape-menu selection now creates one collision-safe node at the visible canvas center without changing the viewport. Node data derives incoming/outgoing connection status from semantic edges. Missing legal sides render enlarged black arrow handles, while connected sides retain compact handles for additional branches. React Flow loose mode accepts gestures from either side and normalizes them into outgoing-to-incoming semantic edges before existing validation, decision-label, ID, and history handling. A scoped black cursor supports the light editor while preserving specialized interaction cursors.
-- Required validation: focused node-tool, flowchart-node, edge-editing, and canvas tests; frontend production build; `git diff --check`; manual browser inspection of cursor and arrow appearance.
+- Status: INCOMPLETE (implementation and automated validation complete; manual browser cursor check pending)
+- Purpose: Remove extra placement steps, represent Trigger and End as strict visual boundaries, and keep drag cursors legible on the light editor.
+- Implementation: Shape-menu and Add Text selections immediately create one collision-safe item at the visible canvas center without changing the viewport. Annotation placement uses a deterministic 160×64 footprint against workflow nodes and existing annotations, records one presentation-only history transaction, selects the new annotation, and returns to Select. Trigger and Start omit incoming handles, End omits its outgoing handle, and manual connections targeting either boundary source or originating from End are rejected after loose-mode normalization. Scoped black open- and closed-hand SVG cursors replace native white drag hands on the pane, nodes, and selection dragging while preserving specialized control, text, resize, crosshair, and disabled cursors.
+- Required validation: focused annotation, flowchart-node, edge-editing, and node-tool tests; frontend production build; `git diff --check`; manual browser inspection of open/closed drag cursors.
 - Acceptance criteria:
-  - [x] Selecting a shape immediately creates and selects one collision-safe node at the current viewport center.
-  - [x] Shape creation records one history transaction and does not fit, pan, zoom, or recenter the viewport.
-  - [x] Missing incoming/outgoing sides show interactive arrows; connected sides keep compact reusable handles.
-  - [x] Start remains outgoing-only, End incoming-only, and other nodes expose both legal sides.
-  - [x] Connections initiated from either side normalize safely and preserve existing decision-label and reducer behavior.
+  - [x] Selecting a shape or Add Text immediately creates and selects one collision-safe item at the current viewport center.
+  - [x] Direct creation records one history transaction, returns to Select, and does not fit, pan, zoom, or recenter the viewport.
+  - [x] Start and Trigger expose no incoming handle, End exposes no outgoing handle, and invalid boundary-direction connections are rejected.
+  - [x] Connections initiated from either legal side normalize safely and preserve existing decision-label and reducer behavior.
   - [x] Responsive and async locks disable creation and connections without disabling navigation.
-  - [x] Focused tests (62), production build, and `git diff --check` pass without backend or dependency changes.
-  - [ ] The black cursor and arrow appearance are confirmed in a real browser.
-- Commit message: `feat(frontend): streamline node creation and connections`
+  - [x] Focused tests (62) and the production build pass without backend, API, semantic-schema, dependency, or layout changes.
+  - [ ] Black open/closed drag hands are confirmed in a real browser.
+- Commit message: `fix(frontend): refine creation and boundary interactions`
 - Stop conditions: Stop if implementation requires backend/API changes, semantic coordinates, a dependency, reducer bypass, or automatic viewport movement.
 
 ### V2 Checkpoint 14: Document and perform final Version 2 verification

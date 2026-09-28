@@ -12,6 +12,7 @@ import type { Workflow } from "../types/workflow"
 const flowCapture = vi.hoisted(() => ({ props: null as unknown }))
 const screenToFlowPosition = vi.hoisted(() => vi.fn((point: { x: number; y: number }) => ({ x: point.x - 100, y: point.y - 50 })))
 const setFlowNodes = vi.hoisted(() => vi.fn())
+const fitView = vi.hoisted(() => vi.fn())
 
 interface EditorViewNode {
   id: string
@@ -69,7 +70,7 @@ vi.mock("@xyflow/react", async () => {
     Controls: () => <span data-testid="controls" />,
     MiniMap: () => <span data-testid="minimap" />,
     useNodesInitialized: () => true,
-    useReactFlow: () => ({ fitView: vi.fn() }),
+    useReactFlow: () => ({ fitView }),
   }
 })
 
@@ -78,6 +79,7 @@ afterEach(() => {
   flowCapture.props = null
   screenToFlowPosition.mockClear()
   setFlowNodes.mockClear()
+  fitView.mockClear()
   vi.restoreAllMocks()
 })
 
@@ -116,9 +118,9 @@ function StateProbe() {
   )
 }
 
-function renderTools(editingViewport = true) {
+function renderTools(editingViewport = true, workflow = workflowFixture()) {
   return render(
-    <EditorProvider workflow={workflowFixture()}>
+    <EditorProvider workflow={workflow}>
       <WorkflowEditorCanvas editingViewport={editingViewport} />
       <EditorToolbar editingViewport={editingViewport} />
       <InspectorPanel editingViewport={editingViewport} />
@@ -142,23 +144,32 @@ function stateValue() {
   }
 }
 
-function createAnnotation(clientX = 310, clientY = 260) {
+function createAnnotation() {
   fireEvent.click(screen.getByRole("button", { name: "Add text" }))
-  act(() => flowProps().onPaneClick({ clientX, clientY }))
 }
 
 describe("annotations and editor shortcuts", () => {
-  it("creates one presentation-only annotation at converted canvas coordinates", () => {
-    const originalWorkflow = workflowFixture()
-    renderTools()
-    fireEvent.click(screen.getByRole("button", { name: "Add text" }))
-    expect(screen.getByRole("button", { name: "Add text" })).toHaveAttribute("aria-pressed", "true")
-    act(() => flowProps().onPaneClick({ clientX: 310, clientY: 260 }))
+  it("creates and selects one presentation-only annotation immediately at the viewport center", () => {
+    const originalWorkflow = { ...workflowFixture(), nodes: [], edges: [] }
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      x: 100,
+      y: 50,
+      left: 100,
+      top: 50,
+      right: 900,
+      bottom: 650,
+      width: 800,
+      height: 600,
+      toJSON: () => ({}),
+    })
+    renderTools(true, originalWorkflow)
+    const fitCallsBeforeInsertion = fitView.mock.calls.length
+    createAnnotation()
 
     const state = stateValue()
-    expect(screenToFlowPosition).toHaveBeenCalledWith({ x: 310, y: 260 })
+    expect(screenToFlowPosition).toHaveBeenCalledWith({ x: 500, y: 350 })
     expect(state.annotations).toHaveLength(1)
-    expect(state.annotations[0]).toMatchObject({ text: "Text", position: { x: 210, y: 210 } })
+    expect(state.annotations[0]).toMatchObject({ text: "Text", position: { x: 400, y: 300 } })
     expect(state.selection).toEqual({ kind: "annotation", annotationId: state.annotations[0].id })
     expect(state.activeTool).toBe("select")
     expect(state.history).toBe(1)
@@ -168,6 +179,7 @@ describe("annotations and editor shortcuts", () => {
       type: "annotation",
       connectable: false,
     })
+    expect(fitView).toHaveBeenCalledTimes(fitCallsBeforeInsertion)
   })
 
   it("retries a colliding annotation ID", () => {
@@ -177,12 +189,15 @@ describe("annotations and editor shortcuts", () => {
     uuid.mockReturnValueOnce("unique" as ReturnType<Crypto["randomUUID"]>)
     renderTools()
     createAnnotation()
-    createAnnotation(410, 360)
+    const firstPosition = stateValue().annotations[0].position
+    createAnnotation()
 
     expect(stateValue().annotations.map((annotation) => annotation.id)).toEqual([
       "annotation-collision",
       "annotation-unique",
     ])
+    expect(stateValue().annotations[1].position).not.toEqual(firstPosition)
+    expect(stateValue().history).toBe(2)
     expect(uuid).toHaveBeenCalledTimes(3)
   })
 
@@ -215,9 +230,8 @@ describe("annotations and editor shortcuts", () => {
   it("uses Escape to clear selection and return to Select without history", () => {
     renderTools()
     fireEvent.click(screen.getByRole("button", { name: "Select node review" }))
-    fireEvent.click(screen.getByRole("button", { name: "Add text" }))
     expect(stateValue().selection).toEqual({ kind: "node", nodeId: "review" })
-    expect(stateValue().activeTool).toBe("text")
+    expect(stateValue().activeTool).toBe("select")
 
     fireEvent.keyDown(window, { key: "Escape" })
     expect(stateValue().selection).toEqual({ kind: "none" })
@@ -301,7 +315,7 @@ describe("annotations and editor shortcuts", () => {
     expect(screen.queryByRole("button", { name: "Focus AI prompt" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Select" })).toHaveAttribute("aria-pressed", "true")
     fireEvent.click(screen.getByRole("button", { name: "Add text" }))
-    expect(screen.getByRole("button", { name: "Add text" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "Select" })).toHaveAttribute("aria-pressed", "true")
     withWorkflow.unmount()
 
     const empty = render(

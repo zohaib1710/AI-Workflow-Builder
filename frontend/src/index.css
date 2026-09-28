@@ -464,10 +464,6 @@ textarea {
   line-height: 1.35;
 }
 
-.editor-canvas--placing .react-flow__pane {
-  cursor: crosshair;
-}
-
 .inspector-panel {
   position: absolute;
   z-index: var(--editor-layer-overlay);
@@ -1118,6 +1114,22 @@ textarea {
 .editor-shell,
 .editor-canvas .react-flow__node:not(.selectable):not(.draggable) {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M3 2v17l4.8-4.5 3.4 7 3-1.5-3.4-6.7H18L3 2Z' fill='%23000' stroke='%23fff' stroke-width='1.25' stroke-linejoin='round'/%3E%3C/svg%3E") 3 2, default;
+}
+
+.editor-shell {
+  --editor-cursor-grab: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M5 13V9.5c0-2 3-2 3 0V12h1V6.5c0-2 3-2 3 0V12h1V5.5c0-2 3-2 3 0V12h1V7c0-2 3-2 3 0v7h1V10c0-2 3-2 3 0v7c0 5.5-3.5 9-9 9-4.5 0-7-2.5-9-6.5l-2-4c-.9-1.9 1.9-3.2 3-1.2L8 16v-3Z' fill='%23000' stroke='%23fff' stroke-width='1.25' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, grab;
+  --editor-cursor-grabbing: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M5 12c0-2 3-2 3 0v1h1V9c0-2 3-2 3 0v4h1V8c0-2 3-2 3 0v5h1v-3c0-2 3-2 3 0v5h1v-2c0-2 3-2 3 0v5c0 5-3.5 8-9 8-4.5 0-7-2.5-9-6l-2-4c-.9-1.9 1.9-3.2 3-1.2L8 17v-5Z' fill='%23000' stroke='%23fff' stroke-width='1.25' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, grabbing;
+}
+
+.editor-canvas .react-flow__pane.draggable:not(.selection),
+.editor-canvas .react-flow__node.draggable,
+.editor-canvas .react-flow__nodesselection-rect {
+  cursor: var(--editor-cursor-grab);
+}
+
+.editor-canvas .react-flow__pane.dragging,
+.editor-canvas .react-flow__node.draggable.dragging {
+  cursor: var(--editor-cursor-grabbing);
 }
 
 .flowchart-node .flowchart-node__handle--missing {

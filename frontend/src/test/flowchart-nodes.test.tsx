@@ -95,6 +95,10 @@ describe("flowchart shape renderer", () => {
     expect(screen.queryByTestId("target-left")).not.toBeInTheDocument()
     expect(screen.getByLabelText("Connect outgoing side")).toHaveClass("flowchart-node__handle--missing")
 
+    rerender(<FlowchartNode {...nodeProps("trigger", "terminator")} />)
+    expect(screen.queryByTestId("target-left")).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Connect outgoing side")).toBeInTheDocument()
+
     rerender(<FlowchartNode {...nodeProps("end", "process")} />)
     expect(screen.getByLabelText("Connect incoming side")).toHaveClass("flowchart-node__handle--missing")
     expect(screen.queryByTestId("source-right")).not.toBeInTheDocument()

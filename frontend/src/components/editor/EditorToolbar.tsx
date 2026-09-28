@@ -65,7 +65,6 @@ function EditorToolbar({ editingViewport, isRequestLoading = false }: EditorTool
           <EditorToolButton
             label="Add text"
             icon="T"
-            pressed={state.activeTool === "text"}
             disabled={manualToolsDisabled}
             onClick={() => {
               dispatch({ type: "tool/set", tool: "text" })
