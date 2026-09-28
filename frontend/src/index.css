@@ -1324,3 +1324,116 @@ textarea {
 .editor-floating-controls__new:focus-visible, .editor-button:focus-visible, .editor-tool-button:focus-visible, .shape-menu__item:focus-visible, .editor-composer__example:focus-visible, .editor-composer__textarea:focus-visible, .inspector-panel__close:focus-visible, .connection-label-dialog button:focus-visible, .connection-label-dialog input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .editor-export-menu__item-icon { display: inline-grid; width: 1.25rem; height: 1.25rem; place-items: center; }
 .editor-export-menu__item-icon svg { width: 1rem; height: 1rem; }
+
+/* Focused SaaS visual polish layer. Presentation only; editor behavior stays unchanged. */
+.editor-shell {
+  --surface-canvas: #f8fafc;
+  --surface-panel: #ffffff;
+  --surface-subtle: #f1f5f9;
+  --border-default: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text-primary: #172033;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+  --shadow-panel: 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-floating: 0 8px 24px rgb(15 23 42 / 0.1);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+}
+
+.editor-canvas__empty,
+.editor-canvas .workflow-canvas,
+.editor-canvas .react-flow,
+.editor-canvas .react-flow__pane {
+  background-color: var(--surface-canvas);
+}
+
+.editor-canvas__empty {
+  background-image: radial-gradient(circle, rgb(100 116 139 / 0.14) 0.7px, transparent 0.8px);
+  background-size: 20px 20px;
+}
+
+.editor-floating-controls { gap: 0.625rem; }
+.editor-floating-controls__identity { min-height: 2.75rem; border-radius: var(--radius-lg); border-color: var(--border-default); box-shadow: var(--shadow-floating); }
+.editor-floating-controls__product { font-size: 0.8125rem; font-weight: 650; letter-spacing: -0.01em; }
+.editor-floating-controls__workflow-title { font-size: 0.6875rem; }
+.editor-floating-controls__actions { gap: 0.5rem; }
+.editor-floating-controls__new { min-height: 2.5rem; border-radius: var(--radius-md); border-color: var(--border-strong); box-shadow: var(--shadow-panel); font-size: 0.75rem; transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, color 150ms ease; }
+.editor-floating-controls__new--primary { border-color: #bfdbfe; background: var(--accent-soft); color: #1d4ed8; }
+.editor-floating-controls__new--primary:hover { border-color: #93c5fd; background: #dbeafe; color: #1e40af; box-shadow: var(--shadow-floating); }
+.editor-export-menu__trigger { background: var(--surface-panel); color: var(--text-secondary); }
+.editor-export-menu__trigger:hover { background: var(--surface-subtle); }
+
+.editor-toolbar { top: 5.75rem; gap: 0.25rem; padding: 0.375rem; border-radius: 0.6875rem; border-color: var(--border-default); box-shadow: var(--shadow-floating); }
+.editor-tool-button { width: 2.25rem; height: 2.25rem; border-radius: var(--radius-md); color: var(--text-secondary); transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease; }
+.editor-tool-button:hover:not(:disabled) { border-color: var(--border-default); background: var(--surface-subtle); color: var(--text-primary); }
+.editor-tool-button[aria-pressed="true"] { border-color: #bfdbfe; background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px rgb(37 99 235 / 0.05); }
+.editor-toolbar__divider { width: 1.5rem; height: 1px; margin: 0.125rem auto; background: var(--border-default); }
+
+.editor-composer { border-radius: var(--radius-lg); border-color: var(--border-default); background: rgb(255 255 255 / 0.97); box-shadow: 0 12px 32px rgb(15 23 42 / 0.12); }
+.editor-composer--generate { width: min(620px, calc(100vw - 2rem)); }
+.editor-composer--iterate { width: min(500px, calc(100vw - 2rem)); }
+.editor-composer--collapsed { min-height: 3rem; width: min(30rem, calc(100vw - 2rem)); }
+.editor-composer__heading { font-size: 0.875rem; font-weight: 650; letter-spacing: -0.01em; }
+.editor-composer__intro, .editor-composer__guidance { font-size: 0.6875rem; }
+.editor-composer__textarea { border-radius: var(--radius-md); box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.03); font-size: 0.8125rem; transition: border-color 150ms ease, box-shadow 150ms ease; }
+.editor-composer__textarea:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12); outline: none; }
+.editor-button { min-height: 2.375rem; border-radius: var(--radius-md); transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+.editor-button--secondary:hover:not(:disabled) { background: var(--surface-subtle); border-color: var(--border-strong); }
+.editor-button--primary { box-shadow: 0 1px 2px rgb(37 99 235 / 0.2); }
+
+.flowchart-node__shape { filter: drop-shadow(0 2px 5px rgb(15 23 42 / 0.1)); transition: filter 150ms ease; }
+.editor-canvas .react-flow__node:hover .flowchart-node__shape { filter: drop-shadow(0 4px 8px rgb(15 23 42 / 0.14)); }
+.flowchart-node__semantic { font-size: 0.5625rem; letter-spacing: 0.08em; }
+.flowchart-node__title { font-size: 0.8125rem; font-weight: 650; line-height: 1.3; }
+.flowchart-node__description { color: #475569; font-size: 0.6875rem; line-height: 1.35; }
+.flowchart-node__application { color: #64748b; font-size: 0.59375rem; font-weight: 500; }
+.editor-canvas .react-flow__node:hover .flowchart-node .react-flow__handle { transform: scale(1.1); }
+.flowchart-node .react-flow__handle { width: 8px; height: 8px; border: 2px solid #ffffff; box-shadow: 0 0 0 1px var(--flowchart-accent); transition: transform 140ms ease, box-shadow 140ms ease; }
+.flowchart-node .flowchart-node__handle--missing { box-shadow: none; }
+.flowchart-node__handle-arrow { font-size: 1.35rem; }
+
+.editor-canvas .react-flow__edge-path { stroke: #64748b; stroke-width: 1.5; }
+.editor-canvas .react-flow__edge:hover .react-flow__edge-path,
+.editor-canvas .react-flow__edge.selected .react-flow__edge-path { stroke: #334155; stroke-width: 2; }
+.editor-canvas .react-flow__edge-textbg { fill: #ffffff; stroke: var(--border-default); stroke-width: 1; rx: 4; }
+.editor-canvas .react-flow__edge-text { fill: var(--text-secondary); font-size: 0.625rem; font-weight: 650; }
+
+.editor-canvas .react-flow__controls { border-radius: var(--radius-lg); box-shadow: var(--shadow-floating); }
+.editor-canvas .react-flow__controls-button { width: 2rem; height: 2rem; transition: background-color 140ms ease, color 140ms ease; }
+.editor-canvas .react-flow__minimap { width: 11rem; height: 7.5rem; padding: 0.375rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-floating); }
+
+.inspector-panel { border-radius: var(--radius-lg); border-color: var(--border-default); box-shadow: var(--shadow-floating); }
+.inspector-panel__title { font-size: 0.875rem; font-weight: 650; }
+.inspector-panel__close { border-radius: var(--radius-sm); padding: 0.25rem 0.375rem; transition: background-color 140ms ease, color 140ms ease; }
+.inspector-panel__close:hover { background: var(--surface-subtle); color: var(--text-primary); }
+.node-inspector__field { gap: 0.375rem; font-size: 0.6875rem; font-weight: 550; }
+.node-inspector__field input, .node-inspector__field textarea, .node-inspector__field select { border-radius: var(--radius-sm); border-color: var(--border-default); font-size: 0.75rem; }
+.node-inspector__field input:not([type="color"]), .node-inspector__field select { min-height: 2.125rem; }
+.node-inspector__field input:focus-visible, .node-inspector__field textarea:focus-visible, .node-inspector__field select:focus-visible { border-color: #93c5fd; outline: 2px solid rgb(37 99 235 / 0.16); outline-offset: 1px; }
+.node-inspector__color input[type="color"] { width: 100%; height: 2.125rem; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-panel); }
+.node-inspector__delete { border-radius: var(--radius-sm); transition: background-color 140ms ease, border-color 140ms ease; }
+.node-inspector__delete:hover:not(:disabled) { border-color: #fca5a5; background: #fff1f2; }
+
+.shape-menu { gap: 0.25rem; width: 13rem; padding: 0.5rem; border-radius: var(--radius-lg); border-color: var(--border-default); box-shadow: var(--shadow-floating); }
+.shape-menu__item { min-height: 2.25rem; border-radius: var(--radius-sm); color: var(--text-secondary); transition: background-color 140ms ease, color 140ms ease; }
+.shape-menu__item:hover:not(:disabled) { background: var(--surface-subtle); color: var(--text-primary); }
+.shape-menu__marker { border-color: #94a3b8; background: #f8fafc; }
+
+.validation-indicator { border-radius: var(--radius-md); border-color: var(--border-default); box-shadow: var(--shadow-panel); font-size: 0.6875rem; }
+.validation-indicator--valid { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+.validation-indicator:not(.validation-indicator--valid) { color: var(--text-secondary); }
+
+.editor-floating-controls__new:focus-visible, .editor-button:focus-visible, .editor-tool-button:focus-visible, .shape-menu__item:focus-visible, .editor-composer__collapse:focus-visible, .inspector-panel__close:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+
+@media (max-width: 767px) {
+  .editor-floating-controls { right: 0.75rem; }
+  .editor-floating-controls__identity { max-width: calc(100vw - 5rem); }
+  .editor-floating-controls__actions { gap: 0.375rem; }
+  .editor-floating-controls__new { min-height: 2.25rem; padding: 0.5rem 0.625rem; }
+  .editor-toolbar { top: 4.75rem; }
+  .editor-canvas .react-flow__minimap { width: 9.5rem; height: 6.5rem; }
+}

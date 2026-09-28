@@ -29,7 +29,7 @@ function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, o
               onExport={onExport}
             />
           )}
-          <button type="button" className="editor-floating-controls__new" onClick={onNewWorkflow}>
+          <button type="button" className="editor-floating-controls__new editor-floating-controls__new--primary" onClick={onNewWorkflow}>
             <Icon name="plus" aria-hidden="true" />
             New workflow
           </button>

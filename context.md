@@ -329,7 +329,7 @@
 ## Boundary-handle, direct-text, and drag-cursor correction
 
 - Trigger now matches Start as an incoming-boundary node and renders no left/incoming handle. End continues to render no right/outgoing handle. Manual connections targeting Start or Trigger, or originating from End, are rejected after loose-handle direction normalization.
-- Add Text now immediately inserts and selects one presentation-only `Text` annotation at the visible canvas center, resolves its initial 160×64 footprint against workflow nodes and annotations, records one undoable transaction, and returns to Select without fitting or moving the viewport.
+- Add Text now immediately inserts and selects one presentation-only `Text` annotation at the visible canvas center, resolves its initial 160Ã—64 footprint against workflow nodes and annotations, records one undoable transaction, and returns to Select without fitting or moving the viewport.
 - Annotation click-to-place state and its crosshair were removed. Narrow-screen and async mutation locks continue to disable creation.
 - Scoped black open- and closed-hand SVG cursors now cover canvas panning, node dragging, and selection dragging while existing specialized cursors remain intact.
 - Successful automated validation: focused annotation/node/edge/tool suites (4 files, 62 tests) and the frontend production build. The manual real-browser drag-cursor appearance check remains pending, so V2 Checkpoint 14 remains untouched.
@@ -348,3 +348,7 @@
 - V2 UI Correction is complete: the editor now uses a restrained token-based professional light workspace with consistent overlays, authored SVG icons, refined composer and controls, and no visible Auto Arrange toolbar action. Existing layout/history helpers, workflow behavior, export behavior, and responsive restrictions were preserved.
 - Successful validation: focused frontend editor shell, toolbar/history, node, annotation, flowchart, and export-menu suites (73 passed); frontend production build; `git diff --check`.
 - Prepared commit message: `feat(frontend): polish workflow editor interface`.
+
+- V2 Visual Polish Refinement is complete. The existing light editor now has a cohesive professional SaaS presentation with restrained token-based surfaces, subtle canvas grid, clearer header/action hierarchy, grouped toolbar styling, polished nodes/edges/handles, compact composers, standardized inspectors/forms, and lighter React Flow controls/MiniMap. No editor behavior, viewport behavior, workflow data, dependency, API, or backend changes were introduced.
+- Successful validation: frontend production build and `git diff --check`.
+- Prepared commit message: `feat(frontend): refine workflow editor visuals`.

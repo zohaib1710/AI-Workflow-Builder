@@ -56,6 +56,7 @@ function EditorToolbar({ editingViewport, isRequestLoading = false }: EditorTool
               setIsShapeMenuOpen(false)
             }}
           />
+          <span className="editor-toolbar__divider" aria-hidden="true" />
           <EditorToolButton
             label="Undo"
             icon={<Icon name="undo" />}
