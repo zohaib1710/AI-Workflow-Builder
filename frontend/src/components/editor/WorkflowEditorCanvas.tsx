@@ -11,11 +11,12 @@ import {
   type Node,
   type ReactFlowInstance,
 } from "@xyflow/react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { createUniqueEditorId } from "../../editor/ids"
 import { findNearestClearAnnotationPosition, findNearestClearNodePosition } from "../../editor/nodePlacement"
 import { DEFAULT_SHAPE_BY_NODE_TYPE, NODE_CREATION_PRESETS_BY_ID } from "../../editor/types"
+import { exportWorkflowDiagram, type WorkflowExportFormat } from "../../editor/workflowExport"
 import useEditorShortcuts from "../../hooks/useEditorShortcuts"
 import { isSupportedNodeType, workflowVisualConfig } from "../nodes/nodeTypes"
 import ConnectionLabelDialog from "./ConnectionLabelDialog"
@@ -25,6 +26,10 @@ import { FLOWCHART_SHAPES } from "./nodes/shapeRegistry"
 
 export interface WorkflowEditorCanvasProps {
   editingViewport: boolean
+}
+
+export interface WorkflowEditorCanvasHandle {
+  exportWorkflow: (format: WorkflowExportFormat) => Promise<void>
 }
 
 export const AUTO_ARRANGE_FIT_EVENT = "workflow-editor:auto-arrange-fit"
@@ -99,7 +104,7 @@ function minimapNodeColor(node: Node<FlowchartNodeData | AnnotationNodeData>): s
   return workflowVisualConfig[nodeType].minimapColor
 }
 
-function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
+const WorkflowEditorCanvas = forwardRef<WorkflowEditorCanvasHandle, WorkflowEditorCanvasProps>(function WorkflowEditorCanvas({ editingViewport }, ref) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
   const canvasRef = useRef<HTMLElement | null>(null)
@@ -279,6 +284,31 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
     }
   }, [canEdit, dispatch, editorState])
 
+  useImperativeHandle(ref, () => ({
+    exportWorkflow: async (format) => {
+      const canvas = canvasRef.current
+      const viewport = canvas?.querySelector<HTMLElement>(".react-flow__viewport")
+      const nodes = flowInstance?.getNodes() ?? []
+      if (!canvas || !viewport || !flowInstance || nodes.length === 0) {
+        throw new Error("There is no workflow content to export.")
+      }
+
+      canvas.dataset.exporting = "true"
+      await new Promise<void>((resolve) => globalThis.requestAnimationFrame(() => resolve()))
+      try {
+        await exportWorkflowDiagram({
+          viewport,
+          nodes,
+          bounds: flowInstance.getNodesBounds(nodes),
+          title: workflow?.title ?? "Workflow",
+          format,
+        })
+      } finally {
+        delete canvas.dataset.exporting
+      }
+    },
+  }), [flowInstance, workflow?.title])
+
   if (!workflow || !editorState) {
     return (
       <section className="editor-canvas" aria-label="Workflow canvas surface">
@@ -397,6 +427,6 @@ function WorkflowEditorCanvas({ editingViewport }: WorkflowEditorCanvasProps) {
       </div>
     </section>
   )
-}
+})
 
 export default WorkflowEditorCanvas

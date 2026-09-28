@@ -335,3 +335,12 @@
 - Successful automated validation: focused annotation/node/edge/tool suites (4 files, 62 tests) and the frontend production build. The manual real-browser drag-cursor appearance check remains pending, so V2 Checkpoint 14 remains untouched.
 - No backend, API, semantic workflow, dependency, lock-file, layout, or responsive-policy change was introduced.
 - Proposed commit title: `fix(frontend): refine creation and boundary interactions`.
+
+## Workflow export correction
+
+- Added an accessible Download menu for PNG and PDF on generated workflows. Exports use the current React Flow node bounds, include workflow nodes, edge labels, and text annotations, and exclude controls, handles, selections, grid, MiniMap, prompt, and inspector overlays.
+- PNG capture uses lazy-loaded `html-to-image@1.11.11` with 64px padding and adaptive resolution limits. PDF capture reuses the image and lazy-loads `jspdf@4.2.1` to produce a titled, proportionally centered A4 landscape page.
+- Export is exposed through a typed canvas handle and never calls fit, pan, zoom, selection, or history APIs. Duplicate requests are locked and failures show a safe retryable message.
+- Focused export validation passed: 2 test files, 8 tests; frontend production build; `git diff --check`. The existing user-commented Auto Arrange toolbar change remains untouched; professional UI cleanup is the next incomplete checkpoint.
+- No backend, API, semantic workflow, persistence, or provider change was introduced.
+- Proposed commit title: `feat(frontend): add workflow image and pdf exports`.

@@ -1,9 +1,15 @@
+import type { WorkflowExportFormat } from "../../editor/workflowExport"
+import WorkflowExportMenu from "./WorkflowExportMenu"
+
 interface EditorHeaderProps {
   workflowTitle: string | null
+  hasExportableContent: boolean
+  isRequestLoading: boolean
   onNewWorkflow: () => void
+  onExport: (format: WorkflowExportFormat) => Promise<void>
 }
 
-function EditorHeader({ workflowTitle, onNewWorkflow }: EditorHeaderProps) {
+function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, onNewWorkflow, onExport }: EditorHeaderProps) {
   return (
     <header className="editor-floating-controls" aria-label="Editor controls">
       <div className="editor-floating-controls__identity">
@@ -15,6 +21,13 @@ function EditorHeader({ workflowTitle, onNewWorkflow }: EditorHeaderProps) {
       </div>
       {workflowTitle && (
         <div className="editor-floating-controls__actions">
+          {hasExportableContent && (
+            <WorkflowExportMenu
+              hasContent
+              isRequestLoading={isRequestLoading}
+              onExport={onExport}
+            />
+          )}
           <button type="button" className="editor-floating-controls__new" onClick={onNewWorkflow}>
             <span aria-hidden="true">+</span>
             New workflow

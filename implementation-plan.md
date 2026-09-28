@@ -21,11 +21,11 @@ Version 2 includes:
 - A frontend editor draft that may temporarily violate graph rules, visible validation feedback, in-memory undo/redo, and an explicit Auto Arrange command.
 - A separate provider-agnostic workflow-edit backend contract that returns a full revised semantic workflow.
 - Stable-ID reconciliation that preserves manual positions and shape overrides for retained nodes and deterministically places new nodes.
-- A collapsible insights surface, responsive editor constraints, focused automated coverage, and Version 2 documentation.
+- A collapsible insights surface, responsive editor constraints, client-side workflow exports, focused automated coverage, and Version 2 documentation.
 
 ## Exclusions
 
-Do not add authentication, user accounts, database persistence, saved projects, server-side history, shared links, real-time collaboration, multi-user cursors, workflow execution, automation-platform deployment, integration credentials, provider-selection UI, streaming generation, exports, BPMN import/export, swimlanes, groups/containers, advanced styling, a plugin marketplace, Docker, deployment automation, or CI/CD. Refresh continues to clear all workflow/editor state.
+Do not add authentication, user accounts, database persistence, saved projects, server-side history, shared links, real-time collaboration, multi-user cursors, workflow execution, automation-platform deployment, integration credentials, provider-selection UI, streaming generation, BPMN import/export, swimlanes, groups/containers, advanced styling, a plugin marketplace, Docker, deployment automation, or CI/CD. Refresh continues to clear all workflow/editor state.
 
 ## Repository observations
 
@@ -455,6 +455,37 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `fix(frontend): refine creation and boundary interactions`
 - Stop conditions: Stop if implementation requires backend/API changes, semantic coordinates, a dependency, reducer bypass, or automatic viewport movement.
 
+### V2 Export Correction: Download complete workflows as PNG and PDF
+
+- Status: COMPLETE
+- Purpose: Let users download the current edited workflow as a clean diagram without changing the live canvas.
+- Files added: `frontend/src/editor/workflowExport.ts`, `frontend/src/components/editor/WorkflowExportMenu.tsx`, and focused export tests.
+- Files modified: `frontend/src/components/editor/EditorShell.tsx`, `frontend/src/components/editor/EditorHeader.tsx`, `frontend/src/components/editor/WorkflowEditorCanvas.tsx`, `frontend/src/index.css`, `frontend/package.json`, and `frontend/package-lock.json`.
+- Implementation: The header exposes an accessible Download menu for PNG and PDF. React Flow's actual node bounds include workflow nodes and annotations, with 64px padding and adaptive pixel ratio limits. Capture uses a temporary export-only attribute to hide handles and selection visuals; controls, MiniMap, grid, prompt, and inspectors remain outside the captured viewport. PNG uses `html-to-image@1.11.11`; PDF uses lazy-loaded `jspdf@4.2.1`, A4 landscape sizing, margins, title, and proportional centering. Export failures are safe, retriable, and do not alter selection, history, or viewport state.
+- Required validation: focused export helper/menu tests; frontend production build; `git diff --check`; manual PNG/PDF inspection remains recommended.
+- Acceptance criteria:
+  - [x] PNG and PDF actions export the full current workflow, including annotations and edge labels, without editor chrome.
+  - [x] Filename sanitization, adaptive large-diagram sizing, A4 landscape fitting, duplicate protection, and safe failure messaging are covered.
+  - [x] Export is client-side and lazy-loads dependencies; no backend/API/schema/persistence changes were introduced.
+  - [x] Focused export tests (8), production build, and `git diff --check` pass.
+- Commit message: `feat(frontend): add workflow image and pdf exports`
+- Stop conditions: Stop if export requires backend rendering, changes viewport/history state, or introduces a second workflow data contract.
+
+### V2 UI Correction: Professional light editor polish
+
+- Status: INCOMPLETE
+- Purpose: Replace the current mixed visual layers with a coherent professional light workspace while preserving editor behavior.
+- Dependencies/prerequisites: Export correction complete; preserve existing user removal of Auto Arrange from the visible toolbar.
+- Implementation: Consolidate light-theme tokens and overlay layers, replace placeholder letter/asterisk icons with authored SVG icons, refine header/download/new actions, toolbar, composer, inspector, dialogs, controls, MiniMap, labels, focus states, and responsive spacing. Remove the commented Auto Arrange toolbar block and only its now-unused toolbar code; retain underlying layout/history helpers.
+- Required validation: focused shell, toolbar/history, flowchart, export-menu, and responsive tests; frontend production build; `git diff --check`; desktop and narrow-screen visual inspection.
+- Acceptance criteria:
+  - [ ] Empty and generated states use consistent spacing, typography, surfaces, controls, and focus treatment.
+  - [ ] Toolbar and header use real icons, clear grouping, and no dead Auto Arrange control.
+  - [ ] Export controls remain available and visually integrated on desktop and narrow screens.
+  - [ ] Existing node, edge, annotation, drag, layout, history, responsive, and export behavior remains unchanged.
+- Commit message: `feat(frontend): polish workflow editor interface`
+- Stop conditions: Stop if the cleanup changes semantic workflow data, layout algorithms, backend/API behavior, or introduces a design-system dependency.
+
 ### V2 Checkpoint 14: Document and perform final Version 2 verification
 
 - Status: INCOMPLETE
@@ -480,10 +511,10 @@ After all checkpoint commits, verify from a clean worktree:
 
 1. Install exactly from `frontend/package-lock.json` and `backend/uv.lock`.
 2. Run the complete frontend and backend suites, frontend production build, Ruff, and Python compilation.
-3. Confirm initial generation, centered-to-bottom composer transition, manual node/edge/annotation editing, draft issues, AI iteration, layout reconciliation, Auto Arrange, undo/redo, the absence of insights, and responsive limitations through automated mocked coverage.
+3. Confirm initial generation, centered-to-bottom composer transition, manual node/edge/annotation editing, draft issues, AI iteration, layout reconciliation, Auto Arrange, undo/redo, PNG/PDF export, the absence of insights, and responsive limitations through automated mocked coverage.
 4. Confirm the semantic API payload contains no coordinates, shapes, annotations, selection, viewport, history, or provider details.
 5. Confirm an AI edit failure or identity-instability response preserves the current editor snapshot.
-6. Confirm no authentication, persistence, collaboration, execution, export, Docker, deployment, or CI artifacts were introduced.
+6. Confirm no authentication, persistence, collaboration, execution, Docker, deployment, or CI artifacts were introduced.
 7. Verify tracked locks and ignored secrets/environments, then run `git diff --check` and inspect `git status --short`.
 
 An optional manual provider smoke test may be documented but is not required for completion and must never be automated with a real credential.

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { editWorkflow, generateWorkflow, WorkflowApiError } from "../../api/client"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { reconcileWorkflowPresentation } from "../../editor/reconcileWorkflow"
@@ -9,8 +9,9 @@ import EditorHeader from "./EditorHeader"
 import EditorToolbar from "./EditorToolbar"
 import InspectorPanel from "./InspectorPanel"
 import ValidationIndicator from "./ValidationIndicator"
-import WorkflowEditorCanvas from "./WorkflowEditorCanvas"
+import WorkflowEditorCanvas, { type WorkflowEditorCanvasHandle } from "./WorkflowEditorCanvas"
 import WorkflowPromptComposer from "./WorkflowPromptComposer"
+import type { WorkflowExportFormat } from "../../editor/workflowExport"
 
 const IDENTITY_INSTABILITY_MESSAGE = "The revised workflow could not preserve the current canvas layout. Try a more specific edit."
 
@@ -66,10 +67,17 @@ function EditorShell() {
   const [error, setError] = useState<string | null>(null)
   const requestInFlight = useRef(false)
   const isMounted = useRef(true)
+  const canvasRef = useRef<WorkflowEditorCanvasHandle | null>(null)
   const editingViewport = useEditingViewport()
   const workflow = editorState?.present.workflow ?? null
   const isEditing = editorState?.asyncState.status === "loading"
   const isRequestLoading = isGenerating || isEditing
+  const hasExportableContent = Boolean(workflow && (workflow.nodes.length > 0 || editorState?.present.annotations.length))
+
+  const handleExport = useCallback(async (format: WorkflowExportFormat) => {
+    if (!canvasRef.current) throw new Error("The workflow canvas is not ready.")
+    await canvasRef.current.exportWorkflow(format)
+  }, [])
 
   useEffect(() => {
     isMounted.current = true
@@ -206,10 +214,13 @@ function EditorShell() {
 
   return (
     <main className="editor-shell" data-testid="editor-shell">
-      <WorkflowEditorCanvas editingViewport={editingViewport} />
+      <WorkflowEditorCanvas ref={canvasRef} editingViewport={editingViewport} />
       <EditorHeader
         workflowTitle={workflow?.title ?? null}
+        hasExportableContent={hasExportableContent}
+        isRequestLoading={isRequestLoading}
         onNewWorkflow={handleReset}
+        onExport={handleExport}
       />
       <EditorToolbar
         editingViewport={editingViewport}
