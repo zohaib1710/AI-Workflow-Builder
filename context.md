@@ -361,3 +361,6 @@
 - Supabase authentication and persistence correction is complete: signup distinguishes immediate sessions from email-confirmation-required accounts, session initialization cannot remain stuck on a failed getSession call, authenticated account controls (including Sign out) remain visible on the empty canvas, generation/save persistence errors are surfaced without discarding the generated workflow, and New Workflow clears the saved workflow identity.
 - Focused validation passed: auth context/screen (4 tests), App (4 tests), editor shell (7 tests), frontend production build, and `git diff --check`.
 - Collaboration invitations, saved-workflow browsing/loading, and Realtime remain future work; workflow_collaborators stays empty by design.
+- The changed-save checkpoint is complete: persisted editor snapshots now receive deterministic SHA-256 fingerprints, Save is enabled only for unsaved changes, and named version saves use the existing `change_summary` field. Automatic version 1 remains `Initial workflow`; failed saves remain retryable.
+- Focused validation passed: fingerprint/save-dialog tests, editor-shell regression, frontend production build, and `git diff --check`.
+- Workflow reopening, version history listing, and restore-as-draft remain the next persistence checkpoint.

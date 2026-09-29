@@ -4,6 +4,7 @@ import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { reconcileWorkflowPresentation } from "../../editor/reconcileWorkflow"
 import { createInitialEditorState } from "../../editor/editorReducer"
 import { createWorkflowRecord, saveWorkflowVersion } from "../../editor/workflowRepository"
+import { fingerprintSnapshot } from "../../editor/snapshotFingerprint"
 import type { CanvasNodePresentation, CanvasPosition } from "../../editor/types"
 import { validateWorkflowDraft } from "../../editor/validation"
 import { EXAMPLE_PROMPT, PROMPT_MAX_LENGTH } from "../../lib/constants"
@@ -76,7 +77,11 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
   const [savedWorkflowId, setSavedWorkflowId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
+  const [currentFingerprint, setCurrentFingerprint] = useState<string | null>(null)
+  const [savedFingerprint, setSavedFingerprint] = useState<string | null>(null)
+  const [isHashing, setIsHashing] = useState(false)
   const requestInFlight = useRef(false)
+  const fingerprintRequest = useRef(0)
   const isMounted = useRef(true)
   const canvasRef = useRef<WorkflowEditorCanvasHandle | null>(null)
   const editingViewport = useEditingViewport()
@@ -84,6 +89,23 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
   const isEditing = editorState?.asyncState.status === "loading"
   const isRequestLoading = isGenerating || isEditing
   const hasExportableContent = Boolean(workflow && (workflow.nodes.length > 0 || editorState?.present.annotations.length))
+  const canSave = Boolean(userId && workflow && currentFingerprint && currentFingerprint !== savedFingerprint && !isHashing && !isSaving)
+
+  useEffect(() => {
+    const snapshot = editorState?.present
+    if (!snapshot) {
+      setCurrentFingerprint(null)
+      setIsHashing(false)
+      return
+    }
+    const request = ++fingerprintRequest.current
+    setIsHashing(true)
+    void fingerprintSnapshot(snapshot).then((fingerprint) => {
+      if (request !== fingerprintRequest.current) return
+      setCurrentFingerprint(fingerprint)
+      setIsHashing(false)
+    })
+  }, [editorState?.present])
 
   const handleExport = useCallback(async (format: WorkflowExportFormat) => {
     if (!canvasRef.current) throw new Error("The workflow canvas is not ready.")
@@ -121,7 +143,10 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
         try {
           const initialSnapshot = createInitialEditorState(response.workflow).present
           const workflowId = await createWorkflowRecord(userId, initialSnapshot)
-          if (isMounted.current) setSavedWorkflowId(workflowId)
+          if (isMounted.current) {
+            setSavedWorkflowId(workflowId)
+            setSavedFingerprint(await fingerprintSnapshot(initialSnapshot))
+          }
         } catch (persistenceError: unknown) {
           if (isMounted.current) setSaveStatus("Initial save failed: " + (persistenceError instanceof Error ? persistenceError.message : "unknown database error"))
         }
@@ -212,7 +237,7 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (versionName = "") => {
     if (!editorState || !editorState.present.workflow || !userId || isSaving) return
     setIsSaving(true)
     setError(null)
@@ -261,6 +286,8 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
         onNewWorkflow={handleReset}
         onExport={handleExport}
         onSave={userId && workflow ? handleSave : undefined}
+        onSaveVersion={userId && workflow ? (name) => void handleSave(name) : undefined}
+        canSave={canSave}
         isSaving={isSaving}
         saveStatus={saveStatus}
         userEmail={userEmail}

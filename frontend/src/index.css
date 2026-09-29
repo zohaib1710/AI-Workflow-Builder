@@ -1454,3 +1454,30 @@ textarea {
 .auth-card__message { margin: 0; color: #166534; font-size: 0.75rem; }
 .auth-card__loading { color: #64748b; font-size: 0.875rem; }
 .editor-floating-controls__user { max-width: 12rem; overflow: hidden; color: #64748b; font-size: 0.6875rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.editor-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--editor-layer-dialog, 40);
+  display: grid;
+  place-items: center;
+  background: rgb(15 23 42 / 0.22);
+  padding: 1rem;
+}
+.editor-dialog {
+  width: min(100%, 28rem);
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 0.75rem;
+  background: #fff;
+  color: var(--ink, #0f172a);
+  box-shadow: 0 20px 48px rgb(15 23 42 / 0.2);
+  padding: 1.25rem;
+}
+.editor-dialog h2 { margin: 0; font-size: 1.05rem; }
+.editor-dialog p { margin: 0.5rem 0 1rem; color: var(--text-secondary, #475569); font-size: 0.875rem; }
+.editor-dialog label { display: block; margin-bottom: 0.35rem; font-size: 0.8125rem; font-weight: 600; }
+.editor-dialog input { width: 100%; border: 1px solid var(--border, #cbd5e1); border-radius: 0.5rem; padding: 0.6rem 0.7rem; }
+.editor-dialog__actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
+.editor-dialog__actions button { border: 1px solid var(--border, #cbd5e1); border-radius: 0.5rem; background: #fff; padding: 0.55rem 0.8rem; font-weight: 600; }
+.editor-dialog__actions button:last-child { border-color: #2563eb; background: #2563eb; color: #fff; }
+.editor-floating-controls__save-status { max-width: 20rem; color: var(--text-secondary, #475569); font-size: 0.75rem; }

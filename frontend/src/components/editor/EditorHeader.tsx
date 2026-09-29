@@ -1,6 +1,8 @@
+import { useState } from "react"
 import type { WorkflowExportFormat } from "../../editor/workflowExport"
 import Icon from "./EditorIcons"
 import WorkflowExportMenu from "./WorkflowExportMenu"
+import SaveVersionDialog from "./SaveVersionDialog"
 
 interface EditorHeaderProps {
   workflowTitle: string | null
@@ -9,13 +11,17 @@ interface EditorHeaderProps {
   onNewWorkflow: () => void
   onExport: (format: WorkflowExportFormat) => Promise<void>
   onSave?: () => Promise<void>
+  onSaveVersion?: (name: string) => void
+  canSave?: boolean
   isSaving?: boolean
   saveStatus?: string | null
   userEmail?: string | null
   onSignOut?: () => Promise<void>
 }
 
-function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, onNewWorkflow, onExport, onSave, isSaving = false, saveStatus, userEmail, onSignOut }: EditorHeaderProps) {
+function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, onNewWorkflow, onExport, onSave, onSaveVersion, canSave = false, isSaving = false, saveStatus, userEmail, onSignOut }: EditorHeaderProps) {
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const save = onSaveVersion ?? (() => void onSave?.())
   return (
     <header className="editor-floating-controls" aria-label="Editor controls">
       <div className="editor-floating-controls__identity">
@@ -27,7 +33,7 @@ function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, o
       </div>
       {workflowTitle && (
         <div className="editor-floating-controls__actions">
-          {onSave && <button type="button" className="editor-floating-controls__new" onClick={() => void onSave()} disabled={isSaving}>{isSaving ? "Saving..." : "Save"}</button>}
+          {onSave && <button type="button" className="editor-floating-controls__new" onClick={() => setSaveDialogOpen(true)} disabled={!canSave || isSaving}>{isSaving ? "Saving..." : "Save"}</button>}
           {saveStatus && <span className="editor-floating-controls__save-status" role="status">{saveStatus}</span>}
           {hasExportableContent && <WorkflowExportMenu hasContent isRequestLoading={isRequestLoading} onExport={onExport} />}
           <button type="button" className="editor-floating-controls__new editor-floating-controls__new--primary" onClick={onNewWorkflow} disabled={isRequestLoading || isSaving}>
@@ -42,8 +48,8 @@ function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, o
           {onSignOut && <button type="button" className="editor-floating-controls__new" onClick={() => void onSignOut()} disabled={isRequestLoading || isSaving}>Sign out</button>}
         </div>
       )}
+      <SaveVersionDialog open={saveDialogOpen} isSaving={isSaving} onCancel={() => setSaveDialogOpen(false)} onSave={(name) => { setSaveDialogOpen(false); save(name) }} />
     </header>
   )
 }
-
 export default EditorHeader

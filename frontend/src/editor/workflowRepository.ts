@@ -13,11 +13,11 @@ export async function createWorkflowRecord(userId: string, snapshot: EditorSnaps
   return workflow.id as string
 }
 
-export async function saveWorkflowVersion(userId: string, workflowId: string, snapshot: EditorSnapshot) {
+export async function saveWorkflowVersion(userId: string, workflowId: string, snapshot: EditorSnapshot, versionName?: string) {
   const { data: latest, error: latestError } = await supabase.from("workflow_versions").select("version_number").eq("workflow_id", workflowId).order("version_number", { ascending: false }).limit(1).maybeSingle()
   if (latestError) throw latestError
   const nextVersion = (latest?.version_number ?? 0) + 1
-  const { error: versionError } = await supabase.from("workflow_versions").insert({ workflow_id: workflowId, version_number: nextVersion, created_by: userId, semantic_workflow: snapshot.workflow, presentation_state: { nodePresentations: snapshot.nodePresentations, annotations: snapshot.annotations }, change_summary: "Manual save" })
+  const { error: versionError } = await supabase.from("workflow_versions").insert({ workflow_id: workflowId, version_number: nextVersion, created_by: userId, semantic_workflow: snapshot.workflow, presentation_state: { nodePresentations: snapshot.nodePresentations, annotations: snapshot.annotations }, change_summary: versionName?.trim() || `Version ${nextVersion}` })
   if (versionError) throw versionError
   const { error: workflowError } = await supabase.from("workflows").update({ title: snapshot.workflow.title, description: snapshot.workflow.description, updated_at: new Date().toISOString() }).eq("id", workflowId)
   if (workflowError) throw workflowError
