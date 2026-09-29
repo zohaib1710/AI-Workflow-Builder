@@ -1481,3 +1481,6 @@ textarea {
 .editor-dialog__actions button { border: 1px solid var(--border, #cbd5e1); border-radius: 0.5rem; background: #fff; padding: 0.55rem 0.8rem; font-weight: 600; }
 .editor-dialog__actions button:last-child { border-color: #2563eb; background: #2563eb; color: #fff; }
 .editor-floating-controls__save-status { max-width: 20rem; color: var(--text-secondary, #475569); font-size: 0.75rem; }
+.editor-floating-controls__new--disabled,
+.editor-floating-controls__new:disabled { border-color: #e2e8f0; background: #f1f5f9; color: #94a3b8; box-shadow: none; cursor: not-allowed; }
+.editor-dialog-backdrop { z-index: 100; pointer-events: auto; }

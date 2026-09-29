@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { createPortal } from "react-dom"
 
 interface SaveVersionDialogProps { open: boolean; isSaving: boolean; onCancel: () => void; onSave: (name: string) => void }
 
@@ -6,7 +7,7 @@ function SaveVersionDialog({ open, isSaving, onCancel, onSave }: SaveVersionDial
   const [name, setName] = useState("")
   if (!open) return null
   const submit = () => { onSave(name.trim().slice(0, 100)); setName("") }
-  return (
+  return createPortal((
     <div className="editor-dialog-backdrop" role="presentation">
       <section className="editor-dialog" role="dialog" aria-modal="true" aria-labelledby="save-version-title">
         <h2 id="save-version-title">Save workflow version</h2>
@@ -19,6 +20,6 @@ function SaveVersionDialog({ open, isSaving, onCancel, onSave }: SaveVersionDial
         </div>
       </section>
     </div>
-  )
+  ), document.body)
 }
 export default SaveVersionDialog

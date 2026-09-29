@@ -33,7 +33,7 @@ function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, o
       </div>
       {workflowTitle && (
         <div className="editor-floating-controls__actions">
-          {onSave && <button type="button" className="editor-floating-controls__new" onClick={() => setSaveDialogOpen(true)} disabled={!canSave || isSaving}>{isSaving ? "Saving..." : "Save"}</button>}
+          {onSave && <button type="button" className={`editor-floating-controls__new${!canSave ? " editor-floating-controls__new--disabled" : ""}`} onClick={() => setSaveDialogOpen(true)} disabled={!canSave || isSaving} title={!canSave ? "Save becomes available after you make changes." : "Save a new workflow version"}>{isSaving ? "Saving..." : "Save"}</button>}
           {saveStatus && <span className="editor-floating-controls__save-status" role="status">{saveStatus}</span>}
           {hasExportableContent && <WorkflowExportMenu hasContent isRequestLoading={isRequestLoading} onExport={onExport} />}
           <button type="button" className="editor-floating-controls__new editor-floating-controls__new--primary" onClick={onNewWorkflow} disabled={isRequestLoading || isSaving}>

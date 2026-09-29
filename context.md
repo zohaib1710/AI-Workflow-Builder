@@ -364,3 +364,4 @@
 - The changed-save checkpoint is complete: persisted editor snapshots now receive deterministic SHA-256 fingerprints, Save is enabled only for unsaved changes, and named version saves use the existing `change_summary` field. Automatic version 1 remains `Initial workflow`; failed saves remain retryable.
 - Focused validation passed: fingerprint/save-dialog tests, editor-shell regression, frontend production build, and `git diff --check`.
 - Workflow reopening, version history listing, and restore-as-draft remain the next persistence checkpoint.
+- Save dialog correction: the version-name modal now portals to the document body so its input and buttons receive pointer/keyboard events above the composer. Save visibly uses a muted disabled style when no fingerprint change exists, and Supabase persistence failures map to user-friendly messages.

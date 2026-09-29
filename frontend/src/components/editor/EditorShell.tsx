@@ -24,6 +24,13 @@ export interface EditorShellProps {
 
 const IDENTITY_INSTABILITY_MESSAGE = "The revised workflow could not preserve the current canvas layout. Try a more specific edit."
 
+function friendlyPersistenceError(error: unknown): string {
+  const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code) : ""
+  if (code === "42501") return "Save failed because your account does not have permission to write workflows. Check the Supabase table policies."
+  if (code === "23505") return "Save failed because this version already exists. Please try again."
+  return "Save failed. Please check your connection and try again."
+}
+
 function presentationCenter(
   presentation: Record<string, CanvasNodePresentation>,
 ): CanvasPosition {
@@ -148,7 +155,7 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
             setSavedFingerprint(await fingerprintSnapshot(initialSnapshot))
           }
         } catch (persistenceError: unknown) {
-          if (isMounted.current) setSaveStatus("Initial save failed: " + (persistenceError instanceof Error ? persistenceError.message : "unknown database error"))
+          if (isMounted.current) setSaveStatus(friendlyPersistenceError(persistenceError))
         }
       }
       setPrompt("")
@@ -239,16 +246,19 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
 
   const handleSave = async (versionName = "") => {
     if (!editorState || !editorState.present.workflow || !userId || isSaving) return
+    const snapshotToSave = editorState.present
+    const fingerprintToSave = currentFingerprint ?? await fingerprintSnapshot(snapshotToSave)
     setIsSaving(true)
     setError(null)
     setSaveStatus("Saving workflow...")
     try {
-      const workflowId = savedWorkflowId ?? await createWorkflowRecord(userId, editorState.present)
+      const workflowId = savedWorkflowId ?? await createWorkflowRecord(userId, snapshotToSave)
       if (!savedWorkflowId) setSavedWorkflowId(workflowId)
-      else await saveWorkflowVersion(userId, workflowId, editorState.present)
+      else await saveWorkflowVersion(userId, workflowId, snapshotToSave, versionName)
+      setSavedFingerprint(fingerprintToSave)
       setSaveStatus("Saved")
     } catch (persistenceError: unknown) {
-      setSaveStatus("Save failed: " + (persistenceError instanceof Error ? persistenceError.message : "unknown database error"))
+      setSaveStatus(friendlyPersistenceError(persistenceError))
     } finally {
       setIsSaving(false)
     }
