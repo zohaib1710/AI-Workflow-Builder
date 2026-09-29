@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { editWorkflow, generateWorkflow, WorkflowApiError } from "../../api/client"
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { reconcileWorkflowPresentation } from "../../editor/reconcileWorkflow"
+import { createInitialEditorState } from "../../editor/editorReducer"
+import { createWorkflowRecord, saveWorkflowVersion } from "../../editor/workflowRepository"
 import type { CanvasNodePresentation, CanvasPosition } from "../../editor/types"
 import { validateWorkflowDraft } from "../../editor/validation"
 import { EXAMPLE_PROMPT, PROMPT_MAX_LENGTH } from "../../lib/constants"
@@ -12,6 +14,12 @@ import ValidationIndicator from "./ValidationIndicator"
 import WorkflowEditorCanvas, { type WorkflowEditorCanvasHandle } from "./WorkflowEditorCanvas"
 import WorkflowPromptComposer from "./WorkflowPromptComposer"
 import type { WorkflowExportFormat } from "../../editor/workflowExport"
+
+export interface EditorShellProps {
+  userId?: string
+  userEmail?: string | null
+  onSignOut?: () => Promise<void>
+}
 
 const IDENTITY_INSTABILITY_MESSAGE = "The revised workflow could not preserve the current canvas layout. Try a more specific edit."
 
@@ -59,12 +67,14 @@ function useEditingViewport() {
   return matches
 }
 
-function EditorShell() {
+function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
   const [prompt, setPrompt] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [savedWorkflowId, setSavedWorkflowId] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const requestInFlight = useRef(false)
   const isMounted = useRef(true)
   const canvasRef = useRef<WorkflowEditorCanvasHandle | null>(null)
@@ -105,8 +115,17 @@ function EditorShell() {
       const response = await generateWorkflow({ prompt: normalizedPrompt })
       if (!isMounted.current) return
       dispatch({ type: "workflow/adopt", workflow: response.workflow })
+      if (userId) {
+        try {
+          const initialSnapshot = createInitialEditorState(response.workflow).present
+          const workflowId = await createWorkflowRecord(userId, initialSnapshot)
+          if (isMounted.current) setSavedWorkflowId(workflowId)
+        } catch {
+          if (isMounted.current) setError("Workflow generated, but it could not be saved. You can retry with Save.")
+        }
+      }
       setPrompt("")
-      setError(null)
+      if (!error) setError(null)
     } catch (generationError: unknown) {
       if (!isMounted.current) return
       setError(
@@ -189,6 +208,21 @@ function EditorShell() {
       void handleIterate()
     } else {
       void handleGenerate()
+    }
+  }
+
+  const handleSave = async () => {
+    if (!editorState || !editorState.present.workflow || !userId || isSaving) return
+    setIsSaving(true)
+    setError(null)
+    try {
+      const workflowId = savedWorkflowId ?? await createWorkflowRecord(userId, editorState.present)
+      if (!savedWorkflowId) setSavedWorkflowId(workflowId)
+      else await saveWorkflowVersion(userId, workflowId, editorState.present)
+    } catch {
+      setError("The workflow could not be saved. Please try again.")
+    } finally {
+      setIsSaving(false)
     }
   }
 

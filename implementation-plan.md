@@ -81,7 +81,7 @@ The editor snapshot contains the semantic draft workflow, node-presentation reco
 
 ### Draft validation model
 
-Use draft-state editing (Model B). Manual actions must keep data structurally well formedâ€”unique generated IDs, nonblank required node fields, and existing endpoints for newly created edgesâ€”but may temporarily create graph-invalid states such as disconnected nodes or a decision with one branch. A pure frontend validator mirrors the backend graph rules and produces small user-facing issues. AI iteration is disabled until the draft is graph-valid; the backend independently revalidates the submitted current workflow. Auto Arrange may run on a structurally well-formed draft even when graph issues remain. No draft is sent to execution, persistence, or export because those capabilities are excluded.
+Use draft-state editing (Model B). Manual actions must keep data structurally well formedÃ¢â‚¬â€unique generated IDs, nonblank required node fields, and existing endpoints for newly created edgesÃ¢â‚¬â€but may temporarily create graph-invalid states such as disconnected nodes or a decision with one branch. A pure frontend validator mirrors the backend graph rules and produces small user-facing issues. AI iteration is disabled until the draft is graph-valid; the backend independently revalidates the submitted current workflow. Auto Arrange may run on a structurally well-formed draft even when graph issues remain. No draft is sent to execution, persistence, or export because those capabilities are excluded.
 
 ### State management and history
 
@@ -290,7 +290,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Dependencies/prerequisites: V2 Checkpoint 8 complete; Version 1 route/client tests passing.
 - Files to create: `backend/tests/test_workflow_edit_routes.py`, `frontend/src/test/edit-api-client.test.ts`.
 - Files to modify: `backend/app/api/routes/workflows.py`, `backend/app/api/errors.py`, `backend/app/schemas/workflow_edit.py`, `frontend/src/types/workflow.ts`, `frontend/src/api/client.ts`, `backend/tests/test_error_mapping.py`, `frontend/src/test/api-client.test.ts` only when shared helpers move.
-- Implementation instructions: Register `POST /api/v1/workflows/edit` with dependency-injected `WorkflowEditService`. Return the revised workflow plus configured model and non-negative duration metadata. Map invalid submitted workflow/instruction to safe 422 responses, invalid revised candidates after correction to controlled 502, and reuse all existing provider handlers. Add typed `editWorkflow({ instruction, workflow })` with the same 30-second abort, safe error mappings, no retry, and strict success-shape validation as generation; refactor shared client parsing only when it reduces duplication. Send exactly semantic fieldsâ€”never presentation, annotations, selection, viewport, or provider data.
+- Implementation instructions: Register `POST /api/v1/workflows/edit` with dependency-injected `WorkflowEditService`. Return the revised workflow plus configured model and non-negative duration metadata. Map invalid submitted workflow/instruction to safe 422 responses, invalid revised candidates after correction to controlled 502, and reuse all existing provider handlers. Add typed `editWorkflow({ instruction, workflow })` with the same 30-second abort, safe error mappings, no retry, and strict success-shape validation as generation; refactor shared client parsing only when it reduces duplication. Send exactly semantic fieldsÃ¢â‚¬â€never presentation, annotations, selection, viewport, or provider data.
 - Required tests: Request validation before service call; valid response metadata; dependency override; each new error mapping; no leakage; exact frontend body and URL; timeout/network/non-JSON/malformed-success behavior; one fetch only; generation route/client regressions.
 - Validation commands: `uv run --project backend pytest backend/tests/test_workflow_edit_routes.py backend/tests/test_error_mapping.py backend/tests/test_workflow_routes.py`; `npm.cmd run test --prefix frontend -- --run src/test/edit-api-client.test.ts src/test/api-client.test.ts`; `uv run --project backend ruff check backend`; `npm.cmd run build --prefix frontend`; `git diff --check`.
 - Acceptance criteria:
@@ -442,7 +442,7 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 
 - Status: INCOMPLETE (implementation and automated validation complete; manual browser cursor check pending)
 - Purpose: Remove extra placement steps, represent Trigger and End as strict visual boundaries, and keep drag cursors legible on the light editor.
-- Implementation: Shape-menu and Add Text selections immediately create one collision-safe item at the visible canvas center without changing the viewport. Annotation placement uses a deterministic 160Ã—64 footprint against workflow nodes and existing annotations, records one presentation-only history transaction, selects the new annotation, and returns to Select. Trigger and Start omit incoming handles, End omits its outgoing handle, and manual connections targeting either boundary source or originating from End are rejected after loose-mode normalization. Scoped black open- and closed-hand SVG cursors replace native white drag hands on the pane, nodes, and selection dragging while preserving specialized control, text, resize, crosshair, and disabled cursors.
+- Implementation: Shape-menu and Add Text selections immediately create one collision-safe item at the visible canvas center without changing the viewport. Annotation placement uses a deterministic 160Ãƒâ€”64 footprint against workflow nodes and existing annotations, records one presentation-only history transaction, selects the new annotation, and returns to Select. Trigger and Start omit incoming handles, End omits its outgoing handle, and manual connections targeting either boundary source or originating from End are rejected after loose-mode normalization. Scoped black open- and closed-hand SVG cursors replace native white drag hands on the pane, nodes, and selection dragging while preserving specialized control, text, resize, crosshair, and disabled cursors.
 - Required validation: focused annotation, flowchart-node, edge-editing, and node-tool tests; frontend production build; `git diff --check`; manual browser inspection of open/closed drag cursors.
 - Acceptance criteria:
   - [x] Selecting a shape or Add Text immediately creates and selects one collision-safe item at the current viewport center.
@@ -498,6 +498,15 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
   - [x] Existing workflow behavior, viewport behavior, layout, semantic data, history, export behavior, responsive policy, and dependencies remain unchanged.
 - Commit message: `feat(frontend): refine workflow editor visuals`
 - Stop conditions: Stop if visual polish requires semantic, layout, viewport, API, dependency, or backend changes.
+### V2 Supabase integration: authentication and workflow persistence
+
+- Status: INCOMPLETE
+- Purpose: Add authenticated frontend access and immutable saved workflow versions while preserving the existing editor contract.
+- Implementation completed so far: Supabase client environment wiring, email/password auth gate, sign-up/sign-in/sign-out UI, workflow repository, automatic version 1 creation after generation, explicit Save version creation, and safe environment-template documentation.
+- Remaining: workflow browsing/loading, collaborator management UI, and Realtime collaboration synchronization.
+- Validation: frontend production build and `git diff --check` pass.
+- Commit message: `feat(frontend): add Supabase auth and workflow persistence`
+- Stop conditions: Do not expose service-role credentials, bypass RLS, overwrite immutable versions, or change semantic workflow/API contracts.
 ### V2 Checkpoint 14: Document and perform final Version 2 verification
 
 - Status: INCOMPLETE
