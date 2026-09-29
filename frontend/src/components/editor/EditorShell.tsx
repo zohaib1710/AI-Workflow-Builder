@@ -75,6 +75,7 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
   const [error, setError] = useState<string | null>(null)
   const [savedWorkflowId, setSavedWorkflowId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const requestInFlight = useRef(false)
   const isMounted = useRef(true)
   const canvasRef = useRef<WorkflowEditorCanvasHandle | null>(null)
@@ -110,6 +111,7 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
 
     requestInFlight.current = true
     setError(null)
+    setSaveStatus(null)
     setIsGenerating(true)
     try {
       const response = await generateWorkflow({ prompt: normalizedPrompt })
@@ -120,12 +122,11 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
           const initialSnapshot = createInitialEditorState(response.workflow).present
           const workflowId = await createWorkflowRecord(userId, initialSnapshot)
           if (isMounted.current) setSavedWorkflowId(workflowId)
-        } catch {
-          if (isMounted.current) setError("Workflow generated, but it could not be saved. You can retry with Save.")
+        } catch (persistenceError: unknown) {
+          if (isMounted.current) setSaveStatus("Initial save failed: " + (persistenceError instanceof Error ? persistenceError.message : "unknown database error"))
         }
       }
       setPrompt("")
-      if (!error) setError(null)
     } catch (generationError: unknown) {
       if (!isMounted.current) return
       setError(
@@ -215,12 +216,14 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
     if (!editorState || !editorState.present.workflow || !userId || isSaving) return
     setIsSaving(true)
     setError(null)
+    setSaveStatus("Saving workflow...")
     try {
       const workflowId = savedWorkflowId ?? await createWorkflowRecord(userId, editorState.present)
       if (!savedWorkflowId) setSavedWorkflowId(workflowId)
       else await saveWorkflowVersion(userId, workflowId, editorState.present)
-    } catch {
-      setError("The workflow could not be saved. Please try again.")
+      setSaveStatus("Saved")
+    } catch (persistenceError: unknown) {
+      setSaveStatus("Save failed: " + (persistenceError instanceof Error ? persistenceError.message : "unknown database error"))
     } finally {
       setIsSaving(false)
     }
@@ -230,6 +233,8 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
     if (requestInFlight.current || editorState?.asyncState.status === "loading") return
     if (editorState && window.confirm("Discard this workflow and start a new one?") === false) return
     dispatch({ type: "workflow/reset" })
+    setSavedWorkflowId(null)
+    setSaveStatus(null)
     setPrompt("")
     setError(null)
   }
@@ -255,6 +260,11 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
         isRequestLoading={isRequestLoading}
         onNewWorkflow={handleReset}
         onExport={handleExport}
+        onSave={userId && workflow ? handleSave : undefined}
+        isSaving={isSaving}
+        saveStatus={saveStatus}
+        userEmail={userEmail}
+        onSignOut={onSignOut}
       />
       <EditorToolbar
         editingViewport={editingViewport}

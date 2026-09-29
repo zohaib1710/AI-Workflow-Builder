@@ -8,12 +8,16 @@ import {
 import type { Session, User } from "@supabase/supabase-js"
 import { supabase } from "../lib/supabase"
 
-interface AuthContextValue {
+export type SignUpResult =
+  | { status: "signed-in" }
+  | { status: "confirmation-required" }
+
+export interface AuthContextValue {
   user: User | null
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, displayName: string) => Promise<void>
+  signUp: (email: string, password: string, displayName: string) => Promise<SignUpResult>
   signOut: () => Promise<void>
 }
 
@@ -24,10 +28,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
+    let active = true
+    void supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (error) throw error
+        if (active) setSession(data.session)
+      })
+      .catch(() => {
+        if (active) setSession(null)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
 
     const {
       data: { subscription },
@@ -35,7 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const value: AuthContextValue = {
@@ -53,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
 
     async signUp(email, password, displayName) {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -62,6 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (error) throw error
+      return data.session
+        ? { status: "signed-in" }
+        : { status: "confirmation-required" }
     },
 
     async signOut() {

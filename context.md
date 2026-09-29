@@ -356,3 +356,8 @@
 - Supabase integration is partially implemented: email/password authentication is gated through `AuthProvider`, `AuthScreen`, and `App`; generated workflows create a database workflow plus immutable version 1; the header Save action creates subsequent versions; and `frontend/.env.example` documents the public Supabase variables.
 - Remaining Supabase work: saved-workflow browsing/loading, collaborator management, and Realtime synchronization. The service-role key is not used in the browser.
 - Successful validation: frontend production build; `git diff --check`.
+
+
+- Supabase authentication and persistence correction is complete: signup distinguishes immediate sessions from email-confirmation-required accounts, session initialization cannot remain stuck on a failed getSession call, authenticated account controls (including Sign out) remain visible on the empty canvas, generation/save persistence errors are surfaced without discarding the generated workflow, and New Workflow clears the saved workflow identity.
+- Focused validation passed: auth context/screen (4 tests), App (4 tests), editor shell (7 tests), frontend production build, and `git diff --check`.
+- Collaboration invitations, saved-workflow browsing/loading, and Realtime remain future work; workflow_collaborators stays empty by design.

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import App from "../App"
@@ -5,6 +6,18 @@ import { WorkflowApiError } from "../api/client"
 import type { GenerateWorkflowResponse } from "../types/workflow"
 
 const generateWorkflowMock = vi.hoisted(() => vi.fn())
+
+vi.mock("../auth/AuthContext", () => ({
+  AuthProvider: ({ children }: { children: ReactNode }) => children,
+  useAuth: () => ({
+    user: { id: "test-user", email: "test@example.com" },
+    session: {},
+    loading: false,
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn(),
+  }),
+}))
 
 vi.mock("../api/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../api/client")>()

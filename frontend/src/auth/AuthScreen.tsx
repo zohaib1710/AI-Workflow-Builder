@@ -11,6 +11,7 @@ function AuthScreen() {
   const [message, setMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isSignUp = mode === "sign-up"
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
@@ -18,8 +19,12 @@ function AuthScreen() {
     setIsSubmitting(true)
     try {
       if (isSignUp) {
-        await signUp(email.trim(), password, displayName.trim())
-        setMessage("Account created. Check your email if confirmation is enabled.")
+        const result = await signUp(email.trim(), password, displayName.trim())
+        if (result.status === "confirmation-required") {
+          setMode("sign-in")
+          setPassword("")
+          setMessage("Account created. Check your email, then sign in.")
+        }
       } else {
         await signIn(email.trim(), password)
       }
@@ -29,6 +34,7 @@ function AuthScreen() {
       setIsSubmitting(false)
     }
   }
+
   return (
     <main className="auth-screen">
       <section className="auth-card" aria-labelledby="auth-heading">
