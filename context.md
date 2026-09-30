@@ -365,3 +365,12 @@
 - Focused validation passed: fingerprint/save-dialog tests, editor-shell regression, frontend production build, and `git diff --check`.
 - Workflow reopening, version history listing, and restore-as-draft remain the next persistence checkpoint.
 - Save dialog correction: the version-name modal now portals to the document body so its input and buttons receive pointer/keyboard events above the composer. Save visibly uses a muted disabled style when no fingerprint change exists, and Supabase persistence failures map to user-friendly messages.
+
+## Saved workflow library and reopening
+
+- The signed-in landing view now lists the current user's owned workflows in most-recently-updated order, with loading, empty, retryable failure, account, Sign out, and New workflow controls.
+- Opening a workflow loads and validates its latest immutable version before entering the editor. Semantic workflow data, node presentation, colors, positions, and annotations are adopted together; malformed or missing versions leave the library intact with safe feedback.
+- Reopened workflows start with empty editor history and transient state and with the latest saved snapshot fingerprint, so Save is initially disabled. Returning to My workflows or starting over prompts only when the current persisted snapshot differs from that saved baseline.
+- Successful validation: repository/library suites (5 tests), App reopening suite (5 tests), editor-shell navigation suite (8 tests), frontend production build, and `git diff --check`.
+- Version history, restore-as-draft, and workflow rename remain the next persistence checkpoint. Collaboration invitations and Realtime synchronization remain deferred.
+- Proposed commit title: `feat(frontend): reopen saved workflows from library`.

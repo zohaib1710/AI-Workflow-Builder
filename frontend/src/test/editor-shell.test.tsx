@@ -1,7 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import EditorShell from "../components/editor/EditorShell"
-import { EditorProvider, useEditorState } from "../editor/EditorContext"
+import { EditorProvider, useEditorDispatch, useEditorState } from "../editor/EditorContext"
+import { createInitialEditorState } from "../editor/editorReducer"
+import { fingerprintSnapshot } from "../editor/snapshotFingerprint"
 import { WorkflowApiError } from "../api/client"
 import type { GenerateWorkflowResponse } from "../types/workflow"
 
@@ -15,6 +17,7 @@ vi.mock("../api/client", async (importOriginal) => {
 afterEach(() => {
   cleanup()
   generateWorkflowMock.mockReset()
+  vi.restoreAllMocks()
 })
 
 function responseFixture(): GenerateWorkflowResponse {
@@ -40,6 +43,11 @@ function StateObserver() {
       {`${state.present.workflow.title}|${Object.keys(state.present.nodePresentations).length}|${state.past.length}`}
     </output>
   )
+}
+
+function MakeDirtyButton() {
+  const dispatch = useEditorDispatch()
+  return <button type="button" onClick={() => dispatch({ type: "annotation/create", annotation: { id: "dirty-note", text: "Unsaved note", position: { x: 0, y: 0 } } })}>Make dirty</button>
 }
 
 function renderShell(observeState = false) {
@@ -127,6 +135,7 @@ describe("EditorShell", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Workflow prompt" }), {
       target: { value: "Future edit" },
     })
+    vi.spyOn(window, "confirm").mockReturnValue(true)
     fireEvent.click(screen.getAllByRole("button", { name: "New workflow" })[0])
 
     await waitFor(() => expect(screen.getByLabelText("Empty workflow canvas")).toBeInTheDocument())
@@ -135,6 +144,32 @@ describe("EditorShell", () => {
     expect(screen.getByPlaceholderText("Describe the workflow you want to create...")).toHaveValue("")
     expect(screen.queryByRole("heading", { name: "Request review workflow" })).not.toBeInTheDocument()
     expect(generateWorkflowMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("confirms before leaving a saved workflow with unsaved changes", async () => {
+    const initialSnapshot = createInitialEditorState(responseFixture().workflow).present
+    const savedFingerprint = await fingerprintSnapshot(initialSnapshot)
+    const onBackToLibrary = vi.fn()
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true)
+    render(
+      <EditorProvider initialSnapshot={initialSnapshot}>
+        <EditorShell
+          userId="user-1"
+          workflowId="workflow-1"
+          initialSavedFingerprint={savedFingerprint}
+          onBackToLibrary={onBackToLibrary}
+        />
+        <MakeDirtyButton />
+      </EditorProvider>,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Make dirty" }))
+    fireEvent.click(screen.getByRole("button", { name: "My workflows" }))
+    await waitFor(() => expect(confirm).toHaveBeenCalledTimes(1))
+    expect(onBackToLibrary).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole("button", { name: "My workflows" }))
+    await waitFor(() => expect(onBackToLibrary).toHaveBeenCalledTimes(1))
   })
 
   it("shows the current bounded editor toolbar", async () => {

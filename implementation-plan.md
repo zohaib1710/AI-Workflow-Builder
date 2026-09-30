@@ -567,3 +567,20 @@ Each implementer completes only the first incomplete checkpoint, runs its requir
 - Validation: fingerprint and save-dialog tests (3 passed), editor-shell regression (7 passed), frontend production build, and `git diff --check`.
 - Next: implement the separate workflow reopening and version restore checkpoint.
 - Commit message: `feat(frontend): save named versions only when changed`
+
+### V2 Supabase checkpoint: workflow library and latest-version reopening
+
+- Status: COMPLETE
+- Purpose: Make saved workflows available after sign-in and reload without allowing unvalidated database JSON into editor state.
+- Implementation: The authenticated landing view lists owned workflows ordered by update time and provides loading, empty, retryable error, New workflow, account, and Sign out controls. Opening a workflow validates and adopts its latest semantic and presentation snapshot, resets editor history/transient state, and initializes the saved fingerprint so Save starts disabled. My workflows and New workflow navigation confirm only when the persisted editor snapshot has unsaved changes.
+- Validation: focused repository/library tests (5 passed), App tests (5 passed), editor-shell tests (8 passed), frontend production build, and `git diff --check`.
+- Commit message: `feat(frontend): reopen saved workflows from library`
+- Stop conditions: Stop if reopening requires bypassing RLS, accepting malformed saved JSON, mutating a saved version, or changing the backend workflow API.
+
+### V2 Supabase checkpoint: version history, restore, and rename
+
+- Status: INCOMPLETE
+- Purpose: List immutable versions, restore an older version as an unsaved undoable draft, and rename workflows consistently through a new saved version.
+- Required behavior: Preserve the current editor when loading fails, confirm before replacing unsaved changes, never overwrite an existing version, and update library metadata only after successful persistence.
+- Commit message: `feat(frontend): restore versions and rename workflows`
+- Stop conditions: Stop if the work requires a database migration, bypassing RLS, overwriting immutable versions, or accepting unvalidated stored data.

@@ -9,6 +9,7 @@ interface EditorHeaderProps {
   hasExportableContent: boolean
   isRequestLoading: boolean
   onNewWorkflow: () => void
+  onBackToLibrary?: () => void
   onExport: (format: WorkflowExportFormat) => Promise<void>
   onSave?: () => Promise<void>
   onSaveVersion?: (name: string) => void
@@ -19,7 +20,7 @@ interface EditorHeaderProps {
   onSignOut?: () => Promise<void>
 }
 
-function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, onNewWorkflow, onExport, onSave, onSaveVersion, canSave = false, isSaving = false, saveStatus, userEmail, onSignOut }: EditorHeaderProps) {
+function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, onNewWorkflow, onBackToLibrary, onExport, onSave, onSaveVersion, canSave = false, isSaving = false, saveStatus, userEmail, onSignOut }: EditorHeaderProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const save = onSaveVersion ?? (() => void onSave?.())
   return (
@@ -31,6 +32,7 @@ function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, o
           {workflowTitle && <h2 className="editor-floating-controls__workflow-title">{workflowTitle}</h2>}
         </div>
       </div>
+      {onBackToLibrary && <button type="button" className="editor-floating-controls__new" onClick={onBackToLibrary}>My workflows</button>}
       {workflowTitle && (
         <div className="editor-floating-controls__actions">
           {onSave && <button type="button" className={`editor-floating-controls__new${!canSave ? " editor-floating-controls__new--disabled" : ""}`} onClick={() => setSaveDialogOpen(true)} disabled={!canSave || isSaving} title={!canSave ? "Save becomes available after you make changes." : "Save a new workflow version"}>{isSaving ? "Saving..." : "Save"}</button>}

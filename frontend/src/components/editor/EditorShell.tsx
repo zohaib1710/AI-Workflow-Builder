@@ -20,6 +20,9 @@ export interface EditorShellProps {
   userId?: string
   userEmail?: string | null
   onSignOut?: () => Promise<void>
+  workflowId?: string
+  initialSavedFingerprint?: string | null
+  onBackToLibrary?: () => void
 }
 
 const IDENTITY_INSTABILITY_MESSAGE = "The revised workflow could not preserve the current canvas layout. Try a more specific edit."
@@ -75,17 +78,17 @@ function useEditingViewport() {
   return matches
 }
 
-function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
+function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFingerprint, onBackToLibrary }: EditorShellProps) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
   const [prompt, setPrompt] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [savedWorkflowId, setSavedWorkflowId] = useState<string | null>(null)
+  const [savedWorkflowId, setSavedWorkflowId] = useState<string | null>(workflowId ?? null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const [currentFingerprint, setCurrentFingerprint] = useState<string | null>(null)
-  const [savedFingerprint, setSavedFingerprint] = useState<string | null>(null)
+  const [savedFingerprint, setSavedFingerprint] = useState<string | null>(initialSavedFingerprint ?? null)
   const [isHashing, setIsHashing] = useState(false)
   const requestInFlight = useRef(false)
   const fingerprintRequest = useRef(0)
@@ -264,11 +267,25 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
     }
   }
 
-  const handleReset = () => {
-    if (requestInFlight.current || editorState?.asyncState.status === "loading") return
-    if (editorState && window.confirm("Discard this workflow and start a new one?") === false) return
+  const confirmDiscardIfDirty = async () => {
+    if (!editorState?.present.workflow) return true
+    const fingerprint = await fingerprintSnapshot(editorState.present)
+    if (fingerprint === savedFingerprint) return true
+    return window.confirm("This workflow has unsaved changes. Leave without saving them?")
+  }
+
+  const handleBackToLibrary = async () => {
+    if (requestInFlight.current || isSaving || editorState?.asyncState.status === "loading") return
+    if (!(await confirmDiscardIfDirty())) return
+    onBackToLibrary?.()
+  }
+
+  const handleReset = async () => {
+    if (requestInFlight.current || isSaving || editorState?.asyncState.status === "loading") return
+    if (!(await confirmDiscardIfDirty())) return
     dispatch({ type: "workflow/reset" })
     setSavedWorkflowId(null)
+    setSavedFingerprint(null)
     setSaveStatus(null)
     setPrompt("")
     setError(null)
@@ -293,7 +310,8 @@ function EditorShell({ userId, userEmail, onSignOut }: EditorShellProps) {
         workflowTitle={workflow?.title ?? null}
         hasExportableContent={hasExportableContent}
         isRequestLoading={isRequestLoading}
-        onNewWorkflow={handleReset}
+        onNewWorkflow={() => void handleReset()}
+        onBackToLibrary={onBackToLibrary ? () => void handleBackToLibrary() : undefined}
         onExport={handleExport}
         onSave={userId && workflow ? handleSave : undefined}
         onSaveVersion={userId && workflow ? (name) => void handleSave(name) : undefined}
