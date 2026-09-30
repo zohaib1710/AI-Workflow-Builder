@@ -57,6 +57,52 @@ export interface OwnedWorkflowSummary {
   updatedAt: string
 }
 
+export interface WorkflowVersionSummary {
+  versionNumber: number
+  name: string
+  createdAt: string
+}
+
+export interface WorkflowRenameResult {
+  versionNumber: number
+  updatedAt: string
+}
+
+function isValidTimestamp(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value))
+}
+
+export function parseWorkflowVersionSummary(value: unknown): WorkflowVersionSummary {
+  if (!isRecord(value) || !Number.isInteger(value.version_number) || Number(value.version_number) < 1 || !isValidTimestamp(value.created_at) || (value.change_summary !== null && typeof value.change_summary !== "string")) {
+    throw new Error("Saved version details are invalid.")
+  }
+  const versionNumber = Number(value.version_number)
+  return { versionNumber, name: (value.change_summary as string | null)?.trim() || `Version ${versionNumber}`, createdAt: value.created_at }
+}
+
+export async function listWorkflowVersions(workflowId: string): Promise<WorkflowVersionSummary[]> {
+  const { data, error } = await supabase.from("workflow_versions").select("version_number, change_summary, created_at").eq("workflow_id", workflowId).order("version_number", { ascending: false })
+  if (error) throw error
+  if (!Array.isArray(data)) throw new Error("The saved version list could not be read.")
+  return data.map(parseWorkflowVersionSummary)
+}
+
+export async function loadWorkflowVersion(workflowId: string, versionNumber: number): Promise<SavedWorkflow | null> {
+  const { data, error } = await supabase.from("workflow_versions").select("version_number, semantic_workflow, presentation_state").eq("workflow_id", workflowId).eq("version_number", versionNumber).maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return parseSavedWorkflow(workflowId, data)
+}
+
+export async function renameWorkflow(workflowId: string, title: string): Promise<WorkflowRenameResult> {
+  const normalizedTitle = title.trim()
+  if (!normalizedTitle || normalizedTitle.length > 100) throw new Error("Workflow names must be between 1 and 100 characters.")
+  const { data, error } = await supabase.rpc("rename_owned_workflow", { p_workflow_id: workflowId, p_new_title: normalizedTitle })
+  if (error) throw error
+  if (!isRecord(data) || !Number.isInteger(data.version_number) || Number(data.version_number) < 1 || !isValidTimestamp(data.updated_at)) throw new Error("Workflow rename returned invalid confirmation data.")
+  return { versionNumber: Number(data.version_number), updatedAt: data.updated_at }
+}
+
 export async function listOwnedWorkflows(userId: string): Promise<OwnedWorkflowSummary[]> {
   const { data, error } = await supabase.from("workflows").select("id, title, description, updated_at").eq("owner_id", userId).order("updated_at", { ascending: false })
   if (error) throw error

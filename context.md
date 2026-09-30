@@ -372,5 +372,15 @@
 - Opening a workflow loads and validates its latest immutable version before entering the editor. Semantic workflow data, node presentation, colors, positions, and annotations are adopted together; malformed or missing versions leave the library intact with safe feedback.
 - Reopened workflows start with empty editor history and transient state and with the latest saved snapshot fingerprint, so Save is initially disabled. Returning to My workflows or starting over prompts only when the current persisted snapshot differs from that saved baseline.
 - Successful validation: repository/library suites (5 tests), App reopening suite (5 tests), editor-shell navigation suite (8 tests), frontend production build, and `git diff --check`.
-- Version history, restore-as-draft, and workflow rename remain the next persistence checkpoint. Collaboration invitations and Realtime synchronization remain deferred.
+- Version history, restore-as-draft, and workflow rename are complete. Collaboration invitations and Realtime synchronization remain deferred; apply the rename migration manually in the hosted Supabase SQL Editor before using Rename.
 - Proposed commit title: `feat(frontend): reopen saved workflows from library`.
+
+
+## Version history, restore, and rename
+
+- Added a newest-first Version History drawer for saved workflows. Historical snapshots are validated before adoption. Restore confirms only for dirty snapshots, locks editor mutations while checking/loading, and records one undoable draft without writing a database row; the latest saved fingerprint remains unchanged.
+- Added a library-only Rename dialog with trimmed 1–100 character validation, retryable friendly errors, and refresh after success. The Supabase rename_owned_workflow security-invoker function locks the owner workflow, copies the latest semantic and presentation snapshot, changes only the semantic title, appends an immutable version, and updates the library title/timestamp in one transaction.
+- To enable Rename in the hosted project, manually run supabase/migrations/20260930_rename_owned_workflow.sql in Supabase Dashboard SQL Editor. No hosted migration was executed by the app or this implementation.
+- Fixed an existing composer effect race so collapsing the iteration composer remains effective across the generation-to-iteration transition.
+- Validation: focused suites passed (42 tests); the directly affected history and editor-shell tests passed (11 tests); frontend production build and git diff --check passed. V2 documentation checkpoint remains incomplete.
+- Prepared commit message: feat(frontend): restore versions and rename workflows.

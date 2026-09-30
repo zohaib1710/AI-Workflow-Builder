@@ -11,6 +11,7 @@ interface EditorRoute {
   workflowId: string | null
   initialSnapshot: EditorSnapshot | null
   savedFingerprint: string | null
+  latestSavedVersionNumber: number | null
 }
 
 function AuthenticatedApp({ user, signOut }: { user: NonNullable<ReturnType<typeof useAuth>["user"]>; signOut: () => Promise<void> }) {
@@ -21,8 +22,8 @@ function AuthenticatedApp({ user, signOut }: { user: NonNullable<ReturnType<type
     userId={user.id}
     userEmail={user.email}
     refreshKey={libraryRefresh}
-    onCreate={() => setRoute({ workflowId: null, initialSnapshot: null, savedFingerprint: null })}
-    onOpen={(saved: SavedWorkflow, snapshot, savedFingerprint) => setRoute({ workflowId: saved.id, initialSnapshot: snapshot, savedFingerprint })}
+    onCreate={() => setRoute({ workflowId: null, initialSnapshot: null, savedFingerprint: null, latestSavedVersionNumber: null })}
+    onOpen={(saved: SavedWorkflow, snapshot, savedFingerprint) => setRoute({ workflowId: saved.id, initialSnapshot: snapshot, savedFingerprint, latestSavedVersionNumber: saved.versionNumber })}
     onSignOut={signOut}
   />
 
@@ -34,6 +35,7 @@ function AuthenticatedApp({ user, signOut }: { user: NonNullable<ReturnType<type
         onSignOut={signOut}
         workflowId={route.workflowId ?? undefined}
         initialSavedFingerprint={route.savedFingerprint}
+        initialLatestSavedVersionNumber={route.latestSavedVersionNumber}
         onBackToLibrary={() => { setRoute(null); setLibraryRefresh((value) => value + 1) }}
       />
     </EditorProvider>

@@ -3,7 +3,7 @@ import { editWorkflow, generateWorkflow, WorkflowApiError } from "../../api/clie
 import { useEditorDispatch, useEditorState } from "../../editor/EditorContext"
 import { reconcileWorkflowPresentation } from "../../editor/reconcileWorkflow"
 import { createInitialEditorState } from "../../editor/editorReducer"
-import { createWorkflowRecord, saveWorkflowVersion } from "../../editor/workflowRepository"
+import { createWorkflowRecord, loadWorkflowVersion, saveWorkflowVersion } from "../../editor/workflowRepository"
 import { fingerprintSnapshot } from "../../editor/snapshotFingerprint"
 import type { CanvasNodePresentation, CanvasPosition } from "../../editor/types"
 import { validateWorkflowDraft } from "../../editor/validation"
@@ -15,6 +15,7 @@ import ValidationIndicator from "./ValidationIndicator"
 import WorkflowEditorCanvas, { type WorkflowEditorCanvasHandle } from "./WorkflowEditorCanvas"
 import WorkflowPromptComposer from "./WorkflowPromptComposer"
 import type { WorkflowExportFormat } from "../../editor/workflowExport"
+import VersionHistoryDrawer from "./VersionHistoryDrawer"
 
 export interface EditorShellProps {
   userId?: string
@@ -22,6 +23,7 @@ export interface EditorShellProps {
   onSignOut?: () => Promise<void>
   workflowId?: string
   initialSavedFingerprint?: string | null
+  initialLatestSavedVersionNumber?: number | null
   onBackToLibrary?: () => void
 }
 
@@ -78,7 +80,7 @@ function useEditingViewport() {
   return matches
 }
 
-function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFingerprint, onBackToLibrary }: EditorShellProps) {
+function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFingerprint, initialLatestSavedVersionNumber, onBackToLibrary }: EditorShellProps) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
   const [prompt, setPrompt] = useState("")
@@ -89,6 +91,11 @@ function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFin
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const [currentFingerprint, setCurrentFingerprint] = useState<string | null>(null)
   const [savedFingerprint, setSavedFingerprint] = useState<string | null>(initialSavedFingerprint ?? null)
+  const [latestSavedVersionNumber, setLatestSavedVersionNumber] = useState<number | null>(initialLatestSavedVersionNumber ?? null)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
+  const [isRestoring, setIsRestoring] = useState(false)
+  const [restoredVersion, setRestoredVersion] = useState<{ versionNumber: number; fingerprint: string } | null>(null)
   const [isHashing, setIsHashing] = useState(false)
   const requestInFlight = useRef(false)
   const fingerprintRequest = useRef(0)
@@ -97,9 +104,9 @@ function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFin
   const editingViewport = useEditingViewport()
   const workflow = editorState?.present.workflow ?? null
   const isEditing = editorState?.asyncState.status === "loading"
-  const isRequestLoading = isGenerating || isEditing
+  const isRequestLoading = isGenerating || isEditing || isRestoring
   const hasExportableContent = Boolean(workflow && (workflow.nodes.length > 0 || editorState?.present.annotations.length))
-  const canSave = Boolean(userId && workflow && currentFingerprint && currentFingerprint !== savedFingerprint && !isHashing && !isSaving)
+  const canSave = Boolean(userId && workflow && currentFingerprint && currentFingerprint !== savedFingerprint && !isHashing && !isSaving && !isRequestLoading)
 
   useEffect(() => {
     const snapshot = editorState?.present
@@ -155,6 +162,7 @@ function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFin
           const workflowId = await createWorkflowRecord(userId, initialSnapshot)
           if (isMounted.current) {
             setSavedWorkflowId(workflowId)
+            setLatestSavedVersionNumber(1)
             setSavedFingerprint(await fingerprintSnapshot(initialSnapshot))
           }
         } catch (persistenceError: unknown) {
@@ -248,22 +256,54 @@ function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFin
   }
 
   const handleSave = async (versionName = "") => {
-    if (!editorState || !editorState.present.workflow || !userId || isSaving) return
+    if (!editorState || !editorState.present.workflow || !userId || isSaving || requestInFlight.current) return
     const snapshotToSave = editorState.present
-    const fingerprintToSave = currentFingerprint ?? await fingerprintSnapshot(snapshotToSave)
+    const fingerprintToSave = await fingerprintSnapshot(snapshotToSave)
     setIsSaving(true)
     setError(null)
     setSaveStatus("Saving workflow...")
     try {
       const workflowId = savedWorkflowId ?? await createWorkflowRecord(userId, snapshotToSave)
+      const versionNumber = savedWorkflowId ? await saveWorkflowVersion(userId, workflowId, snapshotToSave, versionName) : 1
       if (!savedWorkflowId) setSavedWorkflowId(workflowId)
-      else await saveWorkflowVersion(userId, workflowId, snapshotToSave, versionName)
+      setLatestSavedVersionNumber(versionNumber)
       setSavedFingerprint(fingerprintToSave)
       setSaveStatus("Saved")
+      setHistoryRefreshKey((value) => value + 1)
     } catch (persistenceError: unknown) {
       setSaveStatus(friendlyPersistenceError(persistenceError))
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleRestoreVersion = async (versionNumber: number) => {
+    if (!editorState || !savedWorkflowId || requestInFlight.current || isSaving || isRestoring) return
+    requestInFlight.current = true
+    setIsRestoring(true)
+    setError(null)
+    dispatch({ type: "async/set", asyncState: { status: "loading" } })
+    try {
+      const currentHash = await fingerprintSnapshot(editorState.present)
+      if (currentHash !== savedFingerprint && !window.confirm("This workflow has unsaved changes. Restore this version and discard them?")) return
+      const saved = await loadWorkflowVersion(savedWorkflowId, versionNumber)
+      if (!saved) throw new Error("The selected saved version could not be found.")
+      const snapshot = { workflow: saved.workflow, nodePresentations: saved.nodePresentations, annotations: saved.annotations }
+      const restoredFingerprint = await fingerprintSnapshot(snapshot)
+      dispatch({ type: "snapshot/record", snapshot })
+      dispatch({ type: "selection/set", selection: { kind: "none" } })
+      dispatch({ type: "tool/set", tool: "select" })
+      setPrompt("")
+      setError(null)
+      setSaveStatus(`Version ${versionNumber} loaded as an unsaved draft`)
+      setRestoredVersion({ versionNumber, fingerprint: restoredFingerprint })
+      setHistoryOpen(false)
+    } catch {
+      setError("We couldn't restore that version. The saved data may be unavailable or invalid. Please retry.")
+    } finally {
+      requestInFlight.current = false
+      setIsRestoring(false)
+      dispatch({ type: "async/set", asyncState: { status: "idle" } })
     }
   }
 
@@ -312,6 +352,7 @@ function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFin
         isRequestLoading={isRequestLoading}
         onNewWorkflow={() => void handleReset()}
         onBackToLibrary={onBackToLibrary ? () => void handleBackToLibrary() : undefined}
+        onVersionHistory={savedWorkflowId ? () => setHistoryOpen(true) : undefined}
         onExport={handleExport}
         onSave={userId && workflow ? handleSave : undefined}
         onSaveVersion={userId && workflow ? (name) => void handleSave(name) : undefined}
@@ -321,6 +362,17 @@ function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFin
         userEmail={userEmail}
         onSignOut={onSignOut}
       />
+      {historyOpen && savedWorkflowId && latestSavedVersionNumber !== null && <VersionHistoryDrawer
+        workflowId={savedWorkflowId}
+        latestVersionNumber={latestSavedVersionNumber}
+        currentFingerprint={currentFingerprint}
+        savedFingerprint={savedFingerprint}
+        restoredVersion={restoredVersion}
+        refreshKey={historyRefreshKey}
+        isRestoring={isRestoring}
+        onClose={() => setHistoryOpen(false)}
+        onRestore={(versionNumber) => void handleRestoreVersion(versionNumber)}
+      />}
       <EditorToolbar
         editingViewport={editingViewport}
         isRequestLoading={isRequestLoading}

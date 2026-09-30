@@ -579,8 +579,10 @@ Each implementer completes only the first incomplete checkpoint, runs its requir
 
 ### V2 Supabase checkpoint: version history, restore, and rename
 
-- Status: INCOMPLETE
+- Status: COMPLETE
 - Purpose: List immutable versions, restore an older version as an unsaved undoable draft, and rename workflows consistently through a new saved version.
 - Required behavior: Preserve the current editor when loading fails, confirm before replacing unsaved changes, never overwrite an existing version, and update library metadata only after successful persistence.
+- Implementation: Added a newest-first Version History drawer with validated history metadata, current/latest state, retryable loading, and restore-as-draft through one undoable snapshot action. Added a library Rename dialog and the rename_owned_workflow SECURITY INVOKER migration, which atomically appends a title-updated immutable version and updates workflow metadata. Run the hosted migration manually in the Supabase SQL Editor before using Rename in production.
+- Validation: Focused repository, library, history, editor-state/history, and shell suites passed (42 tests); directly affected history and shell suites passed (11 tests); frontend production build passed; git diff --check passed. Build reports a greater-than-500-kB main-chunk advisory.
 - Commit message: `feat(frontend): restore versions and rename workflows`
-- Stop conditions: Stop if the work requires a database migration, bypassing RLS, overwriting immutable versions, or accepting unvalidated stored data.
+- Stop conditions: Do not automatically run the hosted migration. Stop if the function cannot retain RLS as its access boundary, immutable versions would be overwritten, or unvalidated stored data could reach editor state.

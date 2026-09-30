@@ -1,8 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import WorkflowLibrary from "../components/editor/WorkflowLibrary"
 
-const repo = vi.hoisted(() => ({ listOwnedWorkflows: vi.fn(), loadLatestWorkflow: vi.fn() }))
+const repo = vi.hoisted(() => ({ listOwnedWorkflows: vi.fn(), loadLatestWorkflow: vi.fn(), renameWorkflow: vi.fn() }))
 vi.mock("../editor/workflowRepository", () => repo)
 
 afterEach(() => {
@@ -52,5 +52,33 @@ describe("WorkflowLibrary", () => {
     expect(repo.listOwnedWorkflows).toHaveBeenCalledTimes(2)
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }))
     expect(onSignOut).toHaveBeenCalledTimes(1)
+  })
+
+  it("renames a workflow and refreshes its library title", async () => {
+    repo.listOwnedWorkflows.mockResolvedValueOnce([row]).mockResolvedValueOnce([{ ...row, title: "Qualified leads" }])
+    repo.renameWorkflow.mockResolvedValue({ versionNumber: 2, updatedAt: "2026-10-01T10:00:00Z" })
+    render(<WorkflowLibrary userId="user-1" refreshKey={0} onCreate={vi.fn()} onOpen={vi.fn()} />)
+    fireEvent.click(await screen.findByRole("button", { name: "Rename" }))
+    expect(screen.getByRole("textbox", { name: "Workflow name" })).toHaveValue("Lead intake")
+    const dialog = screen.getByRole("dialog", { name: "Rename workflow" })
+    expect(within(dialog).getByRole("button", { name: "Rename" })).toBeDisabled()
+    fireEvent.change(screen.getByRole("textbox", { name: "Workflow name" }), { target: { value: "  Qualified leads  " } })
+    fireEvent.click(within(dialog).getByRole("button", { name: "Rename" }))
+    expect(await screen.findByRole("heading", { name: "Qualified leads" })).toBeInTheDocument()
+    expect(screen.getByRole("status")).toHaveTextContent("Workflow renamed to “Qualified leads”.")
+    expect(repo.renameWorkflow).toHaveBeenCalledWith("wf-1", "Qualified leads")
+    expect(repo.listOwnedWorkflows).toHaveBeenCalledTimes(2)
+  })
+
+  it("keeps the existing card and name available when rename fails", async () => {
+    repo.listOwnedWorkflows.mockResolvedValue([row])
+    repo.renameWorkflow.mockRejectedValue(new Error("database error"))
+    render(<WorkflowLibrary userId="user-1" refreshKey={0} onCreate={vi.fn()} onOpen={vi.fn()} />)
+    fireEvent.click(await screen.findByRole("button", { name: "Rename" }))
+    fireEvent.change(screen.getByRole("textbox", { name: "Workflow name" }), { target: { value: "New title" } })
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Rename workflow" })).getByRole("button", { name: "Rename" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't rename this workflow")
+    expect(screen.getByRole("heading", { name: "Lead intake" })).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "Workflow name" })).toHaveValue("New title")
   })
 })

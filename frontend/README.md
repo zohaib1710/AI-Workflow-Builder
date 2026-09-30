@@ -57,3 +57,7 @@ The tests run in jsdom and mock the frontend API boundary or `fetch`; they do no
 ## State and interaction model
 
 Generated workflows are held only in browser memory; refreshing the page clears them. **New workflow** clears the current in-memory editor state. Pan, zoom, fit view, and the MiniMap remain available for navigation.
+
+## Supabase persistence
+
+Authenticated users can browse, reopen, version, restore, and rename their saved workflows. To enable atomic workflow renaming, manually run `supabase/migrations/20260930_rename_owned_workflow.sql` in the Supabase Dashboard's SQL Editor. The migration is not run by the frontend or automatically against a hosted project. Until it is applied, Rename reports that setup is required.

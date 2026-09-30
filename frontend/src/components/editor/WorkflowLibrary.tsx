@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { fingerprintSnapshot } from "../../editor/snapshotFingerprint"
-import { listOwnedWorkflows, loadLatestWorkflow, type OwnedWorkflowSummary, type SavedWorkflow } from "../../editor/workflowRepository"
+import { listOwnedWorkflows, loadLatestWorkflow, renameWorkflow, type OwnedWorkflowSummary, type SavedWorkflow } from "../../editor/workflowRepository"
 import type { EditorSnapshot } from "../../editor/types"
+import RenameWorkflowDialog from "./RenameWorkflowDialog"
 
 interface WorkflowLibraryProps {
   userId: string
@@ -20,6 +21,10 @@ function WorkflowLibrary({ userId, userEmail, refreshKey, onCreate, onOpen, onSi
   const [error, setError] = useState<string | null>(null)
   const [openingId, setOpeningId] = useState<string | null>(null)
   const [retryTarget, setRetryTarget] = useState<RetryTarget | null>(null)
+  const [renameTarget, setRenameTarget] = useState<OwnedWorkflowSummary | null>(null)
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const loadList = async () => {
     setIsLoading(true)
@@ -60,6 +65,26 @@ function WorkflowLibrary({ userId, userEmail, refreshKey, onCreate, onOpen, onSi
     else void loadList()
   }
 
+  const handleRename = async (title: string) => {
+    if (!renameTarget || isRenaming) return
+    setIsRenaming(true)
+    setRenameError(null)
+    try {
+      await renameWorkflow(renameTarget.id, title)
+      setRenameTarget(null)
+      await loadList()
+      setNotice(`Workflow renamed to “${title}”.`)
+    } catch (renameFailure: unknown) {
+      const code = renameFailure && typeof renameFailure === "object" && "code" in renameFailure ? String(renameFailure.code) : ""
+      if (code === "42501") setRenameError("You don't have permission to rename this workflow.")
+      else if (code === "42883" || code === "PGRST202") setRenameError("Rename is not set up yet. Apply the provided Supabase migration, then try again.")
+      else if (renameFailure instanceof TypeError) setRenameError("We couldn't reach Supabase. Check your connection and try again.")
+      else setRenameError("We couldn't rename this workflow. Please try again.")
+    } finally {
+      setIsRenaming(false)
+    }
+  }
+
   return (
     <main className="workflow-library" aria-labelledby="workflow-library-title">
       <header className="workflow-library__header">
@@ -71,9 +96,11 @@ function WorkflowLibrary({ userId, userEmail, refreshKey, onCreate, onOpen, onSi
         </div>
       </header>
       {isLoading && <p role="status" className="workflow-library__status">Loading your workflows...</p>}
+      {notice && <p role="status" className="workflow-library__notice">{notice}</p>}
       {error && <div className="workflow-library__error" role="alert"><span>{error}</span>{!isLoading && <button type="button" onClick={retry}>Retry</button>}</div>}
       {!isLoading && !error && workflows.length === 0 && <section className="workflow-library__empty"><h2>No saved workflows yet</h2><p>Create a workflow and it will appear here after it is saved.</p><button type="button" onClick={onCreate}>Generate a new workflow</button></section>}
-      {!isLoading && workflows.length > 0 && <section className="workflow-library__grid" aria-label="Saved workflows">{workflows.map((workflow) => <article className="workflow-library__card" key={workflow.id}><div><h2>{workflow.title}</h2><p>{workflow.description}</p><time dateTime={workflow.updatedAt}>Updated {new Date(workflow.updatedAt).toLocaleDateString()}</time></div><button type="button" onClick={() => void openWorkflow(workflow)} disabled={openingId !== null}>{openingId === workflow.id ? "Opening..." : "Open workflow"}</button></article>)}</section>}
+      {!isLoading && workflows.length > 0 && <section className="workflow-library__grid" aria-label="Saved workflows">{workflows.map((workflow) => <article className="workflow-library__card" key={workflow.id}><div><h2>{workflow.title}</h2><p>{workflow.description}</p><time dateTime={workflow.updatedAt}>Updated {new Date(workflow.updatedAt).toLocaleDateString()}</time></div><div className="workflow-library__card-actions"><button type="button" className="workflow-library__rename" onClick={() => { setRenameTarget(workflow); setRenameError(null) }} disabled={isRenaming}>Rename</button><button type="button" onClick={() => void openWorkflow(workflow)} disabled={openingId !== null || isRenaming}>{openingId === workflow.id ? "Opening..." : "Open workflow"}</button></div></article>)}</section>}
+      <RenameWorkflowDialog title={renameTarget?.title ?? null} isRenaming={isRenaming} error={renameError} onCancel={() => { if (!isRenaming) setRenameTarget(null) }} onRename={(title) => void handleRename(title)} />
     </main>
   )
 }

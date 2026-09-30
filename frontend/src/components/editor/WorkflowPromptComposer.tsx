@@ -35,7 +35,7 @@ function WorkflowPromptComposer({
     : "Describe the workflow you want to create..."
 
   useEffect(() => {
-    setIsCollapsed(false)
+    if (!isIteration) setIsCollapsed(false)
   }, [mode])
 
   if (isIteration && isCollapsed) {
