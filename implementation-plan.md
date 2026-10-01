@@ -532,6 +532,14 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `feat(app): archive workflows and refresh branding`
 - Stop conditions: Do not delete workflows or versions, change collaborator access, or automatically apply a hosted database migration.
 
+### V2 Cursor Correction: Refine canvas cursor states
+
+- Status: INCOMPLETE (production build and diff validation passed; interactive browser verification pending)
+- Purpose: Replace dated canvas cursors with a coordinated graphite-and-indigo cursor set while preserving the existing interactions.
+- Implementation: Added authored SVG resting-arrow, open-hand, closed-hand, and four-way move assets with light contrast outlines. Panning uses open/closed hands, draggable nodes and annotations use the move/closed-hand pair, group selections use open/closed hands, and connection ports retain a crosshair. Preserved native cursor contexts and browser fallbacks; no interaction or workflow behavior changed.
+- Validation: `npm.cmd run build --prefix frontend` passed; `git diff --check` passed; production CSS was checked to confirm all four SVGs are bundled. A headless Chrome screenshot attempt did not produce an image. Still required: interactively inspect panning, node and annotation dragging, group selection dragging, cursor hotspots, and native cursor contexts in a browser.
+- Commit message: `feat(frontend): refresh editor cursors`
+
 ### V2 Checkpoint 14: Document and perform final Version 2 verification
 
 - Status: INCOMPLETE

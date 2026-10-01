@@ -403,3 +403,11 @@
 - Validation: focused repository, library, auth, editor-shell, App, and browser-branding tests passed (31 tests); production build and `git diff --check` passed. CSS and portal layering were reviewed for desktop and narrow-width scroll behavior; no live hosted migration or database operation was performed.
 - Next: continue with the still-incomplete Version 2 documentation and final verification checkpoint.
 - Prepared commit message: `feat(app): archive workflows and refresh branding`.
+
+## Canvas cursor refresh
+
+- Replaced the solid black cursor artwork with authored SVG arrow, open-hand, closed-hand, and four-way move cursors using graphite fills, pale contrast outlines, and restrained indigo accents. Vite inlines all four assets in the production stylesheet.
+- The canvas uses the arrow at rest, open hand over draggable panes and group-selection surfaces, a four-way move cursor over draggable nodes/annotations, and the closed hand during pane, node, or active group-selection dragging. Connection ports retain a crosshair; disabled ports remain not-allowed. Native UI cursors and browser fallbacks remain in place.
+- No drag handlers, viewport behavior, workflow state, dependencies, or diagram styling changed.
+- Validation: frontend production build passed, production CSS contains all four SVG cursor assets, and `git diff --check` passed. A headless Chrome rendering attempt did not produce a screenshot; interactive verification of panning, node/annotation dragging, group dragging, cursor hotspots, and native control cursors remains pending. V2 Checkpoint 14 remains incomplete.
+- Prepared commit message: `feat(frontend): refresh editor cursors`.
