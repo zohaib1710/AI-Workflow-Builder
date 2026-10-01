@@ -1669,7 +1669,7 @@ textarea {
 .editor-canvas__empty, .editor-canvas .workflow-canvas, .editor-canvas .react-flow, .editor-canvas .react-flow__pane { background-color: var(--app-canvas); }
 .editor-canvas__empty { background-image: radial-gradient(circle, rgb(91 99 154 / 0.11) 0.7px, transparent 0.8px); background-size: 22px 22px; }
 .editor-floating-controls { top: 0.8rem; right: 0.8rem; left: 0.8rem; display: flex; min-height: 3.8rem; max-width: none; align-items: center; gap: 0.85rem; border: 1px solid var(--app-border); border-radius: var(--app-radius-lg); background: rgb(255 253 250 / 0.96); padding: 0.5rem 0.65rem; box-shadow: var(--app-shadow-md); backdrop-filter: blur(16px); pointer-events: auto; animation: app-enter 220ms ease-out both; }
-.editor-floating-controls__navigation { display: flex; min-width: 0; align-items: center; gap: 0.4rem; }
+.editor-floating-controls__navigation { display: flex; min-width: 0; align-items: center; gap: 1rem; }
 .editor-floating-controls__identity { min-width: 0; max-width: 16rem; border: 0; background: transparent; padding: 0; box-shadow: none; backdrop-filter: none; }
 .editor-floating-controls__mark { width: 2.4rem; height: 2.4rem; border-color: #dcd9ff; border-radius: 0.8rem; background: var(--app-primary-soft); color: var(--app-primary); }
 .editor-floating-controls__product { color: var(--app-ink); font-size: 0.78rem; font-weight: 760; }
@@ -1679,7 +1679,7 @@ textarea {
 .editor-floating-controls__user { max-width: 10rem; color: var(--app-muted); font-size: 0.68rem; }
 .editor-floating-controls__new { min-height: 2.4rem; border-color: transparent; border-radius: var(--app-radius-sm); background: transparent; padding: 0.55rem 0.75rem; color: var(--app-ink); font-size: 0.75rem; font-weight: 660; box-shadow: none; backdrop-filter: none; transition: background-color var(--app-motion), border-color var(--app-motion), color var(--app-motion), transform var(--app-motion); }
 .editor-floating-controls__new:hover:not(:disabled) { border-color: var(--app-border); background: var(--app-surface-soft); color: var(--app-primary-hover); }
-.editor-floating-controls__library { color: var(--app-muted); }
+.editor-floating-controls__library { color: var(--app-muted); border-color: #505a78; }
 .editor-floating-controls__new--primary { border-color: var(--app-primary); background: var(--app-primary); color: #fff; }
 .editor-floating-controls__new--primary:hover:not(:disabled) { border-color: var(--app-primary-hover); background: var(--app-primary-hover); color: #fff; }
 .editor-floating-controls__new--disabled, .editor-floating-controls__new:disabled { border-color: #e3e6ef; background: #eef0f6; color: #7d86a2; box-shadow: none; }
