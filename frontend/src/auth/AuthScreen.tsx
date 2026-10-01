@@ -40,7 +40,7 @@ function AuthScreen() {
     <main className="auth-screen">
       <div className="auth-layout">
         <section className="auth-showcase" aria-labelledby="auth-showcase-heading">
-          <div className="auth-showcase__brand"><span aria-hidden="true"><Icon name="brand" /></span>AI Workflow Builder</div>
+          <div className="auth-showcase__brand"><span aria-hidden="true"><Icon name="brand" /></span>Systemapic Workflow Builder</div>
           <div className="auth-showcase__content">
             <p className="auth-showcase__eyebrow">A better way to work</p>
             <h2 id="auth-showcase-heading">Give every great idea a clear path forward.</h2>
@@ -56,7 +56,7 @@ function AuthScreen() {
           <p className="auth-showcase__footer">Clarity for every step of the process.</p>
         </section>
         <section className="auth-card" aria-labelledby="auth-heading">
-          <div className="auth-card__brand"><span aria-hidden="true"><Icon name="brand" /></span>AI Workflow Builder</div>
+          <div className="auth-card__brand"><span aria-hidden="true"><Icon name="brand" /></span>Systemapic Workflow Builder</div>
           <h1 id="auth-heading">{isSignUp ? "Create your account" : "Welcome back"}</h1>
           <p className="auth-card__intro">Save, version, and collaborate on your workflows.</p>
           <form onSubmit={submit} className="auth-card__form">

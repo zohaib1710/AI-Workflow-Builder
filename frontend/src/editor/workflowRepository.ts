@@ -57,6 +57,15 @@ export interface OwnedWorkflowSummary {
   updatedAt: string
 }
 
+export interface ArchivedWorkflowSummary extends OwnedWorkflowSummary {
+  archivedAt: string
+}
+
+export interface WorkflowLibraryResult {
+  active: OwnedWorkflowSummary[]
+  archived: ArchivedWorkflowSummary[]
+}
+
 export interface WorkflowVersionSummary {
   versionNumber: number
   name: string
@@ -111,6 +120,41 @@ export async function listOwnedWorkflows(userId: string): Promise<OwnedWorkflowS
     if (typeof row.id !== "string" || typeof row.title !== "string" || typeof row.description !== "string" || typeof row.updated_at !== "string") throw new Error("The saved workflow list contains invalid data.")
     return { id: row.id, title: row.title, description: row.description, updatedAt: row.updated_at }
   })
+}
+
+export async function listWorkflowLibrary(userId: string): Promise<WorkflowLibraryResult> {
+  const [workflowsResult, archivesResult] = await Promise.all([
+    supabase.from("workflows").select("id, title, description, updated_at").eq("owner_id", userId).order("updated_at", { ascending: false }),
+    supabase.from("workflow_archives").select("workflow_id, archived_at, archived_by").eq("archived_by", userId).order("archived_at", { ascending: false }),
+  ])
+  if (workflowsResult.error) throw workflowsResult.error
+  if (archivesResult.error) throw archivesResult.error
+  if (!Array.isArray(workflowsResult.data) || !Array.isArray(archivesResult.data)) throw new Error("The workflow library could not be read.")
+
+  const workflows = workflowsResult.data.map((row: Record<string, unknown>) => {
+    if (typeof row.id !== "string" || typeof row.title !== "string" || typeof row.description !== "string" || !isValidTimestamp(row.updated_at)) throw new Error("The workflow library contains invalid data.")
+    return { id: row.id, title: row.title, description: row.description, updatedAt: row.updated_at }
+  })
+  const ownedById = new Map(workflows.map((workflow) => [workflow.id, workflow]))
+  const archived: ArchivedWorkflowSummary[] = archivesResult.data.map((row: Record<string, unknown>) => {
+    if (typeof row.workflow_id !== "string" || row.archived_by !== userId || !isValidTimestamp(row.archived_at)) throw new Error("The archive list contains invalid data.")
+    const workflow = ownedById.get(row.workflow_id)
+    if (!workflow) throw new Error("An archived workflow could not be verified as owned by this user.")
+    return { ...workflow, archivedAt: row.archived_at }
+  }).sort((a, b) => Date.parse(b.archivedAt) - Date.parse(a.archivedAt))
+  const archivedIds = new Set(archived.map(({ id }) => id))
+  return { active: workflows.filter(({ id }) => !archivedIds.has(id)), archived }
+}
+
+export async function archiveWorkflow(workflowId: string, userId: string): Promise<void> {
+  const { error } = await supabase.from("workflow_archives").insert({ workflow_id: workflowId, archived_by: userId })
+  if (error) throw error
+}
+
+export async function restoreWorkflow(workflowId: string, userId: string): Promise<void> {
+  const { data, error } = await supabase.from("workflow_archives").delete().eq("workflow_id", workflowId).eq("archived_by", userId).select("workflow_id").maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error("The archived workflow could not be found. Refresh the library and try again.")
 }
 
 export async function createWorkflowRecord(userId: string, snapshot: EditorSnapshot) {

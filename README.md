@@ -1,6 +1,6 @@
-# AI Workflow Builder
+# Systemapic Workflow Builder
 
-AI Workflow Builder turns a natural-language business-process description into a validated visual workflow diagram. The provider-agnostic backend generates core workflow metadata, nodes, and edges, and the frontend renders them with React Flow.
+Systemapic Workflow Builder turns a natural-language business-process description into a validated visual workflow diagram. The provider-agnostic backend generates core workflow metadata, nodes, and edges, and the frontend renders them with React Flow.
 
 It designs and visualizes workflows; it does not execute or save them.
 

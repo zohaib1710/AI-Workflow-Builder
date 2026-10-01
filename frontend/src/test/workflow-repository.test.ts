@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { listWorkflowVersions, loadWorkflowVersion, parseSavedWorkflow, parseWorkflowVersionSummary, renameWorkflow } from "../editor/workflowRepository"
+import { archiveWorkflow, listWorkflowLibrary, listWorkflowVersions, loadWorkflowVersion, parseSavedWorkflow, parseWorkflowVersionSummary, renameWorkflow, restoreWorkflow } from "../editor/workflowRepository"
 
 const supabaseMocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn() }))
 vi.mock("../lib/supabase", () => ({ supabase: supabaseMocks }))
@@ -50,5 +50,46 @@ describe("saved workflow repository data validation", () => {
     expect(supabaseMocks.rpc).toHaveBeenCalledWith("rename_owned_workflow", { p_workflow_id: "wf-1", p_new_title: "New title" })
     supabaseMocks.rpc.mockResolvedValue({ data: { version_number: 0, updated_at: "bad" }, error: null })
     await expect(renameWorkflow("wf-1", "New title")).rejects.toThrow(/invalid confirmation data/)
+  })
+
+  it("splits owned workflows into active and archived lists and validates archive ownership metadata", async () => {
+    const makeQuery = (data: unknown) => {
+      const query = { select: vi.fn(), eq: vi.fn(), order: vi.fn() }
+      query.select.mockReturnValue(query)
+      query.eq.mockReturnValue(query)
+      query.order.mockResolvedValue({ data, error: null })
+      return query
+    }
+    const workflows = makeQuery([
+      { id: "wf-a", title: "Archived", description: "Old", updated_at: "2026-10-01T00:00:00Z" },
+      { id: "wf-b", title: "Active", description: "Current", updated_at: "2026-09-30T00:00:00Z" },
+    ])
+    const archives = makeQuery([{ workflow_id: "wf-a", archived_at: "2026-10-02T00:00:00Z", archived_by: "user-1" }])
+    supabaseMocks.from.mockImplementation((table: string) => table === "workflows" ? workflows : archives)
+    await expect(listWorkflowLibrary("user-1")).resolves.toEqual({
+      active: [{ id: "wf-b", title: "Active", description: "Current", updatedAt: "2026-09-30T00:00:00Z" }],
+      archived: [{ id: "wf-a", title: "Archived", description: "Old", updatedAt: "2026-10-01T00:00:00Z", archivedAt: "2026-10-02T00:00:00Z" }],
+    })
+    expect(workflows.eq).toHaveBeenCalledWith("owner_id", "user-1")
+    expect(archives.eq).toHaveBeenCalledWith("archived_by", "user-1")
+    archives.order.mockResolvedValue({ data: [{ workflow_id: "wf-a", archived_at: "bad", archived_by: "someone-else" }], error: null })
+    await expect(listWorkflowLibrary("user-1")).rejects.toThrow(/archive list contains invalid data/)
+    archives.order.mockResolvedValue({ data: null, error: { code: "42P01", message: "missing relation" } })
+    await expect(listWorkflowLibrary("user-1")).rejects.toMatchObject({ code: "42P01" })
+  })
+
+  it("archives and restores using only the archive marker table", async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null })
+    const archiveDelete = { eq: vi.fn(), select: vi.fn(), maybeSingle: vi.fn() }
+    archiveDelete.eq.mockReturnValue(archiveDelete)
+    archiveDelete.select.mockReturnValue(archiveDelete)
+    archiveDelete.maybeSingle.mockResolvedValue({ data: { workflow_id: "wf-a" }, error: null })
+    supabaseMocks.from.mockImplementation((table: string) => table === "workflow_archives" ? { insert, delete: () => archiveDelete } : null)
+    await expect(archiveWorkflow("wf-a", "user-1")).resolves.toBeUndefined()
+    expect(supabaseMocks.from).toHaveBeenCalledWith("workflow_archives")
+    expect(insert).toHaveBeenCalledWith({ workflow_id: "wf-a", archived_by: "user-1" })
+    await expect(restoreWorkflow("wf-a", "user-1")).resolves.toBeUndefined()
+    expect(archiveDelete.eq).toHaveBeenNthCalledWith(1, "workflow_id", "wf-a")
+    expect(archiveDelete.eq).toHaveBeenNthCalledWith(2, "archived_by", "user-1")
   })
 })

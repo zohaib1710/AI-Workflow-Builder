@@ -516,6 +516,22 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `feat(frontend): redesign app interface`
 - Stop conditions: Do not add new auth, library, editor, diagram, API, persistence, or dependency behavior as part of this visual checkpoint.
 
+### V2 correction: archive workflows and refresh product branding
+
+- Status: COMPLETE
+- Purpose: Let owners organize workflows without deleting versions or revoking collaborator access, provide a scrollable workflow library, and update the product identity.
+- Implementation: Added `workflow_archives` with authenticated table grants and owner-only RLS. The frontend loads archive and workflow rows together and separates Active and Archived; archive confirmation and restore only add/remove archive markers. Failed list loads never render stale data as active, while failed actions preserve cards and offer retry. The library has viewport-height internal scrolling. Authentication, library, editor header, browser metadata, favicon, and product documentation use the Systemapic Workflow Builder name and authored branching-node mark.
+- Rollout: Manually apply `supabase/migrations/20261002_workflow_archives.sql` in Supabase SQL Editor before deploying. No hosted migration was run.
+- Required validation: focused repository, library, auth, editor-shell, App, and branding suites; frontend production build; `git diff --check`.
+- Acceptance criteria:
+  - [x] Only authenticated owners can read, create, or remove their archive marker; workflows, versions, and collaborator access remain unchanged.
+  - [x] Active and Archived views, empty states, confirmation cancellation, archive/restore, retryable failures, and strict archive metadata checks are covered.
+  - [x] Library scrolling is contained to its viewport-height element at desktop and narrow widths; confirmation is portaled above it.
+  - [x] Product name and branching-node SVG are used in auth, library, editor, favicon, and browser metadata.
+  - [x] Focused suites (31 tests), production build, and `git diff --check` pass.
+- Commit message: `feat(app): archive workflows and refresh branding`
+- Stop conditions: Do not delete workflows or versions, change collaborator access, or automatically apply a hosted database migration.
+
 ### V2 Checkpoint 14: Document and perform final Version 2 verification
 
 - Status: INCOMPLETE

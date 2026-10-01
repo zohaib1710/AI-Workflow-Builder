@@ -1,4 +1,4 @@
-# AI Workflow Builder frontend
+# Systemapic Workflow Builder frontend
 
 The frontend collects a workflow prompt and displays the validated response as a visual workflow diagram. It uses React, TypeScript, Vite, Tailwind CSS, React Flow, Dagre, Vitest, and Testing Library.
 
@@ -61,3 +61,5 @@ Generated workflows are held only in browser memory; refreshing the page clears 
 ## Supabase persistence
 
 Authenticated users can browse, reopen, version, restore, and rename their saved workflows. To enable atomic workflow renaming, manually run `supabase/migrations/20260930_rename_owned_workflow.sql` in the Supabase Dashboard's SQL Editor. The migration is not run by the frontend or automatically against a hosted project. Until it is applied, Rename reports that setup is required.
+
+To enable the Active and Archived workflow views, manually run `supabase/migrations/20261002_workflow_archives.sql` in the Supabase Dashboard's SQL Editor before deploying this frontend. This adds only owner-scoped archive markers; it does not delete saved versions or change collaborator access. The application never applies this migration automatically.

@@ -30,7 +30,7 @@ function EditorHeader({ workflowTitle, hasExportableContent, isRequestLoading, o
         <div className="editor-floating-controls__identity">
           <span className="editor-floating-controls__mark" aria-hidden="true"><Icon name="brand" /></span>
           <div className="editor-floating-controls__titles">
-            <h1 className="editor-floating-controls__product">AI Workflow Builder</h1>
+            <h1 className="editor-floating-controls__product">Systemapic Workflow Builder</h1>
             {workflowTitle && <h2 className="editor-floating-controls__workflow-title">{workflowTitle}</h2>}
           </div>
         </div>

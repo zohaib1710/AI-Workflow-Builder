@@ -6,7 +6,7 @@ import { WorkflowApiError } from "../api/client"
 import type { GenerateWorkflowResponse } from "../types/workflow"
 
 const generateWorkflowMock = vi.hoisted(() => vi.fn())
-const repositoryMocks = vi.hoisted(() => ({ listOwnedWorkflows: vi.fn(), loadLatestWorkflow: vi.fn(), createWorkflowRecord: vi.fn(), saveWorkflowVersion: vi.fn() }))
+const repositoryMocks = vi.hoisted(() => ({ listOwnedWorkflows: vi.fn(), listWorkflowLibrary: vi.fn(), loadLatestWorkflow: vi.fn(), createWorkflowRecord: vi.fn(), saveWorkflowVersion: vi.fn() }))
 
 vi.mock("../auth/AuthContext", () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => children,
@@ -29,6 +29,7 @@ vi.mock("../api/client", async (importOriginal) => {
 
 beforeEach(() => {
   repositoryMocks.listOwnedWorkflows.mockResolvedValue([])
+  repositoryMocks.listWorkflowLibrary.mockResolvedValue({ active: [], archived: [] })
   repositoryMocks.createWorkflowRecord.mockResolvedValue("new-workflow-id")
   repositoryMocks.saveWorkflowVersion.mockResolvedValue(2)
 })
@@ -83,7 +84,8 @@ describe("App workflow generation", () => {
     render(<App />)
     expect(await screen.findByRole("heading", { name: "My workflows" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /^new workflow$/i })).toBeInTheDocument()
-    expect(screen.getByText("No saved workflows yet")).toBeInTheDocument()
+    expect(screen.getByText("No active workflows")).toBeInTheDocument()
+    expect(screen.getByText("Systemapic Workflow Builder")).toBeInTheDocument()
     expect(screen.queryByRole("textbox", { name: "Workflow prompt" })).not.toBeInTheDocument()
   })
 
@@ -95,9 +97,9 @@ describe("App workflow generation", () => {
       annotations: [],
       versionNumber: 3,
     }
-    repositoryMocks.listOwnedWorkflows.mockResolvedValue([
+    repositoryMocks.listWorkflowLibrary.mockResolvedValue({ active: [
       { id: savedWorkflow.id, title: savedWorkflow.workflow.title, description: savedWorkflow.workflow.description, updatedAt: "2026-09-30T10:00:00Z" },
-    ])
+    ], archived: [] })
     repositoryMocks.loadLatestWorkflow.mockResolvedValue(savedWorkflow)
     const confirm = vi.spyOn(window, "confirm")
 

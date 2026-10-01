@@ -2,7 +2,7 @@ function Header() {
   return (
     <header className="space-y-4">
       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">
-        AI Workflow Builder
+        Systemapic Workflow Builder
       </p>
       <div className="max-w-3xl space-y-3">
         <h1 className="text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">

@@ -393,3 +393,13 @@
 - Preserved diagram node, edge, annotation, label, geometry, and export-capture selectors and the legacy theme variables consumed by them. No state, API, persistence, backend, dependency, or workflow behavior changed.
 - Validation: focused auth, library, editor-shell, version-history, and export-menu suites passed (20 tests); final frontend production build and git diff --check passed. Local desktop/narrow captures were reviewed for sign-in, library, empty/generated editor, selected-node inspector, and history drawer using temporary fixtures that were removed afterward. Export rendering was checked by selector/source audit and existing focused tests, not by a live Supabase workflow download.
 - Proposed commit title: `feat(frontend): redesign app interface`.
+
+## Workflow archive and product branding correction
+
+- Added the `workflow_archives` table migration with authenticated SELECT/INSERT/DELETE grants and owner-only RLS. Archive markers are separate from workflows and immutable versions; collaborator access is unchanged. The migration must be applied manually in Supabase before deploying the frontend.
+- The workflow library now fetches owned workflows and archive markers together, validates archive ownership/timestamps, and separates Active and Archived views. If archive state cannot be read (including a missing migration/table), the library shows a retryable error instead of treating archived records as active.
+- Active workflows can be archived through a portal confirmation dialog; archived workflows can be restored. Action failures keep the affected card visible and offer retry. Neither action writes, updates, or deletes workflow versions.
+- The library uses an independent viewport-height vertical scroll area at desktop and narrow widths. Product text, browser title/description, and documentation headings now say Systemapic Workflow Builder, with a shared authored branching-node SVG and matching favicon.
+- Validation: focused repository, library, auth, editor-shell, App, and browser-branding tests passed (31 tests); production build and `git diff --check` passed. CSS and portal layering were reviewed for desktop and narrow-width scroll behavior; no live hosted migration or database operation was performed.
+- Next: continue with the still-incomplete Version 2 documentation and final verification checkpoint.
+- Prepared commit message: `feat(app): archive workflows and refresh branding`.

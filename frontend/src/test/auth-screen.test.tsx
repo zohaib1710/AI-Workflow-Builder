@@ -9,6 +9,8 @@ describe("AuthScreen", () => {
   it("explains that email confirmation is required", async () => {
     auth.signUp.mockResolvedValue({ status: "confirmation-required" })
     render(<AuthScreen />)
+    expect(screen.getAllByText("Systemapic Workflow Builder")).toHaveLength(2)
+    expect(document.querySelectorAll(".auth-showcase__brand svg circle")).toHaveLength(3)
     fireEvent.click(screen.getByRole("button", { name: /create one/i }))
     fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "A" } })
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@example.com" } })

@@ -1,4 +1,4 @@
-# AI Workflow Builder backend
+# Systemapic Workflow Builder backend
 
 The backend accepts a natural-language prompt, obtains a structured candidate through a provider-agnostic AI boundary, validates it, and returns a safe workflow contract. It targets Python 3.12 and uses FastAPI, Pydantic, `httpx`, and `uv`.
 

@@ -77,6 +77,8 @@ describe("EditorShell", () => {
     expect(canvas.parentElement).toBe(shell)
     expect(screen.getByLabelText("Empty workflow canvas")).toBeInTheDocument()
     expect(screen.getByRole("banner", { name: "Editor controls" })).toHaveClass("editor-floating-controls")
+    expect(screen.getByRole("heading", { name: "Systemapic Workflow Builder" })).toBeInTheDocument()
+    expect(document.querySelectorAll(".editor-floating-controls__mark svg circle")).toHaveLength(3)
     expect(document.querySelector(".editor-shell__toolbar-reserve")).not.toBeInTheDocument()
     expect(document.querySelector(".editor-shell__inspector-reserve")).not.toBeInTheDocument()
     expect(screen.getAllByRole("form")).toHaveLength(1)
