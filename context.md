@@ -384,3 +384,12 @@
 - Fixed an existing composer effect race so collapsing the iteration composer remains effective across the generation-to-iteration transition.
 - Validation: focused suites passed (42 tests); the directly affected history and editor-shell tests passed (11 tests); frontend production build and git diff --check passed. V2 documentation checkpoint remains incomplete.
 - Prepared commit message: feat(frontend): restore versions and rename workflows.
+
+## Premium application interface correction
+
+- Redesigned the authentication screen as a responsive branded split layout with a CSS workflow motif, clearer form hierarchy, accessible feedback, and polished focus/autofill states. Sign-in and sign-up behavior is unchanged.
+- Refined the signed-in workflow library with a stronger heading and New workflow action, decorative thumbnails, and clearer card hierarchy while retaining Open, Rename, account, loading, empty, and retry controls.
+- Reorganized the editor header into navigation, workflow actions, and account groups. Unified toolbar, composer, validation, controls, MiniMap, inspector, dialogs, menus, and history drawer around shared indigo/blue and warm-surface tokens. Corrected medium-width inspector/header overlap and a narrow-screen CSS selector that hid the compact Download button.
+- Preserved diagram node, edge, annotation, label, geometry, and export-capture selectors and the legacy theme variables consumed by them. No state, API, persistence, backend, dependency, or workflow behavior changed.
+- Validation: focused auth, library, editor-shell, version-history, and export-menu suites passed (20 tests); final frontend production build and git diff --check passed. Local desktop/narrow captures were reviewed for sign-in, library, empty/generated editor, selected-node inspector, and history drawer using temporary fixtures that were removed afterward. Export rendering was checked by selector/source audit and existing focused tests, not by a live Supabase workflow download.
+- Proposed commit title: `feat(frontend): redesign app interface`.

@@ -507,6 +507,15 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Validation: frontend production build and `git diff --check` pass.
 - Commit message: `feat(frontend): add Supabase auth and workflow persistence`
 - Stop conditions: Do not expose service-role credentials, bypass RLS, overwrite immutable versions, or change semantic workflow/API contracts.
+### V2 Interface Correction: Redesign app chrome
+
+- Status: COMPLETE
+- Purpose: Give authentication, workflow library, and editor chrome one premium indigo/blue and warm-white visual language without altering diagram rendering or behavior.
+- Implementation: Shared application tokens; responsive branded sign-in/sign-up layout; refined workflow cards and actions; grouped editor header; coordinated toolbar, composer, validation badge, controls, MiniMap, inspector, menus, dialogs, and version-history drawer. The medium-width inspector/header overlap and narrow Download visibility were corrected during visual review.
+- Validation: Focused auth, library, editor-shell, version-history, and export-menu suites passed (20 tests); final frontend production build and `git diff --check` passed. Desktop/narrow local visual fixtures were reviewed and removed. Diagram/export-capture selectors and their consumed legacy variables remained unchanged.
+- Commit message: `feat(frontend): redesign app interface`
+- Stop conditions: Do not add new auth, library, editor, diagram, API, persistence, or dependency behavior as part of this visual checkpoint.
+
 ### V2 Checkpoint 14: Document and perform final Version 2 verification
 
 - Status: INCOMPLETE

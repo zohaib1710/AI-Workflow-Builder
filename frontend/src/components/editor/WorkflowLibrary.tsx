@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { fingerprintSnapshot } from "../../editor/snapshotFingerprint"
 import { listOwnedWorkflows, loadLatestWorkflow, renameWorkflow, type OwnedWorkflowSummary, type SavedWorkflow } from "../../editor/workflowRepository"
 import type { EditorSnapshot } from "../../editor/types"
+import Icon from "./EditorIcons"
 import RenameWorkflowDialog from "./RenameWorkflowDialog"
 
 interface WorkflowLibraryProps {
@@ -88,9 +89,9 @@ function WorkflowLibrary({ userId, userEmail, refreshKey, onCreate, onOpen, onSi
   return (
     <main className="workflow-library" aria-labelledby="workflow-library-title">
       <header className="workflow-library__header">
-        <div><p className="workflow-library__eyebrow">AI Workflow Builder</p><h1 id="workflow-library-title">My workflows</h1><p>Open a saved workflow or start a new one.</p></div>
+        <div><p className="workflow-library__eyebrow"><span aria-hidden="true"><Icon name="brand" /></span> AI Workflow Builder</p><h1 id="workflow-library-title">My workflows</h1><p>Open a saved workflow or start a new one.</p></div>
         <div className="workflow-library__actions">
-          <button type="button" className="workflow-library__create" onClick={onCreate}><span aria-hidden="true">+</span> New workflow</button>
+          <button type="button" className="workflow-library__create" onClick={onCreate}><Icon name="plus" aria-hidden="true" /> New workflow</button>
           {userEmail && <span className="workflow-library__user" title={userEmail}>{userEmail}</span>}
           {onSignOut && <button type="button" className="workflow-library__sign-out" onClick={() => void onSignOut()} disabled={isLoading || openingId !== null}>Sign out</button>}
         </div>

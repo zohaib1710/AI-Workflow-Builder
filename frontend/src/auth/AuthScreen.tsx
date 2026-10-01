@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react"
 import { useAuth } from "./AuthContext"
+import Icon from "../components/editor/EditorIcons"
 
 function AuthScreen() {
   const { signIn, signUp } = useAuth()
@@ -37,20 +38,38 @@ function AuthScreen() {
 
   return (
     <main className="auth-screen">
-      <section className="auth-card" aria-labelledby="auth-heading">
-        <div className="auth-card__brand">AI Workflow Builder</div>
-        <h1 id="auth-heading">{isSignUp ? "Create your account" : "Welcome back"}</h1>
-        <p className="auth-card__intro">Save, version, and collaborate on your workflows.</p>
-        <form onSubmit={submit} className="auth-card__form">
-          {isSignUp && <label>Display name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="name" required /></label>}
-          <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
-          <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={isSignUp ? "new-password" : "current-password"} minLength={8} required /></label>
-          {error && <p className="auth-card__error" role="alert">{error}</p>}
-          {message && <p className="auth-card__message" role="status">{message}</p>}
-          <button type="submit" className="auth-card__submit" disabled={isSubmitting}>{isSubmitting ? "Please wait..." : isSignUp ? "Create account" : "Sign in"}</button>
-        </form>
-        <button type="button" className="auth-card__switch" onClick={() => { setMode(isSignUp ? "sign-in" : "sign-up"); setError(null); setMessage(null) }}>{isSignUp ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
-      </section>
+      <div className="auth-layout">
+        <section className="auth-showcase" aria-labelledby="auth-showcase-heading">
+          <div className="auth-showcase__brand"><span aria-hidden="true"><Icon name="brand" /></span>AI Workflow Builder</div>
+          <div className="auth-showcase__content">
+            <p className="auth-showcase__eyebrow">A better way to work</p>
+            <h2 id="auth-showcase-heading">Give every great idea a clear path forward.</h2>
+            <p>Turn your ideas into visual workflows, refine the details, and keep every version in one place.</p>
+            <div className="auth-showcase__motif" aria-hidden="true">
+              <span className="auth-showcase__motif-node">Your idea</span>
+              <span className="auth-showcase__motif-line" />
+              <span className="auth-showcase__motif-node auth-showcase__motif-node--middle">Your workflow</span>
+              <span className="auth-showcase__motif-line" />
+              <span className="auth-showcase__motif-node">What comes next</span>
+            </div>
+          </div>
+          <p className="auth-showcase__footer">Clarity for every step of the process.</p>
+        </section>
+        <section className="auth-card" aria-labelledby="auth-heading">
+          <div className="auth-card__brand"><span aria-hidden="true"><Icon name="brand" /></span>AI Workflow Builder</div>
+          <h1 id="auth-heading">{isSignUp ? "Create your account" : "Welcome back"}</h1>
+          <p className="auth-card__intro">Save, version, and collaborate on your workflows.</p>
+          <form onSubmit={submit} className="auth-card__form">
+            {isSignUp && <label>Display name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="name" required /></label>}
+            <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
+            <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={isSignUp ? "new-password" : "current-password"} minLength={8} required /></label>
+            {error && <p className="auth-card__error" role="alert">{error}</p>}
+            {message && <p className="auth-card__message" role="status">{message}</p>}
+            <button type="submit" className="auth-card__submit" disabled={isSubmitting}>{isSubmitting ? "Please wait..." : isSignUp ? "Create account" : "Sign in"}</button>
+          </form>
+          <button type="button" className="auth-card__switch" onClick={() => { setMode(isSignUp ? "sign-in" : "sign-up"); setError(null); setMessage(null) }}>{isSignUp ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
+        </section>
+      </div>
     </main>
   )
 }
