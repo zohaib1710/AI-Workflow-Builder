@@ -1852,7 +1852,7 @@ textarea {
   border-color: var(--app-border);
   background: var(--app-surface);
   box-shadow: none;
-  color: var(--app-muted);
+  color: #ffffff;
 }
 .workflow-library__card-actions > .workflow-library__archive:hover:not(:disabled) { border-color: #c7c3f2; background: var(--app-primary-soft); color: var(--app-primary-hover); }
 .workflow-library__card-actions > button:disabled { cursor: wait; opacity: 0.62; }
