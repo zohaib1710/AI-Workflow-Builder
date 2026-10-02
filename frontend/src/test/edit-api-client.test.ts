@@ -62,7 +62,10 @@ describe("editWorkflow", () => {
     const workflow = workflowFixture()
     fetchMock.mockResolvedValue(jsonResponse(response))
 
-    await expect(editWorkflow({ instruction: "Rename it.", workflow })).resolves.toEqual(response)
+    await expect(editWorkflow(
+      { instruction: "Rename it.", workflow },
+      { accessToken: "supabase-access-token" },
+    )).resolves.toEqual(response)
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
@@ -71,6 +74,10 @@ describe("editWorkflow", () => {
     ).replace(/\/+$/, "")
     expect(url).toBe(`${baseUrl}/workflows/edit`)
     expect(init.method).toBe("POST")
+    expect(init.headers).toEqual({
+      "Content-Type": "application/json",
+      Authorization: "Bearer supabase-access-token",
+    })
     expect(init.body).toBe(JSON.stringify({ instruction: "Rename it.", workflow }))
     expect(Object.keys(JSON.parse(String(init.body)))).toEqual(["instruction", "workflow"])
   })

@@ -19,6 +19,7 @@ import VersionHistoryDrawer from "./VersionHistoryDrawer"
 
 export interface EditorShellProps {
   userId?: string
+  accessToken?: string | null
   userEmail?: string | null
   onSignOut?: () => Promise<void>
   workflowId?: string
@@ -80,7 +81,7 @@ function useEditingViewport() {
   return matches
 }
 
-function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFingerprint, initialLatestSavedVersionNumber, onBackToLibrary }: EditorShellProps) {
+function EditorShell({ userId, accessToken, userEmail, onSignOut, workflowId, initialSavedFingerprint, initialLatestSavedVersionNumber, onBackToLibrary }: EditorShellProps) {
   const editorState = useEditorState()
   const dispatch = useEditorDispatch()
   const [prompt, setPrompt] = useState("")
@@ -153,7 +154,9 @@ function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFin
     setSaveStatus(null)
     setIsGenerating(true)
     try {
-      const response = await generateWorkflow({ prompt: normalizedPrompt })
+      const response = accessToken
+        ? await generateWorkflow({ prompt: normalizedPrompt }, { accessToken })
+        : await generateWorkflow({ prompt: normalizedPrompt })
       if (!isMounted.current) return
       dispatch({ type: "workflow/adopt", workflow: response.workflow })
       if (userId) {
@@ -205,10 +208,13 @@ function EditorShell({ userId, userEmail, onSignOut, workflowId, initialSavedFin
     setError(null)
     dispatch({ type: "async/set", asyncState: { status: "loading" } })
     try {
-      const response = await editWorkflow({
+      const editRequest = {
         instruction: normalizedInstruction,
         workflow: previous.workflow,
-      })
+      }
+      const response = accessToken
+        ? await editWorkflow(editRequest, { accessToken })
+        : await editWorkflow(editRequest)
       if (!isMounted.current) return
 
       const reconciliation = reconcileWorkflowPresentation(

@@ -532,6 +532,39 @@ Preserve provider isolation, strict semantic schema, backend graph validation, s
 - Commit message: `feat(app): archive workflows and refresh branding`
 - Stop conditions: Do not delete workflows or versions, change collaborator access, or automatically apply a hosted database migration.
 
+### V2 Account checkpoint 1: Authenticate AI requests
+
+- Status: COMPLETE
+- Purpose: Establish a verified user identity for generation and refinement before personal API keys are introduced.
+- Implementation: The frontend sends the current Supabase access token as an Authorization bearer header for generation and refinement. The backend verifies it through Supabase Auth's `/auth/v1/user` endpoint and derives the authenticated user ID from that response. Invalid/missing tokens receive a safe sign-in error; Supabase verification outages fail closed. CORS allows the Authorization header, and the existing app Groq key remains the provider key.
+- Configuration: Add backend `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` from the project's Supabase settings. No secret key is needed in this checkpoint.
+- Validation: focused backend auth, workflow route, edit route, and health/CORS tests (25 passed); focused frontend API client, edit API client, editor-shell, and App tests (37 passed); frontend production build; focused Ruff; `git diff --check`.
+- Acceptance criteria:
+  - [x] Both AI routes reject missing/invalid sessions before invoking a provider.
+  - [x] The backend authenticates tokens with Supabase and does not trust a user ID from request data.
+  - [x] The frontend sends bearer tokens without placing them in the workflow request body.
+  - [x] CORS permits Authorization; health and existing app-key provider behavior remain intact.
+- Commit message: `feat(api): authenticate workflow AI requests`
+- Stop conditions: Do not trust client identity claims, expose server secrets, or call AI routes when Supabase cannot verify the session.
+
+### V2 Account checkpoint 2: Store personal provider keys
+
+- Status: INCOMPLETE
+- Purpose: Let signed-in users manage personal Groq and OpenAI keys safely from account settings.
+- Implementation: Add a manual Supabase Vault migration, backend-only secret operations and authenticated settings endpoints, plus account settings entry points in My workflows and the editor. Return configured status and timestamps only; never return a saved key. Keep Groq as the default and use a personal Groq key before the app key. Add account-wide provider selection; selecting OpenAI requires a saved personal key.
+- Validation: Test owner isolation, Vault access grants, key create/replace/remove, secret-free responses, selected provider persistence, Groq app-key fallback, and settings UI error/retry states. Run focused frontend/backend tests, frontend build, backend Ruff, and `git diff --check`.
+- Commit message: `feat(account): store personal AI provider keys`
+- Stop conditions: Stop if a browser role can read decrypted Vault data, if a user can access another account's key, or if key contents enter logs or responses.
+
+### V2 Account checkpoint 3: Route providers and clarify errors
+
+- Status: INCOMPLETE
+- Purpose: Support the account-selected Groq or OpenAI provider for generation and refinement and distinguish personal-key, app-key, provider, and application failures.
+- Implementation: Add a dedicated OpenAI adapter using the server-configured `gpt-4.1-mini` model and structured output. Resolve the selected key per authenticated request. A rejected personal key never falls back silently to the app key; removing the active OpenAI key returns selection to Groq. Map allowlisted provider responses into stable safe codes and actionable provider-specific UI messages; never expose raw upstream response bodies.
+- Validation: Mock both providers for generation/refinement; test precedence, no hidden fallback, model request shape, and each auth, key, quota, rate-limit, provider-outage, malformed-output, and backend-connectivity message. Run focused frontend/backend tests, build, Ruff, and `git diff --check`.
+- Commit message: `feat(ai): route personal keys and explain provider errors`
+- Stop conditions: Do not accept user-controlled provider URLs, expose raw provider errors, or silently charge the app key after a personal-key failure.
+
 ### V2 Cursor Correction: Refine canvas cursor states
 
 - Status: INCOMPLETE (production build and diff validation passed; interactive browser verification pending)

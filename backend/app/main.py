@@ -14,7 +14,7 @@ app.add_middleware(
     allow_origins=[settings.frontend_url],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 register_exception_handlers(app)

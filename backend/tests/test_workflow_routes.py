@@ -2,6 +2,7 @@ from collections.abc import Iterator
 
 import pytest
 from app.api.routes.workflows import get_workflow_generation_service
+from app.auth.supabase import AuthenticatedUser, get_authenticated_user
 from app.main import app
 from app.providers.exceptions import AIProviderTimeoutError
 from fastapi.testclient import TestClient
@@ -46,6 +47,7 @@ def client(*, raise_server_exceptions: bool = True) -> TestClient:
 
 def use_service(service: FakeService) -> None:
     app.dependency_overrides[get_workflow_generation_service] = lambda: service
+    app.dependency_overrides[get_authenticated_user] = lambda: AuthenticatedUser(id="user-1")
 
 
 def test_valid_request_returns_workflow_and_generation_metadata() -> None:
@@ -97,6 +99,18 @@ def test_provider_error_handler_is_wired() -> None:
     assert response.status_code == 504
     assert response.json()["errors"][0]["code"] == "provider_timeout"
     assert "private timeout detail" not in response.text
+
+
+def test_generation_requires_a_verified_user_before_calling_ai() -> None:
+    service = FakeService()
+    app.dependency_overrides[get_workflow_generation_service] = lambda: service
+
+    response = client().post("/api/v1/workflows/generate", json={"prompt": "valid"})
+
+    assert response.status_code == 401
+    assert response.json()["errors"][0]["code"] == "authentication_required"
+    assert response.json()["errors"][0]["message"] == "Sign in again to continue."
+    assert service.calls == []
 
 
 def test_health_endpoint_is_unchanged() -> None:

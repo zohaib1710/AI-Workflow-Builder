@@ -46,14 +46,21 @@ describe("generateWorkflow", () => {
     const payload = validResponse()
     fetchMock.mockResolvedValue(jsonResponse(payload))
 
-    await expect(generateWorkflow({ prompt: "Create a lead workflow" })).resolves.toEqual(payload)
+    await expect(generateWorkflow(
+      { prompt: "Create a lead workflow" },
+      { accessToken: "supabase-access-token" },
+    )).resolves.toEqual(payload)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     const expectedBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api/v1").replace(/\/+$/, "")
     expect(url).toBe(`${expectedBaseUrl}/workflows/generate`)
     expect(init.method).toBe("POST")
-    expect(init.headers).toEqual({ "Content-Type": "application/json" })
+    expect(init.headers).toEqual({
+      "Content-Type": "application/json",
+      Authorization: "Bearer supabase-access-token",
+    })
     expect(init.body).toBe(JSON.stringify({ prompt: "Create a lead workflow" }))
+    expect(String(init.body)).not.toContain("supabase-access-token")
     expect(init.signal).toBeInstanceOf(AbortSignal)
   })
 

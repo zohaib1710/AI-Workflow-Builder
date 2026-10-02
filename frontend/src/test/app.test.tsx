@@ -12,7 +12,7 @@ vi.mock("../auth/AuthContext", () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => children,
   useAuth: () => ({
     user: { id: "test-user", email: "test@example.com" },
-    session: {},
+    session: { access_token: "supabase-access-token" },
     loading: false,
     signIn: vi.fn(),
     signUp: vi.fn(),
@@ -123,7 +123,10 @@ describe("App workflow generation", () => {
     submitPrompt()
 
     expect(generateWorkflowMock).toHaveBeenCalledTimes(1)
-    expect(generateWorkflowMock).toHaveBeenCalledWith({ prompt: "Create a lead qualification workflow" })
+    expect(generateWorkflowMock).toHaveBeenCalledWith(
+      { prompt: "Create a lead qualification workflow" },
+      { accessToken: "supabase-access-token" },
+    )
     expect(await screen.findByRole("heading", { name: "Lead qualification workflow" })).toBeInTheDocument()
     expect(screen.getByLabelText("Read-only workflow diagram")).toBeInTheDocument()
   })

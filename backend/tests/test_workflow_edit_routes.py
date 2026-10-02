@@ -2,6 +2,7 @@ from collections.abc import Iterator
 
 import pytest
 from app.api.routes.workflows import get_workflow_edit_service
+from app.auth.supabase import AuthenticatedUser, get_authenticated_user
 from app.main import app
 from app.schemas.workflow import ValidationErrorDetail, Workflow
 from app.services.workflow_edit import (
@@ -72,6 +73,7 @@ def client() -> TestClient:
 
 def use_service(service: FakeEditService) -> None:
     app.dependency_overrides[get_workflow_edit_service] = lambda: service
+    app.dependency_overrides[get_authenticated_user] = lambda: AuthenticatedUser(id="user-1")
 
 
 def test_valid_edit_returns_workflow_metadata_and_normalized_service_input() -> None:
@@ -96,6 +98,20 @@ def test_valid_edit_returns_workflow_metadata_and_normalized_service_input() -> 
     instruction, workflow = service.calls[0]
     assert instruction == "Rename the workflow."
     assert workflow.title == "Current workflow"
+
+
+def test_edit_requires_a_verified_user_before_calling_ai() -> None:
+    service = FakeEditService()
+    app.dependency_overrides[get_workflow_edit_service] = lambda: service
+
+    response = client().post(
+        "/api/v1/workflows/edit",
+        json={"instruction": "Rename.", "workflow": workflow_payload()},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["errors"][0]["code"] == "authentication_required"
+    assert service.calls == []
 
 
 @pytest.mark.parametrize(

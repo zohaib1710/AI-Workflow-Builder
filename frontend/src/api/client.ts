@@ -17,6 +17,8 @@ const SUPPORTED_NODE_TYPES = new Set([
 ])
 
 const SAFE_BACKEND_ERROR_MESSAGES = {
+  authentication_required: "Your session has expired. Sign in again to continue.",
+  authentication_service_unavailable: "We could not verify your account. Please try again shortly.",
   invalid_request: "Check the workflow prompt and try again.",
   invalid_edit_workflow: "The current workflow is not valid for editing.",
   invalid_edit_output: "The workflow could not be revised in a valid format. Please try again.",
@@ -107,7 +109,7 @@ function errorFromResponseBody(body: unknown, status: number): WorkflowApiError 
 async function postWorkflowRequest<TResponse extends WorkflowResponse>(
   path: string,
   payload: object,
-  options?: { signal?: AbortSignal },
+  options?: { signal?: AbortSignal; accessToken?: string },
 ): Promise<TResponse> {
   const controller = new AbortController()
   let didTimeout = false
@@ -119,9 +121,11 @@ async function postWorkflowRequest<TResponse extends WorkflowResponse>(
   options?.signal?.addEventListener("abort", abortFromExternalSignal, { once: true })
 
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" }
+    if (options?.accessToken) headers.Authorization = `Bearer ${options.accessToken}`
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
       signal: controller.signal,
     })
@@ -156,7 +160,7 @@ async function postWorkflowRequest<TResponse extends WorkflowResponse>(
 
 export function generateWorkflow(
   request: GenerateWorkflowRequest,
-  options?: { signal?: AbortSignal },
+  options?: { signal?: AbortSignal; accessToken?: string },
 ): Promise<GenerateWorkflowResponse> {
   return postWorkflowRequest(
     "/workflows/generate",
@@ -167,7 +171,7 @@ export function generateWorkflow(
 
 export function editWorkflow(
   request: EditWorkflowRequest,
-  options?: { signal?: AbortSignal },
+  options?: { signal?: AbortSignal; accessToken?: string },
 ): Promise<EditWorkflowResponse> {
   return postWorkflowRequest(
     "/workflows/edit",

@@ -2,6 +2,7 @@ from time import perf_counter
 
 from fastapi import APIRouter, Depends
 
+from app.auth.supabase import AuthenticatedUser, get_authenticated_user
 from app.config import Settings, get_settings
 from app.providers.factory import create_ai_provider
 from app.schemas.workflow import (
@@ -31,6 +32,7 @@ def get_workflow_edit_service(
 @router.post("/generate", response_model=GenerateWorkflowResponse)
 async def generate_workflow(
     request: GenerateWorkflowRequest,
+    _user: AuthenticatedUser = Depends(get_authenticated_user),  # noqa: B008
     settings: Settings = Depends(get_settings),  # noqa: B008
     service: WorkflowGenerationService = Depends(get_workflow_generation_service),  # noqa: B008
 ) -> GenerateWorkflowResponse:
@@ -46,6 +48,7 @@ async def generate_workflow(
 @router.post("/edit", response_model=EditWorkflowResponse)
 async def edit_workflow(
     request: EditWorkflowRequest,
+    _user: AuthenticatedUser = Depends(get_authenticated_user),  # noqa: B008
     settings: Settings = Depends(get_settings),  # noqa: B008
     service: WorkflowEditService = Depends(get_workflow_edit_service),  # noqa: B008
 ) -> EditWorkflowResponse:

@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.auth.supabase import AuthenticationError
 from app.providers.exceptions import (
     AIProviderAPIError,
     AIProviderConfigurationError,
@@ -41,6 +42,7 @@ async def request_validation_handler(_: Request, exception: RequestValidationErr
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    app.add_exception_handler(AuthenticationError, authentication_error_handler)
     app.add_exception_handler(RequestValidationError, request_validation_handler)
     app.add_exception_handler(WorkflowGenerationValidationError, workflow_validation_handler)
     app.add_exception_handler(WorkflowEditInputValidationError, workflow_edit_input_handler)
@@ -53,6 +55,15 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AIProviderAPIError, provider_api_handler)
     app.add_exception_handler(AIProviderResponseError, provider_response_handler)
     app.add_exception_handler(Exception, internal_error_handler)
+
+
+async def authentication_error_handler(_: Request, exception: AuthenticationError) -> JSONResponse:
+    message = (
+        "Sign in again to continue."
+        if exception.status_code == 401
+        else "We could not verify your account right now. Please try again shortly."
+    )
+    return _response(exception.status_code, exception.code, message)
 
 
 async def workflow_validation_handler(_: Request, __: WorkflowGenerationValidationError) -> JSONResponse:

@@ -33,7 +33,8 @@ def test_cors_allows_only_configured_frontend_origin() -> None:
         "/api/v1/health",
         headers={
             "Origin": "http://localhost:5173",
-            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization,content-type",
         },
     )
     disallowed = client.options(
@@ -45,4 +46,5 @@ def test_cors_allows_only_configured_frontend_origin() -> None:
     )
 
     assert allowed.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "authorization" in allowed.headers["access-control-allow-headers"].lower()
     assert "access-control-allow-origin" not in disallowed.headers

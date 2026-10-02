@@ -411,3 +411,10 @@
 - No drag handlers, viewport behavior, workflow state, dependencies, or diagram styling changed.
 - Validation: frontend production build passed, production CSS contains all four SVG cursor assets, and `git diff --check` passed. A headless Chrome rendering attempt did not produce a screenshot; interactive verification of panning, node/annotation dragging, group dragging, cursor hotspots, and native control cursors remains pending. V2 Checkpoint 14 remains incomplete.
 - Prepared commit message: `feat(frontend): refresh editor cursors`.
+
+## Personal AI key foundation
+
+- Checkpoint 1 is complete: the frontend forwards its current Supabase access token for workflow generation and refinement; the backend verifies it through Supabase Auth before invoking either AI route and derives identity from the verified user record. Missing/invalid sessions receive a safe sign-in error, and Supabase verification failures fail closed.
+- CORS permits the Authorization header. The existing app Groq environment key remains in use. Backend `.env.example` now includes Supabase URL and publishable-key entries; no service key or personal AI key is exposed to the browser.
+- Validation passed: focused backend auth/routes/health tests (25), focused frontend API/editor/App tests (37), frontend build, focused Ruff, and `git diff --check`.
+- Next: implement the Supabase Vault backed personal-key settings checkpoint, then selected-provider routing and user-friendly provider errors. The pending canvas cursor browser check and Version 2 documentation checkpoint are preserved.

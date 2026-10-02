@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     ai_reasoning_effort: Literal["low", "medium", "high"] = "low"
     ai_timeout_seconds: float = 30
     frontend_url: str = "http://localhost:5173"
+    supabase_url: str = ""
+    supabase_publishable_key: SecretStr = SecretStr("")
 
     @field_validator("ai_provider")
     @classmethod

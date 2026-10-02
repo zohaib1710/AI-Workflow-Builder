@@ -14,7 +14,7 @@ interface EditorRoute {
   latestSavedVersionNumber: number | null
 }
 
-function AuthenticatedApp({ user, signOut }: { user: NonNullable<ReturnType<typeof useAuth>["user"]>; signOut: () => Promise<void> }) {
+function AuthenticatedApp({ user, accessToken, signOut }: { user: NonNullable<ReturnType<typeof useAuth>["user"]>; accessToken: string | null; signOut: () => Promise<void> }) {
   const [route, setRoute] = useState<EditorRoute | null>(null)
   const [libraryRefresh, setLibraryRefresh] = useState(0)
 
@@ -31,6 +31,7 @@ function AuthenticatedApp({ user, signOut }: { user: NonNullable<ReturnType<type
     <EditorProvider key={route.workflowId ?? "new-workflow"} workflow={route.initialSnapshot?.workflow} initialSnapshot={route.initialSnapshot ?? undefined}>
       <EditorShell
         userId={user.id}
+        accessToken={accessToken}
         userEmail={user.email}
         onSignOut={signOut}
         workflowId={route.workflowId ?? undefined}
@@ -43,10 +44,10 @@ function AuthenticatedApp({ user, signOut }: { user: NonNullable<ReturnType<type
 }
 
 function AppContent() {
-  const { user, loading, signOut } = useAuth()
+  const { user, session, loading, signOut } = useAuth()
   if (loading) return <main className="auth-screen"><p className="auth-card__loading">Loading session...</p></main>
   if (!user) return <AuthScreen />
-  return <AuthenticatedApp key={user.id} user={user} signOut={signOut} />
+  return <AuthenticatedApp key={user.id} user={user} accessToken={session?.access_token ?? null} signOut={signOut} />
 }
 
 function App() {
